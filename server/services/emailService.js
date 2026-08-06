@@ -20,27 +20,30 @@ let cachedTransporter = null;
 /**
  * Returns a cached single Nodemailer Transporter instance with pooled connections, IPv4 forcing, and strict socket timeouts.
  */
-export const createTransporter = () => {
-  if (cachedTransporter) {
-    return cachedTransporter;
-  }
-
+export const createTransporter = (overridePort = null) => {
   const host = process.env.EMAIL_HOST || 'smtp.gmail.com';
-  const port = parseInt(process.env.EMAIL_PORT || '587', 10);
+  // Default to port 465 (Implicit TLS) for Gmail to avoid cloud host (Render/AWS) port 587 connection timeouts
+  const configuredPort = process.env.EMAIL_PORT ? parseInt(process.env.EMAIL_PORT, 10) : 465;
+  const port = overridePort || configuredPort;
+  const secure = port === 465;
   const user = process.env.EMAIL_USER;
   const pass = process.env.EMAIL_PASS;
 
-  cachedTransporter = nodemailer.createTransport({
+  if (cachedTransporter && !overridePort) {
+    return cachedTransporter;
+  }
+
+  const transporter = nodemailer.createTransport({
     host,
     port,
-    secure: port === 465, // true for 465, false for other ports (587 STARTTLS)
-    family: 4, // Force IPv4 family
+    secure,
+    family: 4, // Force IPv4 family to prevent ENETUNREACH
     lookup: (hostname, options, callback) => {
       dns.lookup(hostname, { ...options, family: 4 }, (err, address, family) => {
         if (err) {
           console.error(`❌ [DNS LOOKUP FAILED for ${hostname}]:`, err.message);
         } else {
-          console.log(`🌐 [DNS LOOKUP]: Resolved ${hostname} -> IPv4 ${address}`);
+          console.log(`🌐 [DNS LOOKUP]: Resolved ${hostname}:${port} (secure: ${secure}) -> IPv4 ${address}`);
         }
         callback(err, address, family);
       });
@@ -48,7 +51,7 @@ export const createTransporter = () => {
     pool: true, // Enable connection pooling to reuse socket handshakes
     maxConnections: 3,
     maxMessages: 100,
-    // Strict Socket Timeouts (prevents hanging)
+    // Strict Socket Timeouts
     connectionTimeout: 8000,  // 8s TCP connection timeout
     greetingTimeout: 8000,    // 8s SMTP greeting timeout
     socketTimeout: 10000,     // 10s socket inactivity timeout
@@ -61,17 +64,19 @@ export const createTransporter = () => {
     }
   });
 
+  if (!overridePort) {
+    cachedTransporter = transporter;
+  }
 
-  return cachedTransporter;
+  return transporter;
 };
-
 
 /**
  * Fast synchronous configuration check (0ms roundtrip).
  */
 export const validateSmtpConfig = () => {
   const host = process.env.EMAIL_HOST || 'smtp.gmail.com';
-  const port = process.env.EMAIL_PORT || '587';
+  const port = process.env.EMAIL_PORT || '465';
   const user = process.env.EMAIL_USER;
   const pass = process.env.EMAIL_PASS;
 
@@ -96,7 +101,7 @@ export const verifySmtpConnection = async () => {
 
   console.log('🔍 [EMAIL CONFIG CHECK]:');
   console.log(`   - EMAIL_HOST: ${process.env.EMAIL_HOST || 'smtp.gmail.com'}`);
-  console.log(`   - EMAIL_PORT: ${process.env.EMAIL_PORT || '587'}`);
+  console.log(`   - EMAIL_PORT: ${process.env.EMAIL_PORT || '465 (Default)'}`);
   console.log(`   - EMAIL_USER: ${process.env.EMAIL_USER || '[NOT SET]'}`);
   console.log(`   - EMAIL_PASS: ${maskedPass}`);
   console.log(`   - EMAIL_FROM: ${process.env.EMAIL_FROM || '[NOT SET]'}`);
@@ -151,7 +156,6 @@ export const sendDeadlineReminder = async ({
     return false;
   }
 
-  const transporter = createTransporter();
   const dashboardUrl = process.env.CLIENT_URL || 'http://localhost:5173';
 
   const html = generateReminderEmailHtml({
@@ -173,13 +177,15 @@ export const sendDeadlineReminder = async ({
 
   let attempt = 0;
   let lastError = null;
+  let currentPort = process.env.EMAIL_PORT ? parseInt(process.env.EMAIL_PORT, 10) : 465;
 
   while (attempt <= retries) {
     try {
       attempt++;
       const sendStart = performance.now();
-      console.log(`📧 [EMAIL SENDING]: Dispatching mail to ${toEmail} (Attempt ${attempt}/${retries + 1})...`);
+      console.log(`📧 [EMAIL SENDING]: Dispatching mail to ${toEmail} via ${process.env.EMAIL_HOST || 'smtp.gmail.com'}:${currentPort} (Attempt ${attempt}/${retries + 1})...`);
       
+      const transporter = createTransporter(currentPort);
       const info = await transporter.sendMail(mailOptions);
       const sendDurationMs = (performance.now() - sendStart).toFixed(2);
       
@@ -188,10 +194,15 @@ export const sendDeadlineReminder = async ({
       return true;
     } catch (err) {
       lastError = err;
-      // Reset cached transporter on failure so socket/auth errors don't persist
       cachedTransporter = null;
       console.error(`❌ [EMAIL ATTEMPT ${attempt}/${retries + 1} FAILED]: [${err.code || err.name || 'SMTP_ERROR'}] ${err.message}`);
       
+      // Auto-fallback: If port 587 times out or fails (common on cloud hosts), switch to Port 465 SMTPS (Implicit TLS)
+      if (currentPort === 587) {
+        console.warn('⚠️ [SMTP FALLBACK]: Connection on Port 587 failed/timed out. Switching to SMTPS Port 465 (Implicit TLS)...');
+        currentPort = 465;
+      }
+
       if (attempt > retries) {
         console.error(`❌ [EMAIL FATAL]: Exhausted all ${retries + 1} retry attempts for ${toEmail}. Error: ${err.message}`);
         if (throwOnError) {
@@ -199,7 +210,7 @@ export const sendDeadlineReminder = async ({
         }
         return false;
       }
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 300));
     }
   }
 
@@ -209,6 +220,7 @@ export const sendDeadlineReminder = async ({
 
   return false;
 };
+
 
 /**
  * Sends an immediate test email with microsecond performance measurements.
