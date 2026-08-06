@@ -45,8 +45,17 @@ export const resolveIPv4Host = async (hostname) => {
  */
 export const createTransporter = async (overridePort = null) => {
   const targetHost = process.env.EMAIL_HOST || 'smtp.gmail.com';
-  const configuredPort = process.env.EMAIL_PORT ? parseInt(process.env.EMAIL_PORT, 10) : 465;
-  const port = overridePort || configuredPort;
+  
+  // For Gmail SMTP (smtp.gmail.com), force Port 465 (Implicit TLS) because Port 587 is blocked by cloud firewalls (Render/AWS)
+  let port = overridePort;
+  if (!port) {
+    if (targetHost.includes('gmail.com')) {
+      port = 465;
+    } else {
+      port = process.env.EMAIL_PORT ? parseInt(process.env.EMAIL_PORT, 10) : 465;
+    }
+  }
+
   const secure = port === 465;
   const user = process.env.EMAIL_USER;
   const pass = process.env.EMAIL_PASS;
@@ -57,6 +66,7 @@ export const createTransporter = async (overridePort = null) => {
 
   // Resolve hostname directly to IPv4 address string (e.g. "192.178.211.109")
   const resolvedIp = await resolveIPv4Host(targetHost);
+
 
   const transporter = nodemailer.createTransport({
     host: resolvedIp,
@@ -276,7 +286,7 @@ export const sendTestEmail = async ({ toEmail, userName = 'Student' }) => {
     priority: 'high',
     deadlineFormatted,
     estimatedStudyTime: '1.0 hr (60 min)',
-    retries: 0,
+    retries: 2,
     throwOnError: true // Propagate exact SMTP error message (e.g. 535 authentication, host unreachable, sender rejected)
   });
 
