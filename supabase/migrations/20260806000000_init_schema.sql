@@ -50,6 +50,7 @@ CREATE TABLE public.tasks (
   description TEXT,
   task_type TEXT CHECK (task_type IN ('assignment', 'exam', 'announcement', 'reading')) DEFAULT 'assignment',
   status TEXT CHECK (status IN ('pending', 'in_progress', 'completed')) DEFAULT 'pending',
+  notification_sent BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );

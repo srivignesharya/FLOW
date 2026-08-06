@@ -12,6 +12,8 @@ import copilotRoutes from './routes/copilot.js';
 import { standardLimiter } from './middleware/rateLimiter.js';
 import { errorHandler } from './utils/errorHandler.js';
 
+import { initReminderScheduler } from './jobs/reminderJob.js';
+
 dotenv.config();
 
 const app = express();
@@ -71,4 +73,7 @@ app.listen(PORT, () => {
   console.log(`\n⚡ [FLOW SERVER] Running on http://localhost:${PORT}`);
   console.log(`   Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`   Client URL:  ${process.env.CLIENT_URL || 'http://localhost:5173'}\n`);
+
+  // Start deadline reminder scheduler
+  initReminderScheduler();
 });
