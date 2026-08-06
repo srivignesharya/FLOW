@@ -34,7 +34,17 @@ export const createTransporter = () => {
     host,
     port,
     secure: port === 465, // true for 465, false for other ports (587 STARTTLS)
-    family: 4, // Force IPv4 family to prevent ENETUNREACH on cloud environments like Render
+    family: 4, // Force IPv4 family
+    lookup: (hostname, options, callback) => {
+      dns.lookup(hostname, { ...options, family: 4 }, (err, address, family) => {
+        if (err) {
+          console.error(`❌ [DNS LOOKUP FAILED for ${hostname}]:`, err.message);
+        } else {
+          console.log(`🌐 [DNS LOOKUP]: Resolved ${hostname} -> IPv4 ${address}`);
+        }
+        callback(err, address, family);
+      });
+    },
     pool: true, // Enable connection pooling to reuse socket handshakes
     maxConnections: 3,
     maxMessages: 100,
@@ -50,6 +60,7 @@ export const createTransporter = () => {
       rejectUnauthorized: false
     }
   });
+
 
   return cachedTransporter;
 };
