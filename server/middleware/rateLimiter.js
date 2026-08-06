@@ -9,6 +9,7 @@ export const standardLimiter = rateLimit({
   max: 200,
   standardHeaders: true,
   legacyHeaders: false,
+  validate: { xForwardedForHeader: false },
   message: {
     error: 'Too many requests from this IP. Please try again in 15 minutes.'
   }
@@ -23,7 +24,9 @@ export const aiServiceLimiter = rateLimit({
   max: 30,
   standardHeaders: true,
   legacyHeaders: false,
+  validate: { xForwardedForHeader: false },
   message: {
     error: 'AI processing limit reached. Please wait before running more extractions.'
   }
 });
+
