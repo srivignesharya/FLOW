@@ -1,0 +1,176 @@
+import { Router } from 'express';
+import multer from 'multer';
+import { requireAuth } from '../middleware/authMiddleware.js';
+import { validateBody, textIngestSchema } from '../middleware/validation.js';
+import { aiServiceLimiter } from '../middleware/rateLimiter.js';
+import { ai, FLASH_MODEL, SYSTEM_INSTRUCTION, taskExtractionSchema } from '../services/gemini.js';
+import { supabaseAdmin } from '../services/supabase.js';
+
+// Multer: store files in memory (no disk writes), max 10MB
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = ['application/pdf', 'image/png', 'image/jpeg', 'image/webp', 'image/gif'];
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error(`Invalid file type: ${file.mimetype}. Allowed: PDF, PNG, JPEG, WebP`));
+    }
+  }
+});
+
+const router = Router();
+
+// ============================================================
+// POST /api/v1/ingest/file
+// Upload a PDF or image → Gemini extracts tasks → saves to DB
+// ============================================================
+router.post('/file', requireAuth, aiServiceLimiter, upload.single('file'), async (req, res, next) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No document or image file uploaded' });
+    }
+
+    const userId = req.user.id;
+    const dateStr = new Date().toISOString();
+    const base64Data = req.file.buffer.toString('base64');
+
+    const prompt = `Today's date is ${dateStr}. Analyze this academic document thoroughly and extract ALL tasks, assignments, exams, announcements, and deadlines. Include estimated study/completion time for each.`;
+
+    const aiResponse = await ai.models.generateContent({
+      model: FLASH_MODEL,
+      contents: [
+        {
+          role: 'user',
+          parts: [
+            { inlineData: { mimeType: req.file.mimetype, data: base64Data } },
+            { text: prompt }
+          ]
+        }
+      ],
+      config: {
+        systemInstruction: SYSTEM_INSTRUCTION,
+        responseMimeType: 'application/json',
+        responseSchema: taskExtractionSchema,
+        temperature: 0.1
+      }
+    });
+
+    const parsedData = JSON.parse(aiResponse.text);
+
+    if (!parsedData.tasks || parsedData.tasks.length === 0) {
+      return res.status(200).json({ document: null, tasks: [], message: 'No academic tasks detected in this document.' });
+    }
+
+    // Save document record
+    const { data: doc, error: docErr } = await supabaseAdmin
+      .from('documents')
+      .insert({
+        user_id: userId,
+        file_name: req.file.originalname,
+        file_type: req.file.mimetype.includes('pdf') ? 'pdf' : 'image',
+        file_path: `${userId}/${Date.now()}_${req.file.originalname}`
+      })
+      .select()
+      .single();
+
+    if (docErr) throw docErr;
+
+    // Map and insert extracted tasks
+    const tasksToInsert = parsedData.tasks.map(t => ({
+      user_id: userId,
+      document_id: doc.id,
+      title: t.title,
+      subject: t.subject || 'General',
+      deadline: t.deadline,
+      weightage: t.weightage || 0,
+      priority: t.priority,
+      estimated_minutes: t.estimatedMinutes || 60,
+      description: t.description || '',
+      task_type: t.taskType || 'assignment'
+    }));
+
+    const { data: insertedTasks, error: taskErr } = await supabaseAdmin
+      .from('tasks')
+      .insert(tasksToInsert)
+      .select();
+
+    if (taskErr) throw taskErr;
+
+    res.json({ document: doc, tasks: insertedTasks });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ============================================================
+// POST /api/v1/ingest/text
+// Paste text → Gemini extracts tasks → saves to DB
+// ============================================================
+router.post('/text', requireAuth, aiServiceLimiter, validateBody(textIngestSchema), async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    const { textContent } = req.body;
+    const dateStr = new Date().toISOString();
+
+    const prompt = `Today's date is ${dateStr}. Extract all academic tasks, deadlines, and commitments from the following text:\n\n${textContent}`;
+
+    const aiResponse = await ai.models.generateContent({
+      model: FLASH_MODEL,
+      contents: prompt,
+      config: {
+        systemInstruction: SYSTEM_INSTRUCTION,
+        responseMimeType: 'application/json',
+        responseSchema: taskExtractionSchema,
+        temperature: 0.1
+      }
+    });
+
+    const parsedData = JSON.parse(aiResponse.text);
+
+    if (!parsedData.tasks || parsedData.tasks.length === 0) {
+      return res.status(200).json({ document: null, tasks: [], message: 'No academic tasks detected in the provided text.' });
+    }
+
+    // Save document record for text ingestion
+    const { data: doc, error: docErr } = await supabaseAdmin
+      .from('documents')
+      .insert({
+        user_id: userId,
+        file_name: `Text Ingest — ${new Date().toLocaleString()}`,
+        file_type: 'text',
+        raw_text_content: textContent
+      })
+      .select()
+      .single();
+
+    if (docErr) throw docErr;
+
+    const tasksToInsert = parsedData.tasks.map(t => ({
+      user_id: userId,
+      document_id: doc.id,
+      title: t.title,
+      subject: t.subject || 'General',
+      deadline: t.deadline,
+      weightage: t.weightage || 0,
+      priority: t.priority,
+      estimated_minutes: t.estimatedMinutes || 60,
+      description: t.description || '',
+      task_type: t.taskType || 'assignment'
+    }));
+
+    const { data: insertedTasks, error: taskErr } = await supabaseAdmin
+      .from('tasks')
+      .insert(tasksToInsert)
+      .select();
+
+    if (taskErr) throw taskErr;
+
+    res.json({ document: doc, tasks: insertedTasks });
+  } catch (err) {
+    next(err);
+  }
+});
+
+export default router;

@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Environment variables (contains sensitive API keys and database secrets)
+.env
+.env.local
+.env.production
+server/.env
+client/.env
+
+# Build outputs
+dist/
+build/
+.output/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# IDE & OS files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
