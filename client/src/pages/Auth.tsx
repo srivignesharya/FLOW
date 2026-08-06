@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabaseClient';
 import { useNavigate } from 'react-router-dom';
 import { Sparkles, ArrowRight, BookOpen, Calendar, Bot } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { Footer } from '../components/Footer';
 
 export const Auth: React.FC = () => {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -104,99 +105,105 @@ export const Auth: React.FC = () => {
         </div>
 
         <div className="relative z-10 text-xs text-slate-500">
-          © {new Date().getFullYear()} Flow AI Inc. Production Grade Academic Engine.
+          © 2026 FLOW • Built by IMV
         </div>
       </div>
 
       {/* Right Form Panel */}
-      <div className="flex-1 flex items-center justify-center p-6 sm:p-12 bg-slate-950">
-        <div className="w-full max-w-md space-y-8">
-          <div className="text-center lg:text-left">
-            <h2 className="text-3xl font-bold tracking-tight text-white">
-              {isSignUp ? 'Create your account' : 'Welcome back'}
-            </h2>
-            <p className="text-slate-400 text-sm mt-2">
-              {isSignUp
-                ? 'Sign up to start organizing your academic workflow with AI.'
-                : 'Enter your credentials to access your academic dashboard.'}
-            </p>
-          </div>
-
-          {error && (
-            <div className="p-4 bg-red-950/50 border border-red-800/80 text-red-400 text-xs rounded-xl animate-fade-in">
-              {error}
-            </div>
-          )}
-
-          {message && (
-            <div className="p-4 bg-emerald-950/50 border border-emerald-800/80 text-emerald-400 text-xs rounded-xl animate-fade-in">
-              {message}
-            </div>
-          )}
-
-          <form onSubmit={handleAuth} className="space-y-5">
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
-                Email address
-              </label>
-              <input
-                id="auth-email-input"
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="student@university.edu"
-                className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-sm transition-all"
-              />
+      <div className="flex-1 flex flex-col justify-between bg-slate-950">
+        <div className="my-auto flex items-center justify-center p-6 sm:p-12 w-full">
+          <div className="w-full max-w-md space-y-8">
+            <div className="text-center lg:text-left">
+              <h2 className="text-3xl font-bold tracking-tight text-white">
+                {isSignUp ? 'Create your account' : 'Welcome back'}
+              </h2>
+              <p className="text-slate-400 text-sm mt-2">
+                {isSignUp
+                  ? 'Sign up to start organizing your academic workflow with AI.'
+                  : 'Enter your credentials to access your academic dashboard.'}
+              </p>
             </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
-                Password
-              </label>
-              <input
-                id="auth-password-input"
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-sm transition-all"
-              />
+            {error && (
+              <div className="p-4 bg-red-950/50 border border-red-800/80 text-red-400 text-xs rounded-xl animate-fade-in">
+                {error}
+              </div>
+            )}
+
+            {message && (
+              <div className="p-4 bg-emerald-950/50 border border-emerald-800/80 text-emerald-400 text-xs rounded-xl animate-fade-in">
+                {message}
+              </div>
+            )}
+
+            <form onSubmit={handleAuth} className="space-y-5">
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
+                  Email address
+                </label>
+                <input
+                  id="auth-email-input"
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="student@university.edu"
+                  className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-sm transition-all"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
+                  Password
+                </label>
+                <input
+                  id="auth-password-input"
+                  type="password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-sm transition-all"
+                />
+              </div>
+
+              <button
+                id="auth-submit-btn"
+                type="submit"
+                disabled={loading}
+                className="w-full py-3.5 px-4 bg-brand-600 hover:bg-brand-500 text-white font-semibold rounded-xl transition-all shadow-lg shadow-brand-600/30 flex items-center justify-center gap-2 text-sm disabled:opacity-50"
+              >
+                {loading ? (
+                  'Processing...'
+                ) : (
+                  <>
+                    <span>{isSignUp ? 'Create Account' : 'Sign In'}</span>
+                    <ArrowRight className="h-4 w-4" />
+                  </>
+                )}
+              </button>
+            </form>
+
+            <div className="pt-4 border-t border-slate-800/80 text-center">
+              <button
+                id="toggle-auth-mode-btn"
+                onClick={() => {
+                  setIsSignUp(!isSignUp);
+                  setError('');
+                  setMessage('');
+                }}
+                className="text-xs text-brand-400 hover:text-brand-300 font-medium hover:underline transition-colors"
+              >
+                {isSignUp ? 'Already have an account? Sign In' : "Don't have an account? Sign Up"}
+              </button>
             </div>
-
-            <button
-              id="auth-submit-btn"
-              type="submit"
-              disabled={loading}
-              className="w-full py-3.5 px-4 bg-brand-600 hover:bg-brand-500 text-white font-semibold rounded-xl transition-all shadow-lg shadow-brand-600/30 flex items-center justify-center gap-2 text-sm disabled:opacity-50"
-            >
-              {loading ? (
-                'Processing...'
-              ) : (
-                <>
-                  <span>{isSignUp ? 'Create Account' : 'Sign In'}</span>
-                  <ArrowRight className="h-4 w-4" />
-                </>
-              )}
-            </button>
-          </form>
-
-          <div className="pt-4 border-t border-slate-800/80 text-center">
-            <button
-              id="toggle-auth-mode-btn"
-              onClick={() => {
-                setIsSignUp(!isSignUp);
-                setError('');
-                setMessage('');
-              }}
-              className="text-xs text-brand-400 hover:text-brand-300 font-medium hover:underline transition-colors"
-            >
-              {isSignUp ? 'Already have an account? Sign In' : "Don't have an account? Sign Up"}
-            </button>
           </div>
         </div>
+
+        {/* Responsive Footer for Auth Page */}
+        <Footer className="border-t border-slate-800/80 bg-slate-950 text-slate-500 lg:hidden" />
       </div>
     </div>
   );
 };
+
