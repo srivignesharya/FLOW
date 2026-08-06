@@ -153,6 +153,41 @@ export const verifySmtpConnection = async () => {
 };
 
 /**
+ * Sends email via Resend HTTP REST API (HTTPS Port 443 — supported on all cloud platforms including Render).
+ */
+export const sendViaResendApi = async ({ toEmail, subject, html }) => {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) return false;
+
+  const sender = process.env.EMAIL_FROM || 'FLOW AI <onboarding@resend.dev>';
+  console.log(`📧 [RESEND HTTPS]: Dispatching mail to ${toEmail} via HTTPS Port 443 (Resend REST API)...`);
+
+  const res = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${apiKey}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      from: sender,
+      to: [toEmail],
+      subject,
+      html
+    })
+  });
+
+  const data = await res.json();
+  if (!res.ok) {
+    const errorMsg = data.message || `Resend API Error (HTTP ${res.status})`;
+    console.error(`❌ [RESEND HTTPS ERROR]: ${errorMsg}`);
+    throw new Error(errorMsg);
+  }
+
+  console.log(`✅ [RESEND HTTPS SUCCESS]: Reminder sent to ${toEmail} (ID: ${data.id})`);
+  return true;
+};
+
+/**
  * Sends a deadline reminder email to a user with retry logic and high-precision performance metrics.
  */
 export const sendDeadlineReminder = async ({
@@ -173,6 +208,28 @@ export const sendDeadlineReminder = async ({
     return false;
   }
 
+  const dashboardUrl = process.env.CLIENT_URL || 'http://localhost:5173';
+  const html = generateReminderEmailHtml({
+    userName,
+    assignmentTitle,
+    subject,
+    priority,
+    deadlineFormatted,
+    estimatedStudyTime,
+    dashboardUrl
+  });
+  const emailSubject = `📚 Reminder: "${assignmentTitle}" is due tomorrow`;
+
+  // Option 1: Fast HTTPS API Dispatch if RESEND_API_KEY is configured
+  if (process.env.RESEND_API_KEY) {
+    try {
+      return await sendViaResendApi({ toEmail, subject: emailSubject, html });
+    } catch (err) {
+      console.warn(`⚠️ [RESEND HTTPS FAILED]: Falling back to Nodemailer SMTP. Error: ${err.message}`);
+    }
+  }
+
+  // Option 2: Nodemailer SMTP
   const emailUser = process.env.EMAIL_USER;
   const fromAddress = process.env.EMAIL_FROM || (emailUser ? `"FLOW AI (Powered by IMV)" <${emailUser}>` : undefined);
 
@@ -183,22 +240,10 @@ export const sendDeadlineReminder = async ({
     return false;
   }
 
-  const dashboardUrl = process.env.CLIENT_URL || 'http://localhost:5173';
-
-  const html = generateReminderEmailHtml({
-    userName,
-    assignmentTitle,
-    subject,
-    priority,
-    deadlineFormatted,
-    estimatedStudyTime,
-    dashboardUrl
-  });
-
   const mailOptions = {
     from: fromAddress,
     to: toEmail,
-    subject: `📚 Reminder: "${assignmentTitle}" is due tomorrow`,
+    subject: emailSubject,
     html
   };
 
@@ -211,12 +256,11 @@ export const sendDeadlineReminder = async ({
       attempt++;
       const sendStart = performance.now();
       console.log(`📧 [EMAIL SENDING]: Dispatching mail to ${toEmail} via ${process.env.EMAIL_HOST || 'smtp.gmail.com'}:${currentPort} (Attempt ${attempt}/${retries + 1})...`);
-      
-      const transporter = await createTransporter(currentPort);
 
+      const transporter = await createTransporter(currentPort);
       const info = await transporter.sendMail(mailOptions);
       const sendDurationMs = (performance.now() - sendStart).toFixed(2);
-      
+
       console.log(`⚡ [SMTP SENDMAIL TIME]: ${sendDurationMs} ms`);
       console.log(`✅ [EMAIL SENT SUCCESSFULLY]: Reminder sent to ${toEmail} (MessageId: ${info.messageId})`);
       return true;
@@ -224,7 +268,7 @@ export const sendDeadlineReminder = async ({
       lastError = err;
       cachedTransporter = null;
       console.error(`❌ [EMAIL ATTEMPT ${attempt}/${retries + 1} FAILED]: [${err.code || err.name || 'SMTP_ERROR'}] ${err.message}`);
-      
+
       // Auto-fallback: If port 587 times out or fails (common on cloud hosts), switch to Port 465 SMTPS (Implicit TLS)
       if (currentPort === 587) {
         console.warn('⚠️ [SMTP FALLBACK]: Connection on Port 587 failed/timed out. Switching to SMTPS Port 465 (Implicit TLS)...');
@@ -232,9 +276,13 @@ export const sendDeadlineReminder = async ({
       }
 
       if (attempt > retries) {
-        console.error(`❌ [EMAIL FATAL]: Exhausted all ${retries + 1} retry attempts for ${toEmail}. Error: ${err.message}`);
+        let failureReason = err.message;
+        if (err.message.includes('timeout') || err.code === 'ETIMEDOUT' || err.code === 'ESOCKET') {
+          failureReason = 'Render Cloud Firewall blocks raw SMTP TCP sockets (Ports 25/587/465). Add RESEND_API_KEY to Render environment variables to send via HTTPS Port 443!';
+        }
+        console.error(`❌ [EMAIL FATAL]: Exhausted all ${retries + 1} retry attempts for ${toEmail}. Reason: ${failureReason}`);
         if (throwOnError) {
-          throw new Error(`SMTP Delivery Failed: ${err.message}`);
+          throw new Error(failureReason);
         }
         return false;
       }
@@ -248,6 +296,7 @@ export const sendDeadlineReminder = async ({
 
   return false;
 };
+
 
 
 /**
