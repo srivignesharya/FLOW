@@ -3,7 +3,7 @@ import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useToast } from '../context/ToastContext';
-import { User, Building, Clock, Sun, Moon, Save, CheckCircle2, AlertCircle } from 'lucide-react';
+import { User, Building, Clock, Sun, Moon, Save, CheckCircle2, AlertCircle, Mail, Send, Loader2 } from 'lucide-react';
 import { SkeletonCard } from '../components/SkeletonLoaders';
 
 export const Settings: React.FC = () => {
@@ -16,6 +16,7 @@ export const Settings: React.FC = () => {
   const [studyHours, setStudyHours] = useState(4);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [sendingTestEmail, setSendingTestEmail] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -56,6 +57,23 @@ export const Settings: React.FC = () => {
       setSaving(false);
     }
   };
+
+  const handleSendTestEmail = async () => {
+    setSendingTestEmail(true);
+    setError('');
+    try {
+      const res = await api.post('/test-email');
+      showToast(res.data.message || `Test email sent to ${user?.email}`, 'success');
+    } catch (err: any) {
+      console.error(err);
+      const msg = err.response?.data?.error || 'Failed to send test email. Verify SMTP settings in server/.env';
+      setError(msg);
+      showToast(msg, 'error');
+    } finally {
+      setSendingTestEmail(false);
+    }
+  };
+
 
   if (loading) {
     return (
@@ -157,8 +175,41 @@ export const Settings: React.FC = () => {
           </div>
         </div>
 
+        {/* Email Reminders Test Card */}
+        <div className="card p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <h2 className="text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+              <Mail className="h-5 w-5 text-brand-500" />
+              <span>Email Reminder System</span>
+            </h2>
+            <p className="text-xs text-slate-400">
+              Verify Nodemailer SMTP connection by sending an immediate test deadline reminder to <strong className="text-slate-200">{user?.email}</strong>.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            disabled={sendingTestEmail}
+            onClick={handleSendTestEmail}
+            className="btn-secondary flex items-center gap-2 shrink-0 self-start sm:self-auto"
+          >
+            {sendingTestEmail ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin text-brand-500" />
+                <span>Sending Test Email...</span>
+              </>
+            ) : (
+              <>
+                <Send className="h-4 w-4 text-brand-500" />
+                <span>Send Test Email</span>
+              </>
+            )}
+          </button>
+        </div>
+
         {/* Theme Preference Card */}
         <div className="card p-6 flex items-center justify-between">
+
           <div className="space-y-1">
             <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">Interface Theme</h2>
             <p className="text-xs text-slate-400">Switch between dark mode and light mode appearance.</p>

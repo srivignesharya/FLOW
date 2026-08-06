@@ -11,6 +11,9 @@ import copilotRoutes from './routes/copilot.js';
 
 import { standardLimiter } from './middleware/rateLimiter.js';
 import { errorHandler } from './utils/errorHandler.js';
+import { requireAuth } from './middleware/authMiddleware.js';
+import { sendTestEmail } from './services/emailService.js';
+import { supabaseAdmin } from './services/supabase.js';
 
 import { initReminderScheduler } from './jobs/reminderJob.js';
 
@@ -41,6 +44,41 @@ app.use('/api/v1/ingest', ingestRoutes);
 app.use('/api/v1/tasks', taskRoutes);
 app.use('/api/v1/planner', plannerRoutes);
 app.use('/api/v1/copilot', copilotRoutes);
+
+// Test Email Endpoint
+app.post('/api/v1/test-email', requireAuth, async (req, res) => {
+  try {
+    const userEmail = req.user.email;
+    if (!userEmail) {
+      return res.status(400).json({ error: 'User email not found in authentication token' });
+    }
+
+    let userName = req.user.user_metadata?.full_name || 'Student';
+    const { data: profile } = await supabaseAdmin
+      .from('profiles')
+      .select('full_name')
+      .eq('id', req.user.id)
+      .single();
+
+    if (profile?.full_name) {
+      userName = profile.full_name;
+    }
+
+    await sendTestEmail({ toEmail: userEmail, userName });
+
+    return res.json({
+      success: true,
+      message: `Test email sent successfully to ${userEmail}`
+    });
+  } catch (err) {
+    console.error('❌ [POST /api/v1/test-email ERROR]:', err.message);
+    return res.status(500).json({
+      success: false,
+      error: err.message || 'Failed to send test email'
+    });
+  }
+});
+
 
 // ============================================================
 // HEALTH CHECK

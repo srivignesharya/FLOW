@@ -1,6 +1,6 @@
 import cron from 'node-cron';
 import { supabaseAdmin } from '../services/supabase.js';
-import { sendDeadlineReminder } from '../services/emailService.js';
+import { sendDeadlineReminder, verifySmtpConnection } from '../services/emailService.js';
 
 /**
  * Hourly Cron Job: Checks pending tasks due in the next 24 hours,
@@ -8,12 +8,24 @@ import { sendDeadlineReminder } from '../services/emailService.js';
  */
 export const checkAndSendReminders = async () => {
   try {
-    console.log('⏰ [REMINDER JOB]: Checking for tasks due within the next 24 hours...');
+    console.log('\n============================================================');
+    console.log('⏰ [CRON JOB STARTED]: Deadline reminder sweep initiated');
+    console.log(`   Execution Time: ${new Date().toISOString()}`);
+    console.log('============================================================');
+
+    // 1. Verify SMTP connection state
+    await verifySmtpConnection();
 
     const now = new Date();
     const next24Hours = new Date(now.getTime() + 24 * 60 * 60 * 1000);
 
-    // Query pending/in_progress tasks due in next 24h where notification_sent = false
+    console.log(`\n🔍 [TASK QUERY]: Searching for pending tasks meeting filter:`);
+    console.log(`   - status != 'completed'`);
+    console.log(`   - notification_sent = false`);
+    console.log(`   - deadline >= ${now.toISOString()} (Now)`);
+    console.log(`   - deadline <= ${next24Hours.toISOString()} (+24 Hours)`);
+
+    // 2. Query pending/in_progress tasks due in next 24h where notification_sent = false
     const { data: tasks, error: tasksErr } = await supabaseAdmin
       .from('tasks')
       .select('id, title, subject, priority, deadline, estimated_minutes, user_id, notification_sent, status, profiles(email, full_name)')
@@ -23,23 +35,43 @@ export const checkAndSendReminders = async () => {
       .lte('deadline', next24Hours.toISOString());
 
     if (tasksErr) {
-      console.error('[REMINDER JOB DB ERROR]:', tasksErr.message);
+      console.error('❌ [REMINDER JOB DB ERROR]:', tasksErr.message);
       return;
     }
+
+    const tasksFoundCount = tasks ? tasks.length : 0;
+    console.log(`📊 [TASKS FOUND]: ${tasksFoundCount} task(s) matching criteria.`);
 
     if (!tasks || tasks.length === 0) {
-      console.log('⏰ [REMINDER JOB]: No upcoming deadlines require notification at this time.');
+      console.log('ℹ️ [REMINDER JOB]: No tasks due in the next 24 hours require email notification.');
+      
+      // Diagnostic query: find nearest upcoming pending tasks to explain why 0 were found
+      const { data: upcoming } = await supabaseAdmin
+        .from('tasks')
+        .select('id, title, deadline, status, notification_sent')
+        .neq('status', 'completed')
+        .order('deadline', { ascending: true })
+        .limit(3);
+
+      if (upcoming && upcoming.length > 0) {
+        console.log('📌 [DIAGNOSTIC - NEAREST UPCOMING TASKS IN DB]:');
+        upcoming.forEach((t, i) => {
+          console.log(`   ${i + 1}. "${t.title}" | Deadline: ${t.deadline} | Status: ${t.status} | Notified: ${t.notification_sent}`);
+        });
+        console.log(`💡 [EXPLANATION]: Nearest task deadline is "${upcoming[0].deadline}". That is beyond the 24-hour reminder threshold (${next24Hours.toISOString()}).`);
+      } else {
+        console.log('💡 [EXPLANATION]: Database has no active (non-completed) tasks.');
+      }
       return;
     }
 
-    console.log(`⏰ [REMINDER JOB]: Found ${tasks.length} task(s) requiring deadline reminders.`);
-
+    // 3. Process each task
     for (const task of tasks) {
       const recipientEmail = task.profiles?.email;
       const userName = task.profiles?.full_name || 'Student';
 
       if (!recipientEmail) {
-        console.warn(`[REMINDER JOB WARNING]: Task "${task.title}" (ID: ${task.id}) has no associated profile email. Skipping.`);
+        console.warn(`⚠️ [REMINDER JOB WARNING]: Task "${task.title}" (ID: ${task.id}) has no associated profile email. Skipping.`);
         continue;
       }
 
@@ -55,7 +87,7 @@ export const checkAndSendReminders = async () => {
 
       const estHours = task.estimated_minutes ? `${(task.estimated_minutes / 60).toFixed(1)} hrs (${task.estimated_minutes} min)` : '1 hour';
 
-      // Attempt sending email
+      // 4. Send email
       const sentSuccess = await sendDeadlineReminder({
         toEmail: recipientEmail,
         userName,
@@ -66,7 +98,7 @@ export const checkAndSendReminders = async () => {
         estimatedStudyTime: estHours
       });
 
-      // Update database status if notification succeeded
+      // 5. Update notification_sent status in DB
       if (sentSuccess) {
         const { error: updateErr } = await supabaseAdmin
           .from('tasks')
@@ -74,14 +106,14 @@ export const checkAndSendReminders = async () => {
           .eq('id', task.id);
 
         if (updateErr) {
-          console.error(`[REMINDER JOB DB UPDATE ERROR] for task ${task.id}:`, updateErr.message);
+          console.error(`❌ [REMINDER JOB DB UPDATE ERROR] for task ${task.id}:`, updateErr.message);
         } else {
           console.log(`✅ [REMINDER JOB]: Successfully marked notification_sent=true for task "${task.title}"`);
         }
       }
     }
   } catch (err) {
-    console.error('[REMINDER JOB UNHANDLED EXCEPTION]:', err.message);
+    console.error('❌ [REMINDER JOB UNHANDLED EXCEPTION]:', err.message);
   }
 };
 
@@ -89,15 +121,18 @@ export const checkAndSendReminders = async () => {
  * Initializes the node-cron scheduler (runs once per hour: 0 * * * *).
  */
 export const initReminderScheduler = () => {
-  console.log('⚡ [REMINDER SCHEDULER]: Initializing node-cron hourly job (0 * * * *)...');
+  console.log('⚡ [REMINDER SCHEDULER]: Initializing node-cron hourly job schedule ("0 * * * *")...');
   
   // Run cron every hour on minute 0
   cron.schedule('0 * * * *', () => {
+    console.log('⏰ [CRON TRIGGERED]: Hourly schedule (0 * * * *) triggered.');
     checkAndSendReminders();
   });
 
   // Run initial check 10 seconds after server startup
   setTimeout(() => {
+    console.log('⏰ [CRON INITIAL RUN]: Running startup reminder check...');
     checkAndSendReminders();
   }, 10000);
 };
+

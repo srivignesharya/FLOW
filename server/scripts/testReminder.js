@@ -5,10 +5,24 @@ import { checkAndSendReminders } from '../jobs/reminderJob.js';
  * Usage: node scripts/testReminder.js
  */
 async function runTest() {
-  console.log('🧪 [TEST SCRIPT]: Executing manual deadline reminder test run...');
-  await checkAndSendReminders();
-  console.log('🧪 [TEST SCRIPT]: Manual deadline reminder test run complete.');
-  process.exit(0);
+  console.log('🧪 ============================================================');
+  console.log('🧪 [TEST SCRIPT]: Starting End-to-End Email Reminder System Diagnosis');
+  console.log('🧪 ============================================================');
+
+  try {
+    await checkAndSendReminders();
+    console.log('\n🧪 ============================================================');
+    console.log('🧪 [TEST SCRIPT]: Diagnosis & Test Run Completed Successfully.');
+    console.log('🧪 ============================================================');
+  } catch (err) {
+    console.error('❌ [TEST SCRIPT ERROR]:', err);
+  } finally {
+    // Short delay before exit to allow pending log outputs to flush cleanly
+    setTimeout(() => {
+      process.exit(0);
+    }, 500);
+  }
 }
 
 runTest();
+
