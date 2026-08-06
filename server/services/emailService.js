@@ -16,42 +16,56 @@ try {
 
 // Cached Singleton Transporter Instance
 let cachedTransporter = null;
+let cachedTransporterPort = null;
 
 /**
- * Returns a cached single Nodemailer Transporter instance with pooled connections, IPv4 forcing, and strict socket timeouts.
+ * Resolves a hostname string to a guaranteed explicit IPv4 address string.
+ * Prevents Linux container glibc gai.conf from binding sockets to IPv6 (:::0).
  */
-export const createTransporter = (overridePort = null) => {
-  const host = process.env.EMAIL_HOST || 'smtp.gmail.com';
-  // Default to port 465 (Implicit TLS) for Gmail to avoid cloud host (Render/AWS) port 587 connection timeouts
+export const resolveIPv4Host = async (hostname) => {
+  if (!hostname || /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(hostname)) {
+    return hostname;
+  }
+
+  return new Promise((resolve) => {
+    dns.lookup(hostname, { family: 4 }, (err, address) => {
+      if (err || !address) {
+        console.warn(`⚠️ [IPV4 RESOLVER WARN]: Could not resolve IPv4 for ${hostname}. Falling back to hostname. Error: ${err?.message}`);
+        resolve(hostname);
+      } else {
+        console.log(`🌐 [IPV4 RESOLVER]: Resolved hostname "${hostname}" -> IPv4 Address "${address}"`);
+        resolve(address);
+      }
+    });
+  });
+};
+
+/**
+ * Returns a Nodemailer Transporter instance configured with an explicit IPv4 address and strict socket timeouts.
+ */
+export const createTransporter = async (overridePort = null) => {
+  const targetHost = process.env.EMAIL_HOST || 'smtp.gmail.com';
   const configuredPort = process.env.EMAIL_PORT ? parseInt(process.env.EMAIL_PORT, 10) : 465;
   const port = overridePort || configuredPort;
   const secure = port === 465;
   const user = process.env.EMAIL_USER;
   const pass = process.env.EMAIL_PASS;
 
-  if (cachedTransporter && !overridePort) {
+  if (cachedTransporter && cachedTransporterPort === port && !overridePort) {
     return cachedTransporter;
   }
 
+  // Resolve hostname directly to IPv4 address string (e.g. "192.178.211.109")
+  const resolvedIp = await resolveIPv4Host(targetHost);
+
   const transporter = nodemailer.createTransport({
-    host,
+    host: resolvedIp,
     port,
     secure,
-    family: 4, // Force IPv4 family to prevent ENETUNREACH
-    lookup: (hostname, options, callback) => {
-      dns.lookup(hostname, { ...options, family: 4 }, (err, address, family) => {
-        if (err) {
-          console.error(`❌ [DNS LOOKUP FAILED for ${hostname}]:`, err.message);
-        } else {
-          console.log(`🌐 [DNS LOOKUP]: Resolved ${hostname}:${port} (secure: ${secure}) -> IPv4 ${address}`);
-        }
-        callback(err, address, family);
-      });
-    },
-    pool: true, // Enable connection pooling to reuse socket handshakes
+    family: 4, // Force IPv4 family
+    pool: true,
     maxConnections: 3,
     maxMessages: 100,
-    // Strict Socket Timeouts
     connectionTimeout: 8000,  // 8s TCP connection timeout
     greetingTimeout: 8000,    // 8s SMTP greeting timeout
     socketTimeout: 10000,     // 10s socket inactivity timeout
@@ -60,16 +74,19 @@ export const createTransporter = (overridePort = null) => {
       pass
     },
     tls: {
+      servername: targetHost, // SNI servername for SSL/TLS verification against Gmail certificate
       rejectUnauthorized: false
     }
   });
 
   if (!overridePort) {
     cachedTransporter = transporter;
+    cachedTransporterPort = port;
   }
 
   return transporter;
 };
+
 
 /**
  * Fast synchronous configuration check (0ms roundtrip).
@@ -113,7 +130,7 @@ export const verifySmtpConnection = async () => {
 
   try {
     const startTime = performance.now();
-    const transporter = createTransporter();
+    const transporter = await createTransporter();
     console.log(`🔄 [SMTP VERIFICATION]: Testing connection to ${configCheck.host}:${configCheck.port}...`);
     await transporter.verify();
     const durationMs = (performance.now() - startTime).toFixed(2);
@@ -185,7 +202,8 @@ export const sendDeadlineReminder = async ({
       const sendStart = performance.now();
       console.log(`📧 [EMAIL SENDING]: Dispatching mail to ${toEmail} via ${process.env.EMAIL_HOST || 'smtp.gmail.com'}:${currentPort} (Attempt ${attempt}/${retries + 1})...`);
       
-      const transporter = createTransporter(currentPort);
+      const transporter = await createTransporter(currentPort);
+
       const info = await transporter.sendMail(mailOptions);
       const sendDurationMs = (performance.now() - sendStart).toFixed(2);
       
