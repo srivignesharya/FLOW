@@ -1,14 +1,24 @@
 import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
+import dns from 'dns';
 import { generateReminderEmailHtml } from '../templates/reminderTemplate.js';
 
 dotenv.config();
+
+// Force Node.js DNS resolution to prefer IPv4 (prevents ENETUNREACH errors on Render/cloud environments without IPv6 routing)
+try {
+  if (dns.setDefaultResultOrder) {
+    dns.setDefaultResultOrder('ipv4first');
+  }
+} catch (e) {
+  // Ignore fallback if unsupported in older Node versions
+}
 
 // Cached Singleton Transporter Instance
 let cachedTransporter = null;
 
 /**
- * Returns a cached single Nodemailer Transporter instance with pooled connections and strict socket timeouts.
+ * Returns a cached single Nodemailer Transporter instance with pooled connections, IPv4 forcing, and strict socket timeouts.
  */
 export const createTransporter = () => {
   if (cachedTransporter) {
@@ -23,11 +33,12 @@ export const createTransporter = () => {
   cachedTransporter = nodemailer.createTransport({
     host,
     port,
-    secure: port === 465, // true for 465, false for other ports
+    secure: port === 465, // true for 465, false for other ports (587 STARTTLS)
+    family: 4, // Force IPv4 family to prevent ENETUNREACH on cloud environments like Render
     pool: true, // Enable connection pooling to reuse socket handshakes
     maxConnections: 3,
     maxMessages: 100,
-    // Strict Socket Timeouts (prevents 2-minute default hanging)
+    // Strict Socket Timeouts (prevents hanging)
     connectionTimeout: 8000,  // 8s TCP connection timeout
     greetingTimeout: 8000,    // 8s SMTP greeting timeout
     socketTimeout: 10000,     // 10s socket inactivity timeout
@@ -42,6 +53,7 @@ export const createTransporter = () => {
 
   return cachedTransporter;
 };
+
 
 /**
  * Fast synchronous configuration check (0ms roundtrip).
@@ -108,16 +120,28 @@ export const sendDeadlineReminder = async ({
   priority,
   deadlineFormatted,
   estimatedStudyTime,
-  retries = 1
+  retries = 1,
+  throwOnError = false
 }) => {
   if (!toEmail || !toEmail.includes('@')) {
-    console.error(`❌ [EMAIL ERROR]: Invalid or missing email address: "${toEmail}". Skipping.`);
+    const msg = `Invalid or missing email address: "${toEmail}". Skipping.`;
+    console.error(`❌ [EMAIL ERROR]: ${msg}`);
+    if (throwOnError) throw new Error(msg);
+    return false;
+  }
+
+  const emailUser = process.env.EMAIL_USER;
+  const fromAddress = process.env.EMAIL_FROM || (emailUser ? `"FLOW AI (Powered by IMV)" <${emailUser}>` : undefined);
+
+  if (!fromAddress) {
+    const msg = 'EMAIL_FROM or EMAIL_USER environment variable is not configured.';
+    console.error(`❌ [EMAIL ERROR]: ${msg}`);
+    if (throwOnError) throw new Error(msg);
     return false;
   }
 
   const transporter = createTransporter();
   const dashboardUrl = process.env.CLIENT_URL || 'http://localhost:5173';
-  const fromAddress = process.env.EMAIL_FROM || `"FLOW AI (Powered by IMV)" <${process.env.EMAIL_USER}>`;
 
   const html = generateReminderEmailHtml({
     userName,
@@ -137,6 +161,8 @@ export const sendDeadlineReminder = async ({
   };
 
   let attempt = 0;
+  let lastError = null;
+
   while (attempt <= retries) {
     try {
       attempt++;
@@ -150,13 +176,24 @@ export const sendDeadlineReminder = async ({
       console.log(`✅ [EMAIL SENT SUCCESSFULLY]: Reminder sent to ${toEmail} (MessageId: ${info.messageId})`);
       return true;
     } catch (err) {
-      console.error(`❌ [EMAIL ATTEMPT ${attempt}/${retries + 1} FAILED]: ${err.message}`);
+      lastError = err;
+      // Reset cached transporter on failure so socket/auth errors don't persist
+      cachedTransporter = null;
+      console.error(`❌ [EMAIL ATTEMPT ${attempt}/${retries + 1} FAILED]: [${err.code || err.name || 'SMTP_ERROR'}] ${err.message}`);
+      
       if (attempt > retries) {
-        console.error(`❌ [EMAIL FATAL]: Exhausted all ${retries + 1} retry attempts for ${toEmail}. Skipped.`);
+        console.error(`❌ [EMAIL FATAL]: Exhausted all ${retries + 1} retry attempts for ${toEmail}. Error: ${err.message}`);
+        if (throwOnError) {
+          throw new Error(`SMTP Delivery Failed: ${err.message}`);
+        }
         return false;
       }
       await new Promise((resolve) => setTimeout(resolve, 500));
     }
+  }
+
+  if (throwOnError && lastError) {
+    throw new Error(`SMTP Delivery Failed: ${lastError.message}`);
   }
 
   return false;
@@ -198,14 +235,15 @@ export const sendTestEmail = async ({ toEmail, userName = 'Student' }) => {
     priority: 'high',
     deadlineFormatted,
     estimatedStudyTime: '1.0 hr (60 min)',
-    retries: 0 // No retry delay on test requests for maximum speed
+    retries: 0,
+    throwOnError: true // Propagate exact SMTP error message (e.g. 535 authentication, host unreachable, sender rejected)
   });
 
   const totalDurationMs = (performance.now() - funcStart).toFixed(2);
   const smtpDurationMs = (performance.now() - sendStart).toFixed(2);
 
   if (!success) {
-    throw new Error('Failed to deliver test email. Check server logs for exact SMTP error details.');
+    throw new Error('Failed to deliver test email.');
   }
 
   console.log(`⏱️ [EMAIL SERVICE TIMING BREAKDOWN]:`);
@@ -215,6 +253,7 @@ export const sendTestEmail = async ({ toEmail, userName = 'Student' }) => {
 
   return { success: true, smtpDurationMs, totalDurationMs };
 };
+
 
 
 
