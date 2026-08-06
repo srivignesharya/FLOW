@@ -111,13 +111,6 @@ app.post('/api/v1/test-email', requireAuth, async (req, res) => {
   }
 });
 
-      success: false,
-      error: err.message || 'Failed to send test email'
-    });
-  }
-});
-
-
 // ============================================================
 // HEALTH CHECK
 // ============================================================
