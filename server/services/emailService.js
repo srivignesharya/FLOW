@@ -99,6 +99,30 @@ export const createTransporter = async (overridePort = null) => {
 
 
 /**
+ * Startup validation for email service environment variables.
+ */
+export const validateEmailEnvironment = () => {
+  const user = process.env.EMAIL_USER;
+  const pass = process.env.EMAIL_PASS;
+  const resendKey = process.env.RESEND_API_KEY;
+  const host = process.env.EMAIL_HOST || 'smtp.gmail.com';
+  const port = process.env.EMAIL_PORT || '465';
+
+  console.log('\n📧 [EMAIL SERVICE CONFIGURATION AUDIT]:');
+  console.log(`   - RESEND_API_KEY: ${resendKey ? '✅ Configured (HTTPS Port 443 active)' : '⚠️ Not set (Using Nodemailer SMTP fallback)'}`);
+  console.log(`   - EMAIL_HOST:     ${host}`);
+  console.log(`   - EMAIL_PORT:     ${port}`);
+  console.log(`   - EMAIL_USER:     ${user ? (user === 'your-email@gmail.com' ? '⚠️ Placeholder ("your-email@gmail.com")' : `✅ ${user}`) : '❌ Missing'}`);
+  console.log(`   - EMAIL_PASS:     ${pass ? (pass === 'your-16-character-app-password' ? '⚠️ Placeholder ("your-16-character-app-password")' : '✅ Configured') : '❌ Missing'}`);
+
+  if (!resendKey && (!user || user === 'your-email@gmail.com' || !pass || pass === 'your-16-character-app-password')) {
+    console.warn('⚠️ [EMAIL SERVICE WARNING]: Credentials are missing or set to defaults. Email delivery will fail until updated.\n');
+  } else {
+    console.log('✅ [EMAIL SERVICE READY]: Email service configured cleanly.\n');
+  }
+};
+
+/**
  * Fast synchronous configuration check (0ms roundtrip).
  */
 export const validateSmtpConfig = () => {
@@ -106,6 +130,10 @@ export const validateSmtpConfig = () => {
   const port = process.env.EMAIL_PORT || '465';
   const user = process.env.EMAIL_USER;
   const pass = process.env.EMAIL_PASS;
+
+  if (process.env.RESEND_API_KEY) {
+    return { valid: true, host: 'https://api.resend.com', port: '443', user: 'Resend API' };
+  }
 
   if (!user || user === 'your-email@gmail.com') {
     return { valid: false, reason: 'EMAIL_USER environment variable missing or set to default placeholder ("your-email@gmail.com")' };
@@ -117,6 +145,7 @@ export const validateSmtpConfig = () => {
 
   return { valid: true, host, port, user };
 };
+
 
 /**
  * Verifies that Nodemailer environment variables are present and tests connection to Gmail SMTP.
