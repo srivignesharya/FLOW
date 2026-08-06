@@ -188,8 +188,9 @@ export const sendViaResendApi = async ({ toEmail, subject, html }) => {
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) return false;
 
-  const sender = process.env.EMAIL_FROM || 'FLOW AI <onboarding@resend.dev>';
-  console.log(`📧 [RESEND HTTPS]: Dispatching mail to ${toEmail} via HTTPS Port 443 (Resend REST API)...`);
+  // Resend free tier requires sending from 'onboarding@resend.dev' unless a custom domain is verified
+  const sender = process.env.RESEND_FROM || 'onboarding@resend.dev';
+  console.log(`📧 [RESEND HTTPS]: Dispatching mail to ${toEmail} via HTTPS Port 443 (from: ${sender})...`);
 
   const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',
@@ -212,9 +213,10 @@ export const sendViaResendApi = async ({ toEmail, subject, html }) => {
     throw new Error(errorMsg);
   }
 
-  console.log(`✅ [RESEND HTTPS SUCCESS]: Reminder sent to ${toEmail} (ID: ${data.id})`);
+  console.log(`✅ [RESEND HTTPS SUCCESS]: Email delivered to ${toEmail} (ID: ${data.id})`);
   return true;
 };
+
 
 /**
  * Sends a deadline reminder email to a user with retry logic and high-precision performance metrics.
