@@ -7,7 +7,7 @@ export const errorHandler = (err, req, res, next) => {
 
   // Handle Multer file size limit error
   if (err.code === 'LIMIT_FILE_SIZE') {
-    return res.status(413).json({ error: 'File size exceeds the 10MB limit.' });
+    return res.status(413).json({ error: 'File size exceeds the maximum 100 MB upload limit. Please upload a smaller file.' });
   }
 
   // Handle Gemini API 429 Resource Exhausted / Quota errors

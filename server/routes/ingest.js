@@ -6,10 +6,10 @@ import { aiServiceLimiter } from '../middleware/rateLimiter.js';
 import { ai, FLASH_MODEL, SYSTEM_INSTRUCTION, taskExtractionSchema } from '../services/gemini.js';
 import { supabaseAdmin } from '../services/supabase.js';
 
-// Multer: store files in memory (no disk writes), max 10MB
+// Multer: store files in memory (no disk writes), max 100 MB
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 10 * 1024 * 1024 },
+  limits: { fileSize: 100 * 1024 * 1024 }, // 100 MB limit
   fileFilter: (req, file, cb) => {
     const allowedTypes = ['application/pdf', 'image/png', 'image/jpeg', 'image/webp', 'image/gif'];
     if (allowedTypes.includes(file.mimetype)) {

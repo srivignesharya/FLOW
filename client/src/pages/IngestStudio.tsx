@@ -18,6 +18,12 @@ export const IngestStudio: React.FC = () => {
     e.preventDefault();
     if (!file) return;
 
+    const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100 MB
+    if (file.size > MAX_FILE_SIZE) {
+      setError(`File size exceeds 100 MB limit (Selected file: ${(file.size / (1024 * 1024)).toFixed(1)} MB). Please upload a smaller file.`);
+      return;
+    }
+
     setLoading(true);
     setError('');
     setResult(null);
@@ -119,7 +125,7 @@ export const IngestStudio: React.FC = () => {
                 <span className="font-semibold text-sm text-slate-800 dark:text-slate-200">
                   {file ? file.name : 'Click to upload or drag & drop syllabus document'}
                 </span>
-                <p className="text-xs text-slate-400 mt-1">Supports PDF, PNG, JPEG, WebP (up to 10MB)</p>
+                <p className="text-xs text-slate-400 mt-1">Supports PDF, PNG, JPEG, WebP (Maximum file size: 100 MB)</p>
               </div>
             </label>
           </div>
