@@ -4,8 +4,9 @@ import { StatusBadge } from '../components/StatusBadge';
 import { SkeletonRow } from '../components/SkeletonLoaders';
 import { useToast } from '../context/ToastContext';
 import { getRelativeDeadline, formatDate } from '../utils/dateUtils';
+import { getGoogleCalendarUrl, downloadIcsFile } from '../utils/calendar';
 import {
-  Plus, Trash2, CheckCircle2, Clock, Filter, Search, Edit3, X, ArrowUpDown
+  Plus, Trash2, CheckCircle2, Clock, Filter, Search, Edit3, X, ArrowUpDown, Calendar, Download
 } from 'lucide-react';
 
 export const TaskManager: React.FC = () => {
@@ -349,6 +350,36 @@ export const TaskManager: React.FC = () => {
 
                       <td className="p-4 text-right">
                         <div className="flex items-center justify-end gap-1">
+                          <a
+                            href={getGoogleCalendarUrl({
+                              title: task.title,
+                              description: task.description,
+                              deadline: task.deadline,
+                              estimatedMinutes: task.estimated_minutes,
+                              subject: task.subject
+                            })}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 transition-colors"
+                            title="Add to Google Calendar"
+                          >
+                            <Calendar className="h-4 w-4" />
+                          </a>
+
+                          <button
+                            onClick={() => downloadIcsFile({
+                              title: task.title,
+                              description: task.description,
+                              deadline: task.deadline,
+                              estimatedMinutes: task.estimated_minutes,
+                              subject: task.subject
+                            })}
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition-colors"
+                            title="Export .ics iCalendar file"
+                          >
+                            <Download className="h-4 w-4" />
+                          </button>
+
                           <button
                             onClick={() => openEditModal(task)}
                             className="p-1.5 rounded-lg text-slate-400 hover:text-brand-500 hover:bg-brand-50 dark:hover:bg-brand-950/40 transition-colors"

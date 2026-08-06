@@ -56,7 +56,11 @@ export const taskExtractionSchema = {
           },
           priority: {
             type: Type.STRING,
-            enum: ['high', 'medium', 'low']
+            enum: ['critical', 'high', 'medium', 'low']
+          },
+          reasoning: {
+            type: Type.STRING,
+            description: 'Explainable AI justification for why this priority and estimated duration were assigned.'
           },
           estimatedMinutes: {
             type: Type.INTEGER,
@@ -71,7 +75,7 @@ export const taskExtractionSchema = {
             enum: ['assignment', 'exam', 'announcement', 'reading']
           }
         },
-        required: ['title', 'subject', 'deadline', 'priority', 'estimatedMinutes', 'description', 'taskType']
+        required: ['title', 'subject', 'deadline', 'priority', 'reasoning', 'estimatedMinutes', 'description', 'taskType']
       }
     }
   },

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import {
-  LayoutDashboard, FileUp, CheckSquare, Calendar, Bot, Settings, ChevronLeft, ChevronRight, Zap
+  LayoutDashboard, FileUp, CheckSquare, Calendar, Bot, Settings, ChevronLeft, ChevronRight, Zap, BarChart3
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { clsx } from 'clsx';
@@ -11,6 +11,7 @@ const links = [
   { to: '/ingest', label: 'Upload & Ingest', icon: FileUp, exact: false },
   { to: '/tasks', label: 'Task Manager', icon: CheckSquare, exact: false },
   { to: '/planner', label: 'Study Planner', icon: Calendar, exact: false },
+  { to: '/analytics', label: 'Analytics', icon: BarChart3, exact: false },
   { to: '/copilot', label: 'AI Copilot', icon: Bot, exact: false },
   { to: '/settings', label: 'Settings', icon: Settings, exact: false }
 ];

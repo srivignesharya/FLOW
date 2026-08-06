@@ -1,7 +1,8 @@
 import React from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
-import { Sun, Moon, LogOut, User, Bell } from 'lucide-react';
+import { Sun, Moon, LogOut } from 'lucide-react';
+import { NotificationCenter } from './NotificationCenter';
 
 export const Navbar: React.FC = () => {
   const { user, signOut } = useAuth();
@@ -20,6 +21,9 @@ export const Navbar: React.FC = () => {
 
       {/* Right */}
       <div className="flex items-center gap-2">
+        {/* Notification Center */}
+        <NotificationCenter />
+
         {/* Theme Toggle */}
         <button
           id="theme-toggle-btn"

@@ -9,6 +9,7 @@ import { Dashboard } from './pages/Dashboard';
 import { IngestStudio } from './pages/IngestStudio';
 import { TaskManager } from './pages/TaskManager';
 import { StudyPlanner } from './pages/StudyPlanner';
+import { Analytics } from './pages/Analytics';
 import { Copilot } from './pages/Copilot';
 import { Settings } from './pages/Settings';
 
@@ -63,6 +64,15 @@ export const App: React.FC = () => {
         element={
           <ProtectedRoute>
             <StudyPlanner />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/analytics"
+        element={
+          <ProtectedRoute>
+            <Analytics />
           </ProtectedRoute>
         }
       />

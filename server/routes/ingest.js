@@ -5,6 +5,8 @@ import { validateBody, textIngestSchema } from '../middleware/validation.js';
 import { aiServiceLimiter } from '../middleware/rateLimiter.js';
 import { ai, FLASH_MODEL, SYSTEM_INSTRUCTION, taskExtractionSchema } from '../services/gemini.js';
 import { supabaseAdmin } from '../services/supabase.js';
+import { calculateSmartPriority } from '../services/priorityEngine.js';
+import { performVisionOcr } from '../services/ocrService.js';
 
 // Multer: store files in memory (no disk writes), max 100 MB
 const upload = multer({
@@ -24,7 +26,7 @@ const router = Router();
 
 // ============================================================
 // POST /api/v1/ingest/file
-// Upload a PDF or image → Gemini extracts tasks → saves to DB
+// Upload a PDF or image → Vision OCR Preprocessing → Gemini → Smart Priority Engine
 // ============================================================
 router.post('/file', requireAuth, aiServiceLimiter, upload.single('file'), async (req, res, next) => {
   try {
@@ -36,7 +38,13 @@ router.post('/file', requireAuth, aiServiceLimiter, upload.single('file'), async
     const dateStr = new Date().toISOString();
     const base64Data = req.file.buffer.toString('base64');
 
-    const prompt = `Today's date is ${dateStr}. Analyze this academic document thoroughly and extract ALL tasks, assignments, exams, announcements, and deadlines. Include estimated study/completion time for each.`;
+    // Phase 1: Pre-process scanned PDFs/images with Vision OCR if image or scanned
+    let ocrText = '';
+    if (req.file.mimetype.includes('image') || req.file.originalname.toLowerCase().includes('scanned')) {
+      ocrText = await performVisionOcr(req.file.buffer, req.file.mimetype);
+    }
+
+    const prompt = `Today's date is ${dateStr}. Analyze this academic document ${ocrText ? '(OCR Preprocessed Text included below)' : ''} thoroughly and extract ALL tasks, assignments, exams, announcements, and deadlines. Include estimated study/completion time for each.\n${ocrText ? `OCR Text:\n${ocrText}` : ''}`;
 
     const aiResponse = await ai.models.generateContent({
       model: FLASH_MODEL,
@@ -77,19 +85,29 @@ router.post('/file', requireAuth, aiServiceLimiter, upload.single('file'), async
 
     if (docErr) throw docErr;
 
-    // Map and insert extracted tasks
-    const tasksToInsert = parsedData.tasks.map(t => ({
-      user_id: userId,
-      document_id: doc.id,
-      title: t.title,
-      subject: t.subject || 'General',
-      deadline: t.deadline,
-      weightage: t.weightage || 0,
-      priority: t.priority,
-      estimated_minutes: t.estimatedMinutes || 60,
-      description: t.description || '',
-      task_type: t.taskType || 'assignment'
-    }));
+    // Phase 2 & 7: Map and process tasks through Smart Priority & Explainable AI Engine
+    const tasksToInsert = parsedData.tasks.map(t => {
+      const smartPriority = calculateSmartPriority({
+        deadline: t.deadline,
+        weightage: t.weightage || 0,
+        estimatedMinutes: t.estimatedMinutes || 60,
+        taskType: t.taskType || 'assignment',
+        remainingTasksCount: parsedData.tasks.length
+      });
+
+      return {
+        user_id: userId,
+        document_id: doc.id,
+        title: t.title,
+        subject: t.subject || 'General',
+        deadline: t.deadline,
+        weightage: t.weightage || 0,
+        priority: smartPriority.priority,
+        estimated_minutes: t.estimatedMinutes || 60,
+        description: `${t.description || ''}\n\n💡 AI Priority Analysis: ${smartPriority.reasoning}`.trim(),
+        task_type: t.taskType || 'assignment'
+      };
+    });
 
     const { data: insertedTasks, error: taskErr } = await supabaseAdmin
       .from('tasks')
