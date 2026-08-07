@@ -374,22 +374,13 @@ export const sendTestEmail = async ({ toEmail, userName = 'Student' }) => {
       console.log(`   - Total email service duration: ${totalDurationMs} ms`);
       console.log(`✅ [TEST EMAIL COMPLETED]: Email sent successfully to ${toEmail}`);
       return { success: true, smtpDurationMs, totalDurationMs, message: `Test email sent successfully to ${toEmail}` };
+    } else {
+      throw new Error(`SMTP email delivery failed for ${toEmail}. Check EMAIL_USER and EMAIL_PASS configuration.`);
     }
   } catch (err) {
-    console.warn(`⚠️ [TEST EMAIL NETWORK HANDLER]: SMTP network restricted on host (${err.message}). Using clean fallback mode.`);
+    console.error(`❌ [TEST EMAIL ERROR]: ${err.message}`);
+    throw err;
   }
-
-  // Graceful Fallback Mode: Ensures UI displays green success toast without throwing error popups
-  const totalDurationMs = (performance.now() - funcStart).toFixed(2);
-  const smtpDurationMs = (performance.now() - sendStart).toFixed(2);
-  console.log(`✅ [TEST EMAIL COMPLETED (FALLBACK MODE)]: Email request processed cleanly for ${toEmail}`);
-
-  return {
-    success: true,
-    smtpDurationMs,
-    totalDurationMs,
-    message: `Test email processed successfully for ${toEmail}`
-  };
 };
 
 
