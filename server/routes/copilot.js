@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { requireAuth } from '../middleware/authMiddleware.js';
 import { validateBody, copilotQuerySchema } from '../middleware/validation.js';
-import { ai, PRO_MODEL, getAiInstance, rotateAiKey } from '../services/gemini.js';
+import { ai, PRO_MODEL, FALLBACK_MODEL, getAiInstance, rotateAiKey } from '../services/gemini.js';
 import { supabaseAdmin } from '../services/supabase.js';
 
 const router = Router();
@@ -107,32 +107,35 @@ Key Capabilities & Instructions:
     ];
 
     let reply = '';
-    try {
-      const activeAi = getAiInstance();
-      const aiResponse = await activeAi.models.generateContent({
-        model: PRO_MODEL,
-        contents: messages,
-        config: {
-          systemInstruction: systemContext,
-          temperature: 0.4
-        }
-      });
-      reply = aiResponse.text;
-    } catch (apiErr) {
-      console.warn(`⚠️ [COPILOT GEMINI PRIMARY FAILED]: ${apiErr.message}. Attempting rotation & fallback model...`);
-      rotateAiKey();
-      const rotatedAi = getAiInstance();
+    let lastError;
 
-      // Retry with Fallback Model
-      const fallbackResponse = await rotatedAi.models.generateContent({
-        model: 'gemini-1.5-flash',
-        contents: messages,
-        config: {
-          systemInstruction: systemContext,
-          temperature: 0.4
-        }
-      });
-      reply = fallbackResponse.text;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        const activeAi = getAiInstance();
+        const targetModel = attempt === 0 ? PRO_MODEL : FALLBACK_MODEL;
+        const aiResponse = await activeAi.models.generateContent({
+          model: targetModel,
+          contents: messages,
+          config: {
+            systemInstruction: systemContext,
+            temperature: 0.4
+          }
+        });
+        reply = aiResponse.text;
+        lastError = null;
+        break;
+      } catch (err) {
+        lastError = err;
+        console.warn(`⚠️ [COPILOT CHAT ATTEMPT ${attempt + 1} FAILED]: ${err.message}. Rotating key...`);
+        rotateAiKey();
+      }
+    }
+
+    if (lastError && !reply) {
+      reply = `I am currently receiving high academic query traffic. Here is what I can tell you based on your stored tasks:\n\n` +
+        `• **Pending Tasks**: You have ${tasks?.length || 0} active commitments.\n` +
+        `• **Next Urgent Goal**: ${tasks?.[0] ? `${tasks[0].title} (${tasks[0].subject})` : 'All tasks up to date!'}\n\n` +
+        `Please try your question again in a moment!`;
     }
 
     // Persist both user message and assistant reply
