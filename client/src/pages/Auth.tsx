@@ -1,14 +1,23 @@
 import React, { useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { useNavigate } from 'react-router-dom';
-import { Sparkles, ArrowRight, BookOpen, Calendar, Bot } from 'lucide-react';
+import { Sparkles, ArrowRight, BookOpen, Calendar, Bot, Eye, EyeOff, KeyRound, CheckCircle2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Footer } from '../components/Footer';
+import { validatePassword } from '../utils/passwordValidator';
+import { PasswordStrengthMeter } from '../components/PasswordStrengthMeter';
+
+type AuthViewMode = 'signin' | 'signup' | 'forgot_password';
 
 export const Auth: React.FC = () => {
-  const [isSignUp, setIsSignUp] = useState(false);
+  const [viewMode, setViewMode] = useState<AuthViewMode>('signin');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
@@ -21,22 +30,55 @@ export const Auth: React.FC = () => {
     setMessage('');
 
     try {
-      if (isSignUp) {
+      if (viewMode === 'signup') {
+        // 1. Password confirmation check
+        if (password !== confirmPassword) {
+          setError('Passwords do not match.');
+          setLoading(false);
+          return;
+        }
+
+        // 2. Strong password policy validation
+        const validation = validatePassword(password);
+        if (!validation.isValid) {
+          setError(`Password does not satisfy requirements: ${validation.errors.join(', ')}`);
+          setLoading(false);
+          return;
+        }
+
         const { error } = await supabase.auth.signUp({ email, password });
         if (error) throw error;
-        setMessage('Check your email for the confirmation link to complete registration!');
-      } else {
+        setMessage('Registration successful! Please check your email for the confirmation link.');
+      } else if (viewMode === 'signin') {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
         navigate('/');
+      } else if (viewMode === 'forgot_password') {
+        // Redirect URL points to /reset-password route
+        const redirectUrl = `${window.location.origin}/reset-password`;
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: redirectUrl
+        });
+
+        if (error) throw error;
+        setMessage('Password reset email sent successfully. Please check your inbox.');
       }
     } catch (err: any) {
       console.error('[AUTH ERROR]:', err);
-      setError(err.message || 'Failed to fetch or authenticate with Supabase');
+      let formattedMsg = err.message || 'Authentication operation failed.';
+      if (err.message?.includes('Invalid login credentials')) {
+        formattedMsg = 'Invalid email or password. Please verify your credentials.';
+      } else if (err.message?.includes('User already registered')) {
+        formattedMsg = 'An account with this email address already exists. Please sign in.';
+      }
+      setError(formattedMsg);
     } finally {
       setLoading(false);
     }
   };
+
+  const isSignUp = viewMode === 'signup';
+  const isForgotPassword = viewMode === 'forgot_password';
 
   return (
     <div className="min-h-screen flex bg-slate-950 text-slate-100">
@@ -68,7 +110,7 @@ export const Auth: React.FC = () => {
             transition={{ delay: 0.1 }}
             className="text-slate-400 text-base leading-relaxed"
           >
-            Powered by Google Gemini 2.5 Flash and Pro models. Extract deadlines from syllabus PDFs, schedule intelligent 7-day study blocks, and consult your document-aware AI copilot.
+            Powered by Google Gemini models. Extract deadlines from syllabus PDFs, schedule intelligent 7-day study blocks, and consult your document-aware AI copilot.
           </motion.p>
 
           <div className="grid grid-cols-1 gap-4 pt-4">
@@ -115,24 +157,31 @@ export const Auth: React.FC = () => {
           <div className="w-full max-w-md space-y-8">
             <div className="text-center lg:text-left">
               <h2 className="text-3xl font-bold tracking-tight text-white">
-                {isSignUp ? 'Create your account' : 'Welcome back'}
+                {isForgotPassword
+                  ? 'Reset your password'
+                  : isSignUp
+                  ? 'Create your account'
+                  : 'Welcome back'}
               </h2>
               <p className="text-slate-400 text-sm mt-2">
-                {isSignUp
-                  ? 'Sign up to start organizing your academic workflow with AI.'
+                {isForgotPassword
+                  ? 'Enter your registered email address to receive a secure password reset link.'
+                  : isSignUp
+                  ? 'Sign up with strong password security to organize your academic workflow.'
                   : 'Enter your credentials to access your academic dashboard.'}
               </p>
             </div>
 
             {error && (
-              <div className="p-4 bg-red-950/50 border border-red-800/80 text-red-400 text-xs rounded-xl animate-fade-in">
+              <div className="p-4 bg-rose-950/50 border border-rose-800/80 text-rose-400 text-xs rounded-xl animate-fade-in">
                 {error}
               </div>
             )}
 
             {message && (
-              <div className="p-4 bg-emerald-950/50 border border-emerald-800/80 text-emerald-400 text-xs rounded-xl animate-fade-in">
-                {message}
+              <div className="p-4 bg-emerald-950/50 border border-emerald-800/80 text-emerald-400 text-xs rounded-xl animate-fade-in flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 shrink-0" />
+                <span>{message}</span>
               </div>
             )}
 
@@ -152,20 +201,80 @@ export const Auth: React.FC = () => {
                 />
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
-                  Password
-                </label>
-                <input
-                  id="auth-password-input"
-                  type="password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-sm transition-all"
-                />
-              </div>
+              {!isForgotPassword && (
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
+                    Password
+                  </label>
+                  <div className="relative">
+                    <input
+                      id="auth-password-input"
+                      type={showPassword ? 'text' : 'password'}
+                      required
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="Flow@2026"
+                      className="w-full px-4 py-3 pr-12 rounded-xl bg-slate-900 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-sm transition-all"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 transition-colors p-1"
+                    >
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                  {isSignUp && <PasswordStrengthMeter password={password} />}
+                </div>
+              )}
+
+              {isSignUp && (
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
+                    Confirm Password
+                  </label>
+                  <div className="relative">
+                    <input
+                      id="auth-confirm-password-input"
+                      type={showConfirmPassword ? 'text' : 'password'}
+                      required
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="Flow@2026"
+                      className="w-full px-4 py-3 pr-12 rounded-xl bg-slate-900 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-sm transition-all"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 transition-colors p-1"
+                    >
+                      {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                  {confirmPassword && password !== confirmPassword && (
+                    <p className="text-xs text-rose-400 mt-1.5 font-medium">
+                      Passwords do not match.
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {!isSignUp && !isForgotPassword && (
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setViewMode('forgot_password');
+                      setError('');
+                      setMessage('');
+                    }}
+                    className="text-xs font-medium text-brand-400 hover:text-brand-300 transition-colors flex items-center gap-1"
+                  >
+                    <KeyRound className="h-3.5 w-3.5" />
+                    <span>Forgot Password?</span>
+                  </button>
+                </div>
+              )}
 
               <button
                 id="auth-submit-btn"
@@ -177,33 +286,51 @@ export const Auth: React.FC = () => {
                   'Processing...'
                 ) : (
                   <>
-                    <span>{isSignUp ? 'Create Account' : 'Sign In'}</span>
+                    <span>
+                      {isForgotPassword
+                        ? 'Send Reset Link'
+                        : isSignUp
+                        ? 'Create Account'
+                        : 'Sign In'}
+                    </span>
                     <ArrowRight className="h-4 w-4" />
                   </>
                 )}
               </button>
             </form>
 
-            <div className="pt-4 border-t border-slate-800/80 text-center">
-              <button
-                id="toggle-auth-mode-btn"
-                onClick={() => {
-                  setIsSignUp(!isSignUp);
-                  setError('');
-                  setMessage('');
-                }}
-                className="text-xs text-brand-400 hover:text-brand-300 font-medium hover:underline transition-colors"
-              >
-                {isSignUp ? 'Already have an account? Sign In' : "Don't have an account? Sign Up"}
-              </button>
+            <div className="pt-4 border-t border-slate-800/80 text-center space-y-2">
+              {isForgotPassword ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setViewMode('signin');
+                    setError('');
+                    setMessage('');
+                  }}
+                  className="text-xs text-slate-400 hover:text-white transition-colors"
+                >
+                  ← Back to Sign In
+                </button>
+              ) : (
+                <button
+                  id="toggle-auth-mode-btn"
+                  onClick={() => {
+                    setViewMode(isSignUp ? 'signin' : 'signup');
+                    setError('');
+                    setMessage('');
+                  }}
+                  className="text-xs text-brand-400 hover:text-brand-300 font-medium hover:underline transition-colors"
+                >
+                  {isSignUp ? 'Already have an account? Sign In' : "Don't have an account? Sign Up"}
+                </button>
+              )}
             </div>
           </div>
         </div>
 
-        {/* Responsive Footer for Auth Page */}
         <Footer className="border-t border-slate-800/80 bg-slate-950 text-slate-500 lg:hidden" />
       </div>
     </div>
   );
 };
-

@@ -5,6 +5,7 @@ import { Layout } from './components/Layout';
 import { LoadingSpinner } from './components/LoadingSpinner';
 
 import { Auth } from './pages/Auth';
+import { ResetPassword } from './pages/ResetPassword';
 import { Dashboard } from './pages/Dashboard';
 import { IngestStudio } from './pages/IngestStudio';
 import { TaskManager } from './pages/TaskManager';
@@ -31,6 +32,7 @@ export const App: React.FC = () => {
   return (
     <Routes>
       <Route path="/auth" element={<Auth />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
 
       <Route
         path="/"

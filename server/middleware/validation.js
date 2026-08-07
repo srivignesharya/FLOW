@@ -24,6 +24,13 @@ export const copilotQuerySchema = z.object({
   documentId: z.string().uuid().optional()
 });
 
+export const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?])[^\s]{8,64}$/;
+
+export const passwordSchema = z.string()
+  .min(8, 'Password must be at least 8 characters')
+  .max(64, 'Password must not exceed 64 characters')
+  .regex(strongPasswordRegex, 'Password must contain uppercase, lowercase, number, special character, and no spaces');
+
 export const profileUpdateSchema = z.object({
   full_name: z.string().min(1).optional(),
   academic_institution: z.string().optional(),
