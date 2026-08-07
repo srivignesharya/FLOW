@@ -50,7 +50,7 @@ router.post('/file', requireAuth, aiServiceLimiter, upload.single('file'), async
     let lastError;
     const keysCount = (process.env.GEMINI_API_KEY_2 ? 2 : 1) + (process.env.GEMINI_API_KEY_3 ? 1 : 0);
 
-    for (let attempt = 0; attempt < keysCount + 1; attempt++) {
+    for (let attempt = 0; attempt < 3; attempt++) {
       try {
         const activeAi = getAiInstance();
         const targetModel = attempt === 0 ? FLASH_MODEL : FALLBACK_MODEL;
@@ -158,7 +158,7 @@ router.post('/text', requireAuth, aiServiceLimiter, validateBody(textIngestSchem
     let lastError;
     const keysCount = (process.env.GEMINI_API_KEY_2 ? 2 : 1) + (process.env.GEMINI_API_KEY_3 ? 1 : 0);
 
-    for (let attempt = 0; attempt < keysCount + 1; attempt++) {
+    for (let attempt = 0; attempt < 3; attempt++) {
       try {
         const activeAi = getAiInstance();
         const targetModel = attempt === 0 ? FLASH_MODEL : FALLBACK_MODEL;
