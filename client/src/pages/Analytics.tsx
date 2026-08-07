@@ -1,114 +1,230 @@
 import React, { useEffect, useState } from 'react';
-import { BarChart3, TrendingUp, Flame, Clock, CheckCircle2, BookOpen } from 'lucide-react';
+import api from '../services/api';
+import { SkeletonCard } from '../components/SkeletonLoaders';
+import { AnimatedCounter } from '../components/AnimatedCounter';
+import { InteractiveCard } from '../components/InteractiveCard';
+import { EmptyState } from '../components/EmptyState';
+import {
+  BarChart3, TrendingUp, Flame, Clock, CheckCircle2, BookOpen, CalendarDays, Award
+} from 'lucide-react';
+import {
+  PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid
+} from 'recharts';
 
 export const Analytics: React.FC = () => {
-  const [stats] = useState({
-    completedTasks: 12,
-    totalTasks: 16,
-    streakDays: 5,
-    hoursStudied: 18.5,
-    weeklyCompletionRate: 85,
-    subjects: [
-      { name: 'Database Systems', count: 5, color: 'bg-brand-500' },
-      { name: 'Software Engineering', count: 4, color: 'bg-indigo-500' },
-      { name: 'Computer Networks', count: 3, color: 'bg-purple-500' },
-      { name: 'Linear Algebra', count: 2, color: 'bg-emerald-500' }
-    ]
+  const [tasks, setTasks] = useState<any[]>([]);
+  const [schedule, setSchedule] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  const fetchRealTimeAnalytics = async () => {
+    setLoading(true);
+    try {
+      const [tasksRes, scheduleRes] = await Promise.all([
+        api.get('/tasks'),
+        api.get('/planner/current').catch(() => ({ data: null }))
+      ]);
+
+      setTasks(tasksRes.data || []);
+      setSchedule(scheduleRes.data || null);
+    } catch (err) {
+      console.error('Failed to load real-time analytics:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchRealTimeAnalytics();
+  }, []);
+
+  // Compute live calculations directly from database state
+  const totalTasks = tasks.length;
+  const completedTasks = tasks.filter(t => t.status === 'completed').length;
+  const pendingTasks = tasks.filter(t => t.status !== 'completed');
+  const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+
+  // Calculate live study hours
+  const totalEstimatedMinutes = tasks.reduce((acc, t) => acc + (t.estimated_minutes || 60), 0);
+  const completedMinutes = tasks.filter(t => t.status === 'completed').reduce((acc, t) => acc + (t.estimated_minutes || 60), 0);
+  const hoursStudied = Number((completedMinutes / 60).toFixed(1));
+
+  // Subject Breakdown Aggregation
+  const subjectMap: Record<string, number> = {};
+  tasks.forEach(t => {
+    const subj = t.subject || 'General';
+    subjectMap[subj] = (subjectMap[subj] || 0) + 1;
   });
 
+  const subjectData = Object.keys(subjectMap).map(name => ({
+    name,
+    count: subjectMap[name]
+  }));
+
+  const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
+
+  // Priority Breakdown
+  const priorityData = [
+    { name: 'High Priority', count: tasks.filter(t => t.priority === 'high').length, fill: '#ef4444' },
+    { name: 'Medium Priority', count: tasks.filter(t => t.priority === 'medium').length, fill: '#f59e0b' },
+    { name: 'Low Priority', count: tasks.filter(t => t.priority === 'low').length, fill: '#10b981' }
+  ];
+
   return (
-    <div className="space-y-8 max-w-6xl mx-auto animate-in">
+    <div className="space-y-8 max-w-6xl mx-auto">
       <div>
         <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-slate-50 flex items-center gap-3">
           <BarChart3 className="h-7 w-7 text-brand-500" />
-          <span>Academic Analytics & Insights</span>
+          <span>Real-Time Academic Analytics & Insights</span>
         </h1>
         <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
-          Real-time study velocity, streak tracking, subject focus breakdown, and AI completion metrics.
+          Live synchronized study velocity, subject breakdowns, and execution metrics directly from your database.
         </p>
       </div>
 
-      {/* Metric Cards Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        <div className="card p-5 space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Tasks Completed</span>
-            <div className="p-2 rounded-xl bg-brand-50 dark:bg-brand-950/60 text-brand-600 dark:text-brand-400">
-              <CheckCircle2 className="h-5 w-5" />
-            </div>
-          </div>
-          <div className="text-3xl font-extrabold text-slate-900 dark:text-slate-50">
-            {stats.completedTasks} <span className="text-sm font-normal text-slate-400">/ {stats.totalTasks}</span>
-          </div>
-          <p className="text-xs text-emerald-500 font-medium">75% overall completion rate</p>
+      {loading ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          {[...Array(4)].map((_, i) => <SkeletonCard key={i} />)}
         </div>
-
-        <div className="card p-5 space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Study Streak</span>
-            <div className="p-2 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-500">
-              <Flame className="h-5 w-5" />
-            </div>
-          </div>
-          <div className="text-3xl font-extrabold text-slate-900 dark:text-slate-50">
-            {stats.streakDays} <span className="text-sm font-normal text-slate-400">Days</span>
-          </div>
-          <p className="text-xs text-amber-500 font-semibold">🔥 Active Streak</p>
-        </div>
-
-        <div className="card p-5 space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Hours Studied</span>
-            <div className="p-2 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-500">
-              <Clock className="h-5 w-5" />
-            </div>
-          </div>
-          <div className="text-3xl font-extrabold text-slate-900 dark:text-slate-50">
-            {stats.hoursStudied} <span className="text-sm font-normal text-slate-400">Hours</span>
-          </div>
-          <p className="text-xs text-indigo-500 font-medium">Avg 2.6 hrs/day focus</p>
-        </div>
-
-        <div className="card p-5 space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Weekly Progress</span>
-            <div className="p-2 rounded-xl bg-purple-50 dark:bg-purple-950/60 text-purple-500">
-              <TrendingUp className="h-5 w-5" />
-            </div>
-          </div>
-          <div className="text-3xl font-extrabold text-slate-900 dark:text-slate-50">
-            {stats.weeklyCompletionRate}%
-          </div>
-          <p className="text-xs text-purple-500 font-medium">+12% vs last week</p>
-        </div>
-      </div>
-
-      {/* Subject Distribution */}
-      <div className="card p-6 space-y-6">
-        <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-          <BookOpen className="h-5 w-5 text-brand-500" />
-          <span>Subject Focus Distribution</span>
-        </h3>
-
-        <div className="space-y-4">
-          {stats.subjects.map(subject => {
-            const percentage = Math.round((subject.count / stats.totalTasks) * 100);
-            return (
-              <div key={subject.name} className="space-y-1.5">
-                <div className="flex justify-between text-xs font-semibold">
-                  <span className="text-slate-700 dark:text-slate-300">{subject.name}</span>
-                  <span className="text-slate-400">{subject.count} tasks ({percentage}%)</span>
-                </div>
-                <div className="w-full h-3 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
-                  <div className={`h-full ${subject.color} rounded-full transition-all duration-500`} style={{ width: `${percentage}%` }} />
+      ) : (
+        <>
+          {/* Live Metric Cards Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            <InteractiveCard className="p-5 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Tasks Completed</span>
+                <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                  <CheckCircle2 className="h-5 w-5" />
                 </div>
               </div>
-            );
-          })}
-        </div>
-      </div>
+              <div className="text-3xl font-extrabold text-white">
+                <AnimatedCounter value={completedTasks} />{' '}
+                <span className="text-sm font-normal text-slate-400">/ {totalTasks}</span>
+              </div>
+              <p className="text-xs text-emerald-400 font-medium">{completionRate}% Overall Completion</p>
+            </InteractiveCard>
+
+            <InteractiveCard className="p-5 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Hours Completed</span>
+                <div className="p-2.5 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                  <Clock className="h-5 w-5" />
+                </div>
+              </div>
+              <div className="text-3xl font-extrabold text-white">
+                {hoursStudied} <span className="text-sm font-normal text-slate-400">hrs</span>
+              </div>
+              <p className="text-xs text-indigo-400 font-medium">
+                {Number((totalEstimatedMinutes / 60).toFixed(1))} Total Estimated Hrs
+              </p>
+            </InteractiveCard>
+
+            <InteractiveCard className="p-5 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Active Commitments</span>
+                <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                  <BookOpen className="h-5 w-5" />
+                </div>
+              </div>
+              <div className="text-3xl font-extrabold text-white">
+                <AnimatedCounter value={pendingTasks.length} /> <span className="text-sm font-normal text-slate-400">Pending</span>
+              </div>
+              <p className="text-xs text-amber-400 font-medium">Synced with Task Execution Engine</p>
+            </InteractiveCard>
+
+            <InteractiveCard className="p-5 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Active Subjects</span>
+                <div className="p-2.5 rounded-xl bg-brand-500/10 text-brand-400 border border-brand-500/20">
+                  <Award className="h-5 w-5" />
+                </div>
+              </div>
+              <div className="text-3xl font-extrabold text-white">
+                <AnimatedCounter value={subjectData.length} /> <span className="text-sm font-normal text-slate-400">Courses</span>
+              </div>
+              <p className="text-xs text-brand-400 font-medium">Live Ingest Tracking</p>
+            </InteractiveCard>
+          </div>
+
+          {/* Charts Section */}
+          {tasks.length === 0 ? (
+            <EmptyState
+              icon={BarChart3}
+              title="No Analytics Data Available"
+              description="Upload course documents or create tasks to automatically generate live analytical insights, breakdown charts, and study velocity metrics."
+              actionLabel="Ingest First Syllabus"
+              onAction={() => window.location.href = '/ingest'}
+            />
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Subject Distribution */}
+              <InteractiveCard className="p-6 space-y-4">
+                <h3 className="font-bold text-base text-white flex items-center gap-2">
+                  <BookOpen className="h-5 w-5 text-brand-400" />
+                  <span>Subject Focus Breakdown</span>
+                </h3>
+                <div className="h-64">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={subjectData}
+                        dataKey="count"
+                        nameKey="name"
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={65}
+                        outerRadius={90}
+                        paddingAngle={5}
+                      >
+                        {subjectData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: '#0f172a',
+                          borderColor: 'rgba(255,255,255,0.1)',
+                          borderRadius: '12px',
+                          color: '#fff'
+                        }}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+              </InteractiveCard>
+
+              {/* Priority Workload Distribution */}
+              <InteractiveCard className="p-6 space-y-4">
+                <h3 className="font-bold text-base text-white flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5 text-indigo-400" />
+                  <span>Task Priority Distribution</span>
+                </h3>
+                <div className="h-64">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={priorityData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                      <XAxis dataKey="name" stroke="#94a3b8" />
+                      <YAxis stroke="#94a3b8" allowDecimals={false} />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: '#0f172a',
+                          borderColor: 'rgba(255,255,255,0.1)',
+                          borderRadius: '12px',
+                          color: '#fff'
+                        }}
+                      />
+                      <Bar dataKey="count" radius={[8, 8, 0, 0]}>
+                        {priorityData.map((entry, index) => (
+                          <Cell key={`bar-${index}`} fill={entry.fill} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </InteractiveCard>
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 };
-
-export default Analytics;

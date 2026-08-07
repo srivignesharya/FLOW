@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { requireAuth } from '../middleware/authMiddleware.js';
 import { validateBody, copilotQuerySchema } from '../middleware/validation.js';
-import { ai, PRO_MODEL } from '../services/gemini.js';
+import { ai, PRO_MODEL, getAiInstance, rotateAiKey } from '../services/gemini.js';
 import { supabaseAdmin } from '../services/supabase.js';
 
 const router = Router();
@@ -106,16 +106,34 @@ Key Capabilities & Instructions:
       { role: 'user', parts: [{ text: query }] }
     ];
 
-    const aiResponse = await ai.models.generateContent({
-      model: PRO_MODEL,
-      contents: messages,
-      config: {
-        systemInstruction: systemContext,
-        temperature: 0.4
-      }
-    });
+    let reply = '';
+    try {
+      const activeAi = getAiInstance();
+      const aiResponse = await activeAi.models.generateContent({
+        model: PRO_MODEL,
+        contents: messages,
+        config: {
+          systemInstruction: systemContext,
+          temperature: 0.4
+        }
+      });
+      reply = aiResponse.text;
+    } catch (apiErr) {
+      console.warn(`⚠️ [COPILOT GEMINI PRIMARY FAILED]: ${apiErr.message}. Attempting rotation & fallback model...`);
+      rotateAiKey();
+      const rotatedAi = getAiInstance();
 
-    const reply = aiResponse.text;
+      // Retry with Fallback Model
+      const fallbackResponse = await rotatedAi.models.generateContent({
+        model: 'gemini-1.5-flash',
+        contents: messages,
+        config: {
+          systemInstruction: systemContext,
+          temperature: 0.4
+        }
+      });
+      reply = fallbackResponse.text;
+    }
 
     // Persist both user message and assistant reply
     await supabaseAdmin.from('copilot_messages').insert([

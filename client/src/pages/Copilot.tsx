@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import api from '../services/api';
 import { useToast } from '../context/ToastContext';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Send, Bot, User, Trash2, Sparkles, Loader2, MessageSquare, Compass } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 
@@ -152,45 +153,57 @@ export const Copilot: React.FC = () => {
 
       {/* Message History Container */}
       <div className="flex-1 card p-4 overflow-y-auto space-y-4 bg-slate-900/40 border-slate-800">
-        {messages.map((msg) => (
-          <div
-            key={msg.id}
-            className={`flex gap-3 max-w-[85%] ${
-              msg.role === 'user' ? 'ml-auto flex-row-reverse' : ''
-            }`}
-          >
-            <div className={`h-8 w-8 rounded-xl flex items-center justify-center shrink-0 text-white font-bold text-xs ${
-              msg.role === 'user'
-                ? 'bg-brand-600'
-                : 'bg-gradient-to-tr from-indigo-600 to-purple-600'
-            }`}>
-              {msg.role === 'user' ? <User className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
-            </div>
+        <AnimatePresence initial={false}>
+          {messages.map((msg) => (
+            <motion.div
+              key={msg.id}
+              initial={{ opacity: 0, y: 15, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+              className={`flex gap-3 max-w-[85%] ${
+                msg.role === 'user' ? 'ml-auto flex-row-reverse' : ''
+              }`}
+            >
+              <div className={`h-8 w-8 rounded-xl flex items-center justify-center shrink-0 text-white font-bold text-xs shadow-md ${
+                msg.role === 'user'
+                  ? 'bg-brand-600'
+                  : 'bg-gradient-to-tr from-indigo-600 to-purple-600'
+              }`}>
+                {msg.role === 'user' ? <User className="h-4 w-4" /> : <Bot className="h-4 w-4 animate-pulse" />}
+              </div>
 
-            <div className={`p-4 rounded-2xl text-sm leading-relaxed ${
-              msg.role === 'user'
-                ? 'bg-brand-600 text-white rounded-tr-none'
-                : 'bg-slate-800 text-slate-100 border border-slate-700/80 rounded-tl-none prose-flow'
-            }`}>
-              {msg.role === 'user' ? (
-                msg.content
-              ) : (
-                <ReactMarkdown>{msg.content}</ReactMarkdown>
-              )}
-            </div>
-          </div>
-        ))}
+              <div className={`p-4 rounded-2xl text-sm leading-relaxed shadow-lg ${
+                msg.role === 'user'
+                  ? 'bg-gradient-to-r from-brand-600 to-indigo-600 text-white rounded-tr-none'
+                  : 'bg-slate-800/90 text-slate-100 border border-slate-700/80 rounded-tl-none prose-flow'
+              }`}>
+                {msg.role === 'user' ? (
+                  msg.content
+                ) : (
+                  <ReactMarkdown>{msg.content}</ReactMarkdown>
+                )}
+              </div>
+            </motion.div>
+          ))}
+        </AnimatePresence>
 
         {loading && (
-          <div className="flex gap-3 max-w-[85%]">
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex gap-3 max-w-[85%]"
+          >
             <div className="h-8 w-8 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center text-white shrink-0">
-              <Bot className="h-4 w-4" />
+              <Bot className="h-4 w-4 animate-spin" />
             </div>
-            <div className="p-4 rounded-2xl bg-slate-800 border border-slate-700/80 rounded-tl-none flex items-center gap-2 text-xs text-slate-400">
-              <Loader2 className="h-4 w-4 animate-spin text-indigo-400" />
-              <span>Flow Copilot is thinking...</span>
+            <div className="p-4 rounded-2xl bg-slate-800/90 border border-slate-700/80 text-slate-400 text-sm flex items-center gap-1.5 rounded-tl-none">
+              <span className="h-2 w-2 rounded-full bg-brand-400 animate-bounce" style={{ animationDelay: '0ms' }} />
+              <span className="h-2 w-2 rounded-full bg-indigo-400 animate-bounce" style={{ animationDelay: '150ms' }} />
+              <span className="h-2 w-2 rounded-full bg-purple-400 animate-bounce" style={{ animationDelay: '300ms' }} />
+              <span className="text-xs ml-2 font-medium text-slate-400">Gemini is thinking...</span>
             </div>
-          </div>
+          </motion.div>
         )}
 
         {messages.length === 0 && !loading && (

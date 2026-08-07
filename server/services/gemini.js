@@ -2,14 +2,40 @@ import { GoogleGenAI, Type } from '@google/genai';
 import dotenv from 'dotenv';
 dotenv.config();
 
-if (!process.env.GEMINI_API_KEY) {
-  throw new Error('GEMINI_API_KEY environment variable is missing. Get one at https://aistudio.google.com/apikey');
-}
+// Multi-key list for high availability and quota rotation
+const getApiKeys = () => {
+  const keys = [
+    process.env.GEMINI_API_KEY,
+    process.env.GEMINI_API_KEY_2,
+    process.env.GEMINI_API_KEY_3
+  ].filter(Boolean);
 
-export const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+  if (keys.length === 0) {
+    throw new Error('GEMINI_API_KEY environment variable is missing. Get one at https://aistudio.google.com/apikey');
+  }
+  return keys;
+};
+
+let currentKeyIndex = 0;
+
+export const getAiInstance = () => {
+  const keys = getApiKeys();
+  const apiKey = keys[currentKeyIndex % keys.length];
+  return new GoogleGenAI({ apiKey });
+};
+
+export const rotateAiKey = () => {
+  const keys = getApiKeys();
+  currentKeyIndex = (currentKeyIndex + 1) % keys.length;
+  console.warn(`🔄 [GEMINI KEY ROTATION]: Switched to API Key Slot ${currentKeyIndex + 1}/${keys.length}`);
+  return getAiInstance();
+};
+
+export const ai = getAiInstance();
 
 export const FLASH_MODEL = 'gemini-2.5-flash';
 export const PRO_MODEL = 'gemini-2.5-flash';
+export const FALLBACK_MODEL = 'gemini-1.5-flash';
 
 // ============================================================
 // SYSTEM INSTRUCTIONS

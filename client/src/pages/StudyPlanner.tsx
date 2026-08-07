@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import api from '../services/api';
-import { useToast } from '../context/ToastContext';
+import { AiThinkingOverlay } from '../components/AiThinkingOverlay';
+import { triggerCelebration, showToast } from '../components/ToastContainer';
 import { SkeletonCard } from '../components/SkeletonLoaders';
 import { StatusBadge } from '../components/StatusBadge';
 import { Sparkles, Calendar, Clock, CheckCircle2, AlertCircle, RefreshCw, Layers, CheckSquare, Upload } from 'lucide-react';
@@ -11,7 +12,6 @@ export const StudyPlanner: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState('');
-  const { showToast } = useToast();
 
   const fetchCurrentSchedule = async () => {
     setLoading(true);
@@ -36,6 +36,7 @@ export const StudyPlanner: React.FC = () => {
     try {
       const res = await api.post('/planner/generate');
       setSchedule(res.data);
+      triggerCelebration();
       showToast('New 7-day study plan generated with Gemini AI!', 'success');
     } catch (err: any) {
       const msg = err.response?.data?.error || 'Failed to generate study plan with Gemini.';
@@ -147,7 +148,9 @@ export const StudyPlanner: React.FC = () => {
         </div>
       )}
 
-      {loading ? (
+      {generating ? (
+        <AiThinkingOverlay />
+      ) : loading ? (
         <div className="space-y-4">
           <SkeletonCard />
           <SkeletonCard />
