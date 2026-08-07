@@ -3,33 +3,26 @@
  * Must be the LAST middleware registered in index.js.
  */
 export const errorHandler = (err, req, res, next) => {
-  console.error('[SERVER ERROR]:', err?.message || err);
+  const status = err.status || err.statusCode || 500;
+  const message = err.message || (typeof err === 'string' ? err : 'Internal Server Error');
+
+  console.error('\n============================================================');
+  console.error('❌ [EXPRESS ERROR HANDLER DIAGNOSTIC LOG]:');
+  console.error(`   - HTTP Status: ${status}`);
+  console.error(`   - Error Message: ${message}`);
+  console.error(`   - Error Code: ${err.code || 'N/A'}`);
+  console.error(`   - Stack Trace:\n${err.stack || 'No stack trace available'}`);
+  console.error('============================================================\n');
 
   // Handle Multer file size limit error
   if (err.code === 'LIMIT_FILE_SIZE') {
     return res.status(413).json({ error: 'File size exceeds the maximum 100 MB upload limit. Please upload a smaller file.' });
   }
 
-  // Handle Gemini API 429 Resource Exhausted / Quota errors
-  const errStr = String(err?.message || err || '');
-  if (
-    err.status === 429 ||
-    err.statusCode === 429 ||
-    errStr.includes('429') ||
-    errStr.includes('RESOURCE_EXHAUSTED') ||
-    errStr.includes('Quota exceeded')
-  ) {
-    return res.status(429).json({
-      error: 'Gemini API quota exceeded. Please try again later or use another API key.',
-      timestamp: new Date().toISOString()
-    });
-  }
-
-  const status = err.status || err.statusCode || 500;
-  const message = err.message || 'Internal Server Error';
-
+  // Return EXACT error message from Gemini API or internal service without masking
   res.status(status).json({
     error: message,
+    code: err.code || status,
     timestamp: new Date().toISOString()
   });
 };
