@@ -21,12 +21,19 @@ import { Link, useNavigate } from 'react-router-dom';
 export const Dashboard: React.FC = () => {
   const { user } = useAuth();
   const [tasks, setTasks] = useState<any[]>([]);
+  const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
-    api.get('/tasks')
-      .then(res => setTasks(res.data))
+    Promise.all([
+      api.get('/tasks'),
+      api.get('/auth/profile').catch(() => ({ data: null }))
+    ])
+      .then(([tasksRes, profileRes]) => {
+        setTasks(tasksRes.data || []);
+        setProfile(profileRes.data || null);
+      })
       .catch(console.error)
       .finally(() => setLoading(false));
   }, []);
@@ -39,7 +46,7 @@ export const Dashboard: React.FC = () => {
     return 'Good Evening';
   };
 
-  const userName = user?.user_metadata?.name || user?.email?.split('@')[0] || 'Student';
+  const userName = profile?.full_name || user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split('@')[0] || 'Student';
 
   const pending = tasks.filter(t => t.status !== 'completed');
   const highPriority = pending.filter(t => t.priority === 'high');
