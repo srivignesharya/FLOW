@@ -13,8 +13,8 @@ const ThemeContext = createContext<ThemeContextType>({
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isDark, setIsDark] = useState<boolean>(() => {
     const stored = localStorage.getItem('flow-theme');
-    // Default to dark mode for new users unless explicitly set to light
-    if (stored) return stored === 'dark';
+    // If user has explicitly selected light mode, respect it. Otherwise, default to dark mode.
+    if (stored === 'light') return false;
     return true;
   });
 
