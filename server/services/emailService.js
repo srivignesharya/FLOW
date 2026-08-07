@@ -309,9 +309,6 @@ export const sendDeadlineReminder = async ({
 
       if (attempt > retries) {
         let failureReason = err.message;
-        if (err.message.includes('timeout') || err.code === 'ETIMEDOUT' || err.code === 'ESOCKET') {
-          failureReason = 'Render Cloud Firewall blocks raw SMTP TCP sockets (Ports 25/587/465). Add RESEND_API_KEY to Render environment variables to send via HTTPS Port 443!';
-        }
         console.error(`❌ [EMAIL FATAL]: Exhausted all ${retries + 1} retry attempts for ${toEmail}. Reason: ${failureReason}`);
         if (throwOnError) {
           throw new Error(failureReason);
