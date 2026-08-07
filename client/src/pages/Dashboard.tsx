@@ -120,43 +120,43 @@ export const Dashboard: React.FC = () => {
           {/* 1. Study Streak */}
           <InteractiveCard className="p-5 space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">🔥 Study Streak</span>
-              <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20">
+              <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">🔥 Study Streak</span>
+              <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-500 border border-amber-500/20">
                 <Flame className="h-5 w-5 animate-pulse" />
               </div>
             </div>
-            <div className="text-3xl font-black text-white flex items-baseline gap-1">
-              <AnimatedCounter value={5} /> <span className="text-sm font-normal text-slate-400">Days</span>
+            <div className="text-3xl font-black text-slate-900 dark:text-white flex items-baseline gap-1">
+              <AnimatedCounter value={5} /> <span className="text-sm font-normal text-slate-500 dark:text-slate-400">Days</span>
             </div>
-            <p className="text-xs text-amber-400 font-semibold">🔥 Active 5-day focus streak</p>
+            <p className="text-xs text-amber-500 font-semibold">🔥 Active 5-day focus streak</p>
           </InteractiveCard>
 
           {/* 2. Pending Tasks */}
           <InteractiveCard className="p-5 space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">📚 Pending Tasks</span>
-              <div className="p-2.5 rounded-xl bg-brand-500/10 text-brand-400 border border-brand-500/20">
+              <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">📚 Pending Tasks</span>
+              <div className="p-2.5 rounded-xl bg-brand-500/10 text-brand-600 dark:text-brand-400 border border-brand-500/20">
                 <Clock className="h-5 w-5" />
               </div>
             </div>
-            <div className="text-3xl font-black text-white">
-              <AnimatedCounter value={pending.length} /> <span className="text-sm font-normal text-slate-400">Tasks</span>
+            <div className="text-3xl font-black text-slate-900 dark:text-white">
+              <AnimatedCounter value={pending.length} /> <span className="text-sm font-normal text-slate-500 dark:text-slate-400">Tasks</span>
             </div>
-            <p className="text-xs text-brand-400 font-medium">{highPriority.length} High Priority Commitments</p>
+            <p className="text-xs text-brand-600 dark:text-brand-400 font-semibold">{highPriority.length} High Priority Commitments</p>
           </InteractiveCard>
 
           {/* 3. Next Deadline */}
           <InteractiveCard className="p-5 space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">⏰ Next Deadline</span>
-              <div className="p-2.5 rounded-xl bg-rose-500/10 text-rose-400 border border-rose-500/20">
+              <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">⏰ Next Deadline</span>
+              <div className="p-2.5 rounded-xl bg-rose-500/10 text-rose-500 border border-rose-500/20">
                 <CalendarDays className="h-5 w-5" />
               </div>
             </div>
-            <div className="text-xl font-bold text-white truncate">
+            <div className="text-xl font-bold text-slate-900 dark:text-white truncate">
               {nextUrgentTask ? nextUrgentTask.title : 'No Urgent Deadlines'}
             </div>
-            <p className="text-xs text-rose-400 font-semibold truncate">
+            <p className="text-xs text-rose-500 font-semibold truncate">
               {nextUrgentTask ? `${getRelativeDeadline(nextUrgentTask.deadline).label} (${nextUrgentTask.subject})` : 'All clear!'}
             </p>
           </InteractiveCard>
@@ -164,15 +164,15 @@ export const Dashboard: React.FC = () => {
           {/* 4. AI Focus Score */}
           <InteractiveCard className="p-5 space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">🧠 AI Focus Score</span>
-              <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">🧠 AI Focus Score</span>
+              <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
                 <Brain className="h-5 w-5" />
               </div>
             </div>
-            <div className="text-3xl font-black text-white">
+            <div className="text-3xl font-black text-slate-900 dark:text-white">
               <AnimatedCounter value={Math.min(completionRate + 15, 98)} suffix="%" />
             </div>
-            <p className="text-xs text-emerald-400 font-medium">Top 5% Student Execution</p>
+            <p className="text-xs text-emerald-500 font-semibold">Top 5% Student Execution</p>
           </InteractiveCard>
         </div>
       )}
@@ -182,27 +182,27 @@ export const Dashboard: React.FC = () => {
         <motion.div
           initial={{ opacity: 0, scale: 0.98 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="relative rounded-2xl bg-gradient-to-r from-brand-950/60 via-slate-900 to-indigo-950/60 border border-brand-500/30 p-6 shadow-xl"
+          className="relative rounded-2xl bg-gradient-to-r from-brand-50/80 via-white to-orange-50/80 dark:from-brand-950/60 dark:via-slate-900 dark:to-indigo-950/60 border border-brand-500/30 p-6 shadow-sm dark:shadow-xl"
         >
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div className="flex items-start gap-4">
-              <div className="p-3 rounded-2xl bg-brand-500/20 text-brand-300 border border-brand-500/30 shrink-0">
+              <div className="p-3 rounded-2xl bg-brand-500/20 text-brand-600 dark:text-brand-300 border border-brand-500/30 shrink-0">
                 <Target className="h-7 w-7" />
               </div>
               <div className="space-y-1">
-                <div className="inline-flex items-center gap-2 text-xs font-bold text-brand-400 uppercase tracking-wider">
+                <div className="inline-flex items-center gap-2 text-xs font-bold text-brand-600 dark:text-brand-400 uppercase tracking-wider">
                   <Sparkles className="h-3.5 w-3.5" />
                   <span>Today's Recommendation</span>
                 </div>
-                <h3 className="text-lg font-bold text-white">
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white">
                   Study {nextUrgentTask.subject}: {nextUrgentTask.title}
                 </h3>
-                <div className="flex flex-wrap items-center gap-3 text-xs text-slate-400 pt-1">
-                  <span className="text-rose-400 font-medium">⏰ Deadline: {getRelativeDeadline(nextUrgentTask.deadline).label}</span>
+                <div className="flex flex-wrap items-center gap-3 text-xs text-slate-600 dark:text-slate-400 pt-1">
+                  <span className="text-rose-600 dark:text-rose-400 font-semibold">⏰ Deadline: {getRelativeDeadline(nextUrgentTask.deadline).label}</span>
                   <span>•</span>
-                  <span className="text-amber-400 font-medium">🔥 Priority: {nextUrgentTask.priority.toUpperCase()}</span>
+                  <span className="text-amber-600 dark:text-amber-400 font-semibold">🔥 Priority: {nextUrgentTask.priority.toUpperCase()}</span>
                   <span>•</span>
-                  <span className="text-slate-300">⏱️ Est. Time: {nextUrgentTask.estimated_minutes || 60} Mins</span>
+                  <span className="text-slate-700 dark:text-slate-300">⏱️ Est. Time: {nextUrgentTask.estimated_minutes || 60} Mins</span>
                 </div>
               </div>
             </div>

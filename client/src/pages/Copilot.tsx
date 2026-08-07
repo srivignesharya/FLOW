@@ -109,13 +109,13 @@ export const Copilot: React.FC = () => {
       {/* Top Header */}
       <div className="flex items-center justify-between shrink-0">
         <div>
-          <h1 className="text-2xl font-extrabold tracking-tight text-white flex items-center gap-3">
+          <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white flex items-center gap-3">
             <span>IMvision Intelligence</span>
-            <span className="text-xs px-3 py-1 rounded-full bg-brand-500/10 text-brand-300 font-semibold border border-brand-500/20">
+            <span className="text-xs px-3 py-1 rounded-full bg-brand-500/10 text-brand-600 dark:text-brand-300 font-semibold border border-brand-500/20">
               Gemini 2.5 Pro Architecture
             </span>
           </h1>
-          <p className="text-slate-400 text-xs mt-0.5">
+          <p className="text-slate-500 dark:text-slate-400 text-xs mt-0.5">
             Your intelligent academic assistant built into FLOW.
           </p>
         </div>
@@ -143,22 +143,22 @@ export const Copilot: React.FC = () => {
       </div>
 
       {/* Main Chat Interface */}
-      <div className="flex-1 card p-4 overflow-y-auto space-y-4 bg-slate-900/40 border-slate-800 backdrop-blur-xl">
+      <div className="flex-1 card p-4 overflow-y-auto space-y-4 bg-white/70 dark:bg-slate-900/40 border-slate-200/80 dark:border-slate-800 backdrop-blur-xl">
         {messages.length === 0 && !loading ? (
           /* PART 2: Welcome Page Screen */
           <div className="h-full flex flex-col items-center justify-center text-center p-8 max-w-xl mx-auto space-y-6">
             <div className="relative">
               <div className="absolute -inset-4 bg-brand-500/20 rounded-full blur-2xl animate-pulse" />
-              <div className="relative h-24 w-24 rounded-3xl bg-gradient-to-tr from-brand-600 via-indigo-600 to-purple-600 flex items-center justify-center text-white shadow-2xl shadow-brand-500/30 border border-white/20">
+              <div className="relative h-24 w-24 rounded-3xl bg-gradient-to-tr from-brand-500 via-orange-500 to-amber-500 flex items-center justify-center text-white shadow-2xl shadow-brand-500/30 border border-white/20">
                 <Bot className="h-12 w-12" />
               </div>
             </div>
 
             <div className="space-y-2">
-              <h2 className="text-2xl font-black text-white">
-                Hi, I'm <span className="bg-gradient-to-r from-brand-400 to-indigo-300 bg-clip-text text-transparent">IMvision</span>.
+              <h2 className="text-2xl font-black text-slate-900 dark:text-white">
+                Hi, I'm <span className="bg-gradient-to-r from-brand-500 to-amber-500 bg-clip-text text-transparent">IMvision</span>.
               </h2>
-              <p className="text-slate-300 text-sm leading-relaxed">
+              <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed">
                 Your intelligent academic assistant built into FLOW. How can I help you today?
               </p>
             </div>
@@ -169,13 +169,13 @@ export const Copilot: React.FC = () => {
                 <InteractiveCard
                   key={idx}
                   onClick={() => handleSend(action.query)}
-                  className="p-3.5 text-left border-slate-800 hover:border-brand-500/40"
+                  className="p-3.5 text-left border-slate-200 dark:border-slate-800 hover:border-brand-500/40"
                 >
                   <div className="flex items-center gap-2.5">
-                    <div className="p-2 rounded-lg bg-brand-500/10 text-brand-400 shrink-0">
+                    <div className="p-2 rounded-lg bg-brand-500/10 text-brand-600 dark:text-brand-400 shrink-0">
                       <action.icon className="h-4 w-4" />
                     </div>
-                    <span className="text-xs font-semibold text-white">{action.label}</span>
+                    <span className="text-xs font-semibold text-slate-900 dark:text-white">{action.label}</span>
                   </div>
                 </InteractiveCard>
               ))}
@@ -196,16 +196,16 @@ export const Copilot: React.FC = () => {
               >
                 <div className={`h-8 w-8 rounded-xl flex items-center justify-center shrink-0 text-white font-bold text-xs shadow-md ${
                   msg.role === 'user'
-                    ? 'bg-brand-600'
-                    : 'bg-gradient-to-tr from-indigo-600 to-purple-600'
+                    ? 'bg-brand-500'
+                    : 'bg-gradient-to-tr from-brand-600 via-orange-500 to-amber-500'
                 }`}>
                   {msg.role === 'user' ? <User className="h-4 w-4" /> : <Bot className="h-4 w-4 animate-pulse" />}
                 </div>
 
-                <div className={`p-4 rounded-2xl text-sm leading-relaxed shadow-lg ${
+                <div className={`p-4 rounded-2xl text-sm leading-relaxed shadow-sm dark:shadow-lg ${
                   msg.role === 'user'
-                    ? 'bg-gradient-to-r from-brand-600 to-indigo-600 text-white rounded-tr-none'
-                    : 'bg-slate-800/90 text-slate-100 border border-slate-700/80 rounded-tl-none prose-flow'
+                    ? 'bg-orange-gradient text-white rounded-tr-none font-medium'
+                    : 'bg-slate-100 dark:bg-slate-800/90 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-700/80 rounded-tl-none prose-flow'
                 }`}>
                   {msg.role === 'user' ? (
                     msg.content

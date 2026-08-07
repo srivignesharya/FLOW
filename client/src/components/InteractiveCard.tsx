@@ -70,7 +70,7 @@ export const InteractiveCard: React.FC<InteractiveCardProps> = ({
         y: isHovered ? -4 : 0
       }}
       transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-      className={`relative rounded-2xl bg-slate-900/90 border border-slate-800/80 backdrop-blur-xl shadow-lg transition-colors duration-300 overflow-hidden group ${
+      className={`relative rounded-2xl bg-white dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 backdrop-blur-xl shadow-sm dark:shadow-lg transition-colors duration-300 overflow-hidden group ${
         onClick ? 'cursor-pointer' : ''
       } ${className}`}
     >
