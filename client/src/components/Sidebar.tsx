@@ -135,8 +135,8 @@ export const Sidebar: React.FC = () => {
             className="p-4 border-t border-slate-200 dark:border-slate-800"
           >
             <div className="px-3 py-2.5 rounded-xl bg-brand-50/50 dark:bg-slate-950/60 border border-brand-200 dark:border-brand-500/20">
-              <p className="text-xs font-extrabold bg-gradient-to-r from-brand-600 to-amber-600 dark:from-brand-400 dark:to-amber-400 bg-clip-text text-transparent">FLOW AI SaaS</p>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 font-medium">Powered by Gemini & IMvision</p>
+              <p className="text-xs font-extrabold bg-gradient-to-r from-brand-600 to-amber-600 dark:from-brand-400 dark:to-amber-400 bg-clip-text text-transparent">FLOW</p>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 font-medium">Powered by IMV</p>
             </div>
           </motion.div>
         )}
