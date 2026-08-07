@@ -293,9 +293,13 @@ export const sendDeadlineReminder = async ({
   // Option 1: Brevo HTTPS REST API (Delivers to ANY email address over HTTPS Port 443)
   if (process.env.BREVO_API_KEY) {
     try {
-      return await sendViaBrevoApi({ toEmail, subject: emailSubject, html });
+      const success = await sendViaBrevoApi({ toEmail, subject: emailSubject, html });
+      if (success) return true;
     } catch (err) {
       console.warn(`⚠️ [BREVO HTTPS FAILED]: Falling back to Resend / Nodemailer. Error: ${err.message}`);
+      if (throwOnError && !process.env.RESEND_API_KEY && !process.env.EMAIL_USER) {
+        throw new Error(`Brevo Delivery Failed: ${err.message}`);
+      }
     }
   }
 
@@ -367,7 +371,10 @@ export const sendDeadlineReminder = async ({
   }
 
   if (throwOnError && lastError) {
-    throw new Error(`SMTP Delivery Failed: ${lastError.message}`);
+    const errorMsg = lastError.message.includes('timeout') || lastError.message.includes('ETIMEDOUT')
+      ? 'Render Cloud Firewall blocks raw SMTP TCP sockets (Ports 25/587/465). Add BREVO_API_KEY to Render environment variables to send via HTTPS Port 443!'
+      : lastError.message;
+    throw new Error(errorMsg);
   }
 
   return false;
