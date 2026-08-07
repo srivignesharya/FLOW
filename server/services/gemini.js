@@ -36,9 +36,9 @@ export const rotateAiKey = () => {
 
 export const ai = getAiInstance();
 
-export const FLASH_MODEL = 'gemini-2.0-flash';
-export const PRO_MODEL = 'gemini-2.0-flash';
-export const FALLBACK_MODEL = 'gemini-2.0-flash-lite';
+export const FLASH_MODEL = 'gemini-2.5-flash';
+export const PRO_MODEL = 'gemini-2.5-flash';
+export const FALLBACK_MODEL = 'gemini-2.5-flash';
 
 // ============================================================
 // SYSTEM INSTRUCTIONS
