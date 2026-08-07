@@ -20,8 +20,21 @@ export const textIngestSchema = z.object({
 });
 
 export const copilotQuerySchema = z.object({
-  query: z.string().min(2, 'Query must be at least 2 characters'),
-  documentId: z.string().uuid().optional()
+  query: z.string().optional(),
+  prompt: z.string().optional(),
+  message: z.string().optional(),
+  // Coerce empty string "" → null before UUID check (frontend select sends "" when nothing chosen)
+  documentId: z.union([
+    z.string().uuid(),
+    z.string().max(0).transform(() => null),
+    z.null()
+  ]).optional().nullable().default(null)
+}).transform((data) => ({
+  query: (data.query || data.prompt || data.message || '').trim(),
+  documentId: data.documentId ?? null
+})).refine((data) => data.query.length >= 1, {
+  message: 'Query or message string is required and cannot be empty',
+  path: ['query']
 });
 
 export const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?])[^\s]{8,64}$/;
@@ -50,9 +63,23 @@ export const validateBody = (schema) => (req, res, next) => {
     req.body = schema.parse(req.body);
     next();
   } catch (err) {
+    const details = err.errors?.map(e => ({
+      field: e.path.join('.') || '(root)',
+      message: e.message,
+      received: e.received !== undefined ? e.received : JSON.stringify(req.body?.[e.path[0]])
+    })) || [];
+
+    console.warn('⚠️ [VALIDATION FAILURE] Raw body received:', JSON.stringify(req.body, null, 2));
+    console.warn('⚠️ [VALIDATION FAILURE] Issues:', JSON.stringify(details, null, 2));
+
+    const firstIssue = details[0];
+    const userMessage = firstIssue
+      ? `Validation failed for field "${firstIssue.field}": ${firstIssue.message} (received: ${firstIssue.received})`
+      : 'Request validation failed';
+
     return res.status(400).json({
-      error: 'Request validation failed',
-      details: err.errors?.map(e => ({ field: e.path.join('.'), message: e.message })) || []
+      error: userMessage,
+      details
     });
   }
 };
