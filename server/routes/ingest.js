@@ -3,7 +3,7 @@ import multer from 'multer';
 import { requireAuth } from '../middleware/authMiddleware.js';
 import { validateBody, textIngestSchema } from '../middleware/validation.js';
 import { aiServiceLimiter } from '../middleware/rateLimiter.js';
-import { ai, FLASH_MODEL, SYSTEM_INSTRUCTION, taskExtractionSchema } from '../services/gemini.js';
+import { getAiInstance, rotateAiKey, FLASH_MODEL, SYSTEM_INSTRUCTION, taskExtractionSchema } from '../services/gemini.js';
 import { supabaseAdmin } from '../services/supabase.js';
 import { calculateSmartPriority } from '../services/priorityEngine.js';
 import { performVisionOcr } from '../services/ocrService.js';
@@ -46,24 +46,50 @@ router.post('/file', requireAuth, aiServiceLimiter, upload.single('file'), async
 
     const prompt = `Today's date is ${dateStr}. Analyze this academic document ${ocrText ? '(OCR Preprocessed Text included below)' : ''} thoroughly and extract ALL tasks, assignments, exams, announcements, and deadlines. Include estimated study/completion time for each.\n${ocrText ? `OCR Text:\n${ocrText}` : ''}`;
 
-    const aiResponse = await ai.models.generateContent({
-      model: FLASH_MODEL,
-      contents: [
-        {
-          role: 'user',
-          parts: [
-            { inlineData: { mimeType: req.file.mimetype, data: base64Data } },
-            { text: prompt }
-          ]
+    let aiResponse;
+    try {
+      const activeAi = getAiInstance();
+      aiResponse = await activeAi.models.generateContent({
+        model: FLASH_MODEL,
+        contents: [
+          {
+            role: 'user',
+            parts: [
+              { inlineData: { mimeType: req.file.mimetype, data: base64Data } },
+              { text: prompt }
+            ]
+          }
+        ],
+        config: {
+          systemInstruction: SYSTEM_INSTRUCTION,
+          responseMimeType: 'application/json',
+          responseSchema: taskExtractionSchema,
+          temperature: 0.1
         }
-      ],
-      config: {
-        systemInstruction: SYSTEM_INSTRUCTION,
-        responseMimeType: 'application/json',
-        responseSchema: taskExtractionSchema,
-        temperature: 0.1
-      }
-    });
+      });
+    } catch (apiErr) {
+      console.warn(`⚠️ [INGEST FILE GEMINI PRIMARY FAILED]: ${apiErr.message}. Rotating key and retrying with fallback model...`);
+      rotateAiKey();
+      const rotatedAi = getAiInstance();
+      aiResponse = await rotatedAi.models.generateContent({
+        model: 'gemini-1.5-flash',
+        contents: [
+          {
+            role: 'user',
+            parts: [
+              { inlineData: { mimeType: req.file.mimetype, data: base64Data } },
+              { text: prompt }
+            ]
+          }
+        ],
+        config: {
+          systemInstruction: SYSTEM_INSTRUCTION,
+          responseMimeType: 'application/json',
+          responseSchema: taskExtractionSchema,
+          temperature: 0.1
+        }
+      });
+    }
 
     const parsedData = JSON.parse(aiResponse.text);
 
@@ -134,16 +160,34 @@ router.post('/text', requireAuth, aiServiceLimiter, validateBody(textIngestSchem
 
     const prompt = `Today's date is ${dateStr}. Extract all academic tasks, deadlines, and commitments from the following text:\n\n${textContent}`;
 
-    const aiResponse = await ai.models.generateContent({
-      model: FLASH_MODEL,
-      contents: prompt,
-      config: {
-        systemInstruction: SYSTEM_INSTRUCTION,
-        responseMimeType: 'application/json',
-        responseSchema: taskExtractionSchema,
-        temperature: 0.1
-      }
-    });
+    let aiResponse;
+    try {
+      const activeAi = getAiInstance();
+      aiResponse = await activeAi.models.generateContent({
+        model: FLASH_MODEL,
+        contents: prompt,
+        config: {
+          systemInstruction: SYSTEM_INSTRUCTION,
+          responseMimeType: 'application/json',
+          responseSchema: taskExtractionSchema,
+          temperature: 0.1
+        }
+      });
+    } catch (apiErr) {
+      console.warn(`⚠️ [INGEST TEXT GEMINI PRIMARY FAILED]: ${apiErr.message}. Rotating key and retrying with fallback model...`);
+      rotateAiKey();
+      const rotatedAi = getAiInstance();
+      aiResponse = await rotatedAi.models.generateContent({
+        model: 'gemini-1.5-flash',
+        contents: prompt,
+        config: {
+          systemInstruction: SYSTEM_INSTRUCTION,
+          responseMimeType: 'application/json',
+          responseSchema: taskExtractionSchema,
+          temperature: 0.1
+        }
+      });
+    }
 
     const parsedData = JSON.parse(aiResponse.text);
 

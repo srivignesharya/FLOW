@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { requireAuth } from '../middleware/authMiddleware.js';
 import { aiServiceLimiter } from '../middleware/rateLimiter.js';
-import { ai, PRO_MODEL, studyPlanSchema } from '../services/gemini.js';
+import { ai, PRO_MODEL, studyPlanSchema, getAiInstance, rotateAiKey } from '../services/gemini.js';
 import { supabaseAdmin } from '../services/supabase.js';
 
 const router = Router();
@@ -59,15 +59,32 @@ Instructions:
 6. Include today and the next 6 days with real calendar dates in the "day" field.
 `;
 
-    const aiResponse = await ai.models.generateContent({
-      model: PRO_MODEL,
-      contents: prompt,
-      config: {
-        responseMimeType: 'application/json',
-        responseSchema: studyPlanSchema,
-        temperature: 0.2
-      }
-    });
+    let aiResponse;
+    try {
+      const activeAi = getAiInstance();
+      aiResponse = await activeAi.models.generateContent({
+        model: PRO_MODEL,
+        contents: prompt,
+        config: {
+          responseMimeType: 'application/json',
+          responseSchema: studyPlanSchema,
+          temperature: 0.2
+        }
+      });
+    } catch (apiErr) {
+      console.warn(`⚠️ [PLANNER GEMINI PRIMARY FAILED]: ${apiErr.message}. Rotating key and retrying with fallback model...`);
+      rotateAiKey();
+      const rotatedAi = getAiInstance();
+      aiResponse = await rotatedAi.models.generateContent({
+        model: 'gemini-1.5-flash',
+        contents: prompt,
+        config: {
+          responseMimeType: 'application/json',
+          responseSchema: studyPlanSchema,
+          temperature: 0.2
+        }
+      });
+    }
 
     const planData = JSON.parse(aiResponse.text);
 
