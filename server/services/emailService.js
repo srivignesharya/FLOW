@@ -42,15 +42,16 @@ export const resolveIPv4Host = async (hostname) => {
 
 /**
  * Returns a Nodemailer Transporter instance configured with an explicit IPv4 address and strict socket timeouts.
+ * Uses pooled connection to reuse TCP connection across requests.
  */
 export const createTransporter = async (overridePort = null) => {
   const targetHost = process.env.EMAIL_HOST || 'smtp.gmail.com';
   
-  // For Gmail SMTP (smtp.gmail.com), force Port 465 (Implicit TLS) because Port 587 is blocked by cloud firewalls (Render/AWS)
   let port = overridePort;
   if (!port) {
+    // Default to 465 (SSL) for Gmail on cloud environments like Render
     if (targetHost.includes('gmail.com')) {
-      port = 465;
+      port = process.env.EMAIL_PORT ? parseInt(process.env.EMAIL_PORT, 10) : 465;
     } else {
       port = process.env.EMAIL_PORT ? parseInt(process.env.EMAIL_PORT, 10) : 465;
     }
@@ -64,27 +65,27 @@ export const createTransporter = async (overridePort = null) => {
     return cachedTransporter;
   }
 
-  // Resolve hostname directly to IPv4 address string (e.g. "192.178.211.109")
   const resolvedIp = await resolveIPv4Host(targetHost);
 
+  console.log(`🔌 [Nodemailer Transport Init]: Host="${targetHost}" (${resolvedIp}), Port=${port}, Secure=${secure}, User="${user || '[NOT SET]'}"`);
 
   const transporter = nodemailer.createTransport({
     host: resolvedIp,
     port,
     secure,
-    family: 4, // Force IPv4 family
+    family: 4,
     pool: true,
-    maxConnections: 3,
-    maxMessages: 100,
-    connectionTimeout: 8000,  // 8s TCP connection timeout
-    greetingTimeout: 8000,    // 8s SMTP greeting timeout
-    socketTimeout: 10000,     // 10s socket inactivity timeout
+    maxConnections: 5,
+    maxMessages: 200,
+    connectionTimeout: 10000,
+    greetingTimeout: 10000,
+    socketTimeout: 15000,
     auth: {
       user,
       pass
     },
     tls: {
-      servername: targetHost, // SNI servername for SSL/TLS verification against Gmail certificate
+      servername: targetHost,
       rejectUnauthorized: false
     }
   });

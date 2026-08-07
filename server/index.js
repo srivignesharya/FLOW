@@ -116,14 +116,23 @@ app.post('/api/v1/test-email', requireAuth, async (req, res) => {
 });
 
 // ============================================================
-// HEALTH CHECK
+// HEALTH CHECK & DIAGNOSTICS
 // ============================================================
 app.get('/health', (req, res) => {
+  const emailUser = process.env.EMAIL_USER;
+  const isEmailConfigured = Boolean(process.env.RESEND_API_KEY || (emailUser && emailUser !== 'your-email@gmail.com'));
+
   res.json({
     status: 'ok',
     service: 'flow-server',
     timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || 'development'
+    environment: process.env.NODE_ENV || 'development',
+    emailService: {
+      configured: isEmailConfigured,
+      provider: process.env.RESEND_API_KEY ? 'Resend HTTPS' : 'Nodemailer SMTP',
+      host: process.env.EMAIL_HOST || 'smtp.gmail.com',
+      port: process.env.EMAIL_PORT || '465'
+    }
   });
 });
 

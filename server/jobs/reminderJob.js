@@ -1,6 +1,6 @@
 import cron from 'node-cron';
 import { supabaseAdmin } from '../services/supabase.js';
-import { sendDeadlineReminder, verifySmtpConnection } from '../services/emailService.js';
+import { sendDeadlineReminder, verifySmtpConnection, validateSmtpConfig } from '../services/emailService.js';
 
 /**
  * Hourly Cron Job: Checks pending tasks due in the next 24 hours,
@@ -13,8 +13,12 @@ export const checkAndSendReminders = async () => {
     console.log(`   Execution Time: ${new Date().toISOString()}`);
     console.log('============================================================');
 
-    // 1. Verify SMTP connection state
-    await verifySmtpConnection();
+    // 1. Check configuration validity (0ms roundtrip)
+    const configCheck = validateSmtpConfig();
+    if (!configCheck.valid) {
+      console.warn(`⚠️ [REMINDER JOB SKIPPED]: ${configCheck.reason}`);
+      return;
+    }
 
     const now = new Date();
     const next24Hours = new Date(now.getTime() + 24 * 60 * 60 * 1000);
