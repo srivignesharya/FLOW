@@ -3,7 +3,7 @@ import multer from 'multer';
 import { requireAuth } from '../middleware/authMiddleware.js';
 import { validateBody, textIngestSchema } from '../middleware/validation.js';
 import { aiServiceLimiter } from '../middleware/rateLimiter.js';
-import { getAiInstance, rotateAiKey, FLASH_MODEL, SYSTEM_INSTRUCTION, taskExtractionSchema } from '../services/gemini.js';
+import { getAiInstance, rotateAiKey, FLASH_MODEL, FALLBACK_MODEL, SYSTEM_INSTRUCTION, taskExtractionSchema } from '../services/gemini.js';
 import { supabaseAdmin } from '../services/supabase.js';
 import { calculateSmartPriority } from '../services/priorityEngine.js';
 import { performVisionOcr } from '../services/ocrService.js';
@@ -72,7 +72,7 @@ router.post('/file', requireAuth, aiServiceLimiter, upload.single('file'), async
       rotateAiKey();
       const rotatedAi = getAiInstance();
       aiResponse = await rotatedAi.models.generateContent({
-        model: 'gemini-1.5-flash',
+        model: FALLBACK_MODEL,
         contents: [
           {
             role: 'user',
@@ -178,7 +178,7 @@ router.post('/text', requireAuth, aiServiceLimiter, validateBody(textIngestSchem
       rotateAiKey();
       const rotatedAi = getAiInstance();
       aiResponse = await rotatedAi.models.generateContent({
-        model: 'gemini-1.5-flash',
+        model: FALLBACK_MODEL,
         contents: prompt,
         config: {
           systemInstruction: SYSTEM_INSTRUCTION,

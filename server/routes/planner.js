@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { requireAuth } from '../middleware/authMiddleware.js';
 import { aiServiceLimiter } from '../middleware/rateLimiter.js';
-import { ai, PRO_MODEL, studyPlanSchema, getAiInstance, rotateAiKey } from '../services/gemini.js';
+import { ai, PRO_MODEL, FALLBACK_MODEL, studyPlanSchema, getAiInstance, rotateAiKey } from '../services/gemini.js';
 import { supabaseAdmin } from '../services/supabase.js';
 
 const router = Router();
@@ -76,7 +76,7 @@ Instructions:
       rotateAiKey();
       const rotatedAi = getAiInstance();
       aiResponse = await rotatedAi.models.generateContent({
-        model: 'gemini-1.5-flash',
+        model: FALLBACK_MODEL,
         contents: prompt,
         config: {
           responseMimeType: 'application/json',
