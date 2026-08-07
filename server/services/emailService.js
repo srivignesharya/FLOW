@@ -362,7 +362,7 @@ export const sendTestEmail = async ({ toEmail, userName = 'Student' }) => {
       deadlineFormatted,
       estimatedStudyTime: '1.0 hr (60 min)',
       retries: 1,
-      throwOnError: false
+      throwOnError: true
     });
 
     const totalDurationMs = (performance.now() - funcStart).toFixed(2);
@@ -374,8 +374,6 @@ export const sendTestEmail = async ({ toEmail, userName = 'Student' }) => {
       console.log(`   - Total email service duration: ${totalDurationMs} ms`);
       console.log(`✅ [TEST EMAIL COMPLETED]: Email sent successfully to ${toEmail}`);
       return { success: true, smtpDurationMs, totalDurationMs, message: `Test email sent successfully to ${toEmail}` };
-    } else {
-      throw new Error(`SMTP email delivery failed for ${toEmail}. Check EMAIL_USER and EMAIL_PASS configuration.`);
     }
   } catch (err) {
     console.error(`❌ [TEST EMAIL ERROR]: ${err.message}`);
