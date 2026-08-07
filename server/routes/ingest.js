@@ -47,48 +47,42 @@ router.post('/file', requireAuth, aiServiceLimiter, upload.single('file'), async
     const prompt = `Today's date is ${dateStr}. Analyze this academic document ${ocrText ? '(OCR Preprocessed Text included below)' : ''} thoroughly and extract ALL tasks, assignments, exams, announcements, and deadlines. Include estimated study/completion time for each.\n${ocrText ? `OCR Text:\n${ocrText}` : ''}`;
 
     let aiResponse;
-    try {
-      const activeAi = getAiInstance();
-      aiResponse = await activeAi.models.generateContent({
-        model: FLASH_MODEL,
-        contents: [
-          {
-            role: 'user',
-            parts: [
-              { inlineData: { mimeType: req.file.mimetype, data: base64Data } },
-              { text: prompt }
-            ]
+    let lastError;
+    const keysCount = (process.env.GEMINI_API_KEY_2 ? 2 : 1) + (process.env.GEMINI_API_KEY_3 ? 1 : 0);
+
+    for (let attempt = 0; attempt < keysCount + 1; attempt++) {
+      try {
+        const activeAi = getAiInstance();
+        const targetModel = attempt === 0 ? FLASH_MODEL : FALLBACK_MODEL;
+        aiResponse = await activeAi.models.generateContent({
+          model: targetModel,
+          contents: [
+            {
+              role: 'user',
+              parts: [
+                { inlineData: { mimeType: req.file.mimetype, data: base64Data } },
+                { text: prompt }
+              ]
+            }
+          ],
+          config: {
+            systemInstruction: SYSTEM_INSTRUCTION,
+            responseMimeType: 'application/json',
+            responseSchema: taskExtractionSchema,
+            temperature: 0.1
           }
-        ],
-        config: {
-          systemInstruction: SYSTEM_INSTRUCTION,
-          responseMimeType: 'application/json',
-          responseSchema: taskExtractionSchema,
-          temperature: 0.1
-        }
-      });
-    } catch (apiErr) {
-      console.warn(`⚠️ [INGEST FILE GEMINI PRIMARY FAILED]: ${apiErr.message}. Rotating key and retrying with fallback model...`);
-      rotateAiKey();
-      const rotatedAi = getAiInstance();
-      aiResponse = await rotatedAi.models.generateContent({
-        model: FALLBACK_MODEL,
-        contents: [
-          {
-            role: 'user',
-            parts: [
-              { inlineData: { mimeType: req.file.mimetype, data: base64Data } },
-              { text: prompt }
-            ]
-          }
-        ],
-        config: {
-          systemInstruction: SYSTEM_INSTRUCTION,
-          responseMimeType: 'application/json',
-          responseSchema: taskExtractionSchema,
-          temperature: 0.1
-        }
-      });
+        });
+        lastError = null;
+        break; // Success!
+      } catch (err) {
+        lastError = err;
+        console.warn(`⚠️ [INGEST FILE ATTEMPT ${attempt + 1} FAILED]: ${err.message}. Rotating key...`);
+        rotateAiKey();
+      }
+    }
+
+    if (lastError && !aiResponse) {
+      throw lastError;
     }
 
     const parsedData = JSON.parse(aiResponse.text);
@@ -161,32 +155,34 @@ router.post('/text', requireAuth, aiServiceLimiter, validateBody(textIngestSchem
     const prompt = `Today's date is ${dateStr}. Extract all academic tasks, deadlines, and commitments from the following text:\n\n${textContent}`;
 
     let aiResponse;
-    try {
-      const activeAi = getAiInstance();
-      aiResponse = await activeAi.models.generateContent({
-        model: FLASH_MODEL,
-        contents: prompt,
-        config: {
-          systemInstruction: SYSTEM_INSTRUCTION,
-          responseMimeType: 'application/json',
-          responseSchema: taskExtractionSchema,
-          temperature: 0.1
-        }
-      });
-    } catch (apiErr) {
-      console.warn(`⚠️ [INGEST TEXT GEMINI PRIMARY FAILED]: ${apiErr.message}. Rotating key and retrying with fallback model...`);
-      rotateAiKey();
-      const rotatedAi = getAiInstance();
-      aiResponse = await rotatedAi.models.generateContent({
-        model: FALLBACK_MODEL,
-        contents: prompt,
-        config: {
-          systemInstruction: SYSTEM_INSTRUCTION,
-          responseMimeType: 'application/json',
-          responseSchema: taskExtractionSchema,
-          temperature: 0.1
-        }
-      });
+    let lastError;
+    const keysCount = (process.env.GEMINI_API_KEY_2 ? 2 : 1) + (process.env.GEMINI_API_KEY_3 ? 1 : 0);
+
+    for (let attempt = 0; attempt < keysCount + 1; attempt++) {
+      try {
+        const activeAi = getAiInstance();
+        const targetModel = attempt === 0 ? FLASH_MODEL : FALLBACK_MODEL;
+        aiResponse = await activeAi.models.generateContent({
+          model: targetModel,
+          contents: prompt,
+          config: {
+            systemInstruction: SYSTEM_INSTRUCTION,
+            responseMimeType: 'application/json',
+            responseSchema: taskExtractionSchema,
+            temperature: 0.1
+          }
+        });
+        lastError = null;
+        break; // Success!
+      } catch (err) {
+        lastError = err;
+        console.warn(`⚠️ [INGEST TEXT ATTEMPT ${attempt + 1} FAILED]: ${err.message}. Rotating key...`);
+        rotateAiKey();
+      }
+    }
+
+    if (lastError && !aiResponse) {
+      throw lastError;
     }
 
     const parsedData = JSON.parse(aiResponse.text);
