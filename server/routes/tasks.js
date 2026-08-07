@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { requireAuth } from '../middleware/authMiddleware.js';
 import { validateBody, manualTaskSchema } from '../middleware/validation.js';
 import { supabaseAdmin } from '../services/supabase.js';
+import { sanitizeAndValidateTask } from '../utils/taskValidator.js';
 
 const router = Router();
 
@@ -37,20 +38,25 @@ router.get('/', requireAuth, async (req, res, next) => {
 // ============================================================
 router.post('/', requireAuth, validateBody(manualTaskSchema), async (req, res, next) => {
   try {
-    const { title, subject, deadline, weightage, priority, estimatedMinutes, description, taskType } = req.body;
+    const rawTask = req.body;
+    const cleanTask = sanitizeAndValidateTask(rawTask, 0, rawTask.subject || 'General');
+
+    if (!cleanTask || !cleanTask.title) {
+      return res.status(400).json({ error: 'Task title is required and cannot be empty.' });
+    }
 
     const { data, error } = await supabaseAdmin
       .from('tasks')
       .insert({
         user_id: req.user.id,
-        title,
-        subject,
-        deadline,
-        weightage,
-        priority,
-        estimated_minutes: estimatedMinutes,
-        description,
-        task_type: taskType
+        title: cleanTask.title,
+        subject: cleanTask.subject,
+        deadline: cleanTask.deadline,
+        weightage: cleanTask.weightage,
+        priority: cleanTask.priority,
+        estimated_minutes: cleanTask.estimatedMinutes,
+        description: cleanTask.description,
+        task_type: cleanTask.taskType
       })
       .select()
       .single();

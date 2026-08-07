@@ -7,6 +7,7 @@ import { getAiInstance, rotateAiKey, FLASH_MODEL, FALLBACK_MODEL, SYSTEM_INSTRUC
 import { supabaseAdmin } from '../services/supabase.js';
 import { calculateSmartPriority } from '../services/priorityEngine.js';
 import { performVisionOcr } from '../services/ocrService.js';
+import { sanitizeTaskBatch } from '../utils/taskValidator.js';
 
 // Multer: store files in memory (no disk writes), max 100 MB
 const upload = multer({
@@ -102,14 +103,21 @@ router.post('/file', requireAuth, aiServiceLimiter, upload.single('file'), async
 
     if (docErr) throw docErr;
 
+    // Sanitize and filter out invalid/null title tasks
+    const validTasks = sanitizeTaskBatch(parsedData.tasks, 'Academic Document');
+
+    if (validTasks.length === 0) {
+      return res.status(200).json({ document: doc, tasks: [], message: 'No valid academic tasks with valid titles could be extracted.' });
+    }
+
     // Phase 2 & 7: Map and process tasks through Smart Priority & Explainable AI Engine
-    const tasksToInsert = parsedData.tasks.map(t => {
+    const tasksToInsert = validTasks.map(t => {
       const smartPriority = calculateSmartPriority({
         deadline: t.deadline,
         weightage: t.weightage || 0,
         estimatedMinutes: t.estimatedMinutes || 60,
         taskType: t.taskType || 'assignment',
-        remainingTasksCount: parsedData.tasks.length
+        remainingTasksCount: validTasks.length
       });
 
       return {
@@ -228,8 +236,10 @@ router.post('/text', requireAuth, aiServiceLimiter, validateBody(textIngestSchem
       }
     }
 
-    if (!parsedData.tasks || parsedData.tasks.length === 0) {
-      return res.status(200).json({ document: null, tasks: [], message: 'No academic tasks detected in the provided text.' });
+    const validTasks = sanitizeTaskBatch(parsedData.tasks, 'Text Syllabus');
+
+    if (validTasks.length === 0) {
+      return res.status(200).json({ document: null, tasks: [], message: 'No valid academic tasks with non-null titles detected in the provided text.' });
     }
 
     // Save document record for text ingestion
@@ -246,7 +256,7 @@ router.post('/text', requireAuth, aiServiceLimiter, validateBody(textIngestSchem
 
     if (docErr) throw docErr;
 
-    const tasksToInsert = parsedData.tasks.map(t => ({
+    const tasksToInsert = validTasks.map(t => ({
       user_id: userId,
       document_id: doc.id,
       title: t.title,
