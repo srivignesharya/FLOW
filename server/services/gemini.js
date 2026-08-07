@@ -23,6 +23,7 @@ let currentKeyIndex = 0;
 export const getAiInstance = () => {
   const keys = getApiKeys();
   const apiKey = keys[currentKeyIndex % keys.length];
+  console.log("Gemini key prefix:", process.env.GEMINI_API_KEY?.substring(0, 8));
   return new GoogleGenAI({ apiKey });
 };
 
