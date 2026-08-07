@@ -97,13 +97,14 @@ Key Capabilities & Instructions:
 - Format responses cleanly using Markdown headers, bullet points, and bold text.
 `;
 
-    // Build conversation messages
-    const messages = [
+    // Build conversation messages for Groq format
+    const groqMessages = [
+      { role: 'system', content: systemContext },
       ...recentHistory.map(m => ({
-        role: m.role === 'assistant' ? 'model' : 'user',
-        parts: [{ text: m.content }]
+        role: m.role === 'assistant' ? 'assistant' : 'user',
+        content: m.content
       })),
-      { role: 'user', parts: [{ text: query }] }
+      { role: 'user', content: query }
     ];
 
     let reply = '';
@@ -113,15 +114,12 @@ Key Capabilities & Instructions:
       try {
         const activeAi = getAiInstance();
         const targetModel = attempt === 0 ? PRO_MODEL : FALLBACK_MODEL;
-        const aiResponse = await activeAi.models.generateContent({
+        const completion = await activeAi.chat.completions.create({
           model: targetModel,
-          contents: messages,
-          config: {
-            systemInstruction: systemContext,
-            temperature: 0.4
-          }
+          messages: groqMessages,
+          temperature: 0.4
         });
-        reply = aiResponse.text;
+        reply = completion.choices[0]?.message?.content || '';
         lastError = null;
         break;
       } catch (err) {

@@ -59,34 +59,43 @@ Instructions:
 6. Include today and the next 6 days with real calendar dates in the "day" field.
 `;
 
-    let aiResponse;
-    try {
-      const activeAi = getAiInstance();
-      aiResponse = await activeAi.models.generateContent({
-        model: PRO_MODEL,
-        contents: prompt,
-        config: {
-          responseMimeType: 'application/json',
-          responseSchema: studyPlanSchema,
+    let aiResponseText = '';
+    let lastError;
+
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        const activeAi = getAiInstance();
+        const targetModel = attempt === 0 ? PRO_MODEL : FALLBACK_MODEL;
+        const completion = await activeAi.chat.completions.create({
+          model: targetModel,
+          messages: [
+            { role: 'system', content: 'You are an expert academic study planner. Output ONLY raw valid JSON conforming to the requested 7-day study plan structure.' },
+            { role: 'user', content: prompt }
+          ],
+          response_format: { type: 'json_object' },
           temperature: 0.2
-        }
-      });
-    } catch (apiErr) {
-      console.warn(`⚠️ [PLANNER GEMINI PRIMARY FAILED]: ${apiErr.message}. Rotating key and retrying with fallback model...`);
-      rotateAiKey();
-      const rotatedAi = getAiInstance();
-      aiResponse = await rotatedAi.models.generateContent({
-        model: FALLBACK_MODEL,
-        contents: prompt,
-        config: {
-          responseMimeType: 'application/json',
-          responseSchema: studyPlanSchema,
-          temperature: 0.2
-        }
-      });
+        });
+        aiResponseText = completion.choices[0]?.message?.content || '{}';
+        lastError = null;
+        break;
+      } catch (err) {
+        lastError = err;
+        console.warn(`⚠️ [PLANNER ATTEMPT ${attempt + 1} FAILED]: ${err.message}. Rotating key...`);
+        rotateAiKey();
+      }
     }
 
-    const planData = JSON.parse(aiResponse.text);
+    if (lastError && !aiResponseText) {
+      throw lastError;
+    }
+
+    let planData = {};
+    try {
+      planData = JSON.parse(aiResponseText);
+    } catch (e) {
+      const match = aiResponseText.match(/\{[\s\S]*\}/);
+      if (match) planData = JSON.parse(match[0]);
+    }
 
     // Deactivate old schedules
     await supabaseAdmin

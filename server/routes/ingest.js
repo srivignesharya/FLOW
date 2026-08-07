@@ -46,32 +46,23 @@ router.post('/file', requireAuth, aiServiceLimiter, upload.single('file'), async
 
     const prompt = `Today's date is ${dateStr}. Analyze this academic document ${ocrText ? '(OCR Preprocessed Text included below)' : ''} thoroughly and extract ALL tasks, assignments, exams, announcements, and deadlines. Include estimated study/completion time for each.\n${ocrText ? `OCR Text:\n${ocrText}` : ''}`;
 
-    let aiResponse;
+    let aiResponseText = '';
     let lastError;
-    const keysCount = (process.env.GEMINI_API_KEY_2 ? 2 : 1) + (process.env.GEMINI_API_KEY_3 ? 1 : 0);
 
     for (let attempt = 0; attempt < 3; attempt++) {
       try {
         const activeAi = getAiInstance();
         const targetModel = attempt === 0 ? FLASH_MODEL : FALLBACK_MODEL;
-        aiResponse = await activeAi.models.generateContent({
+        const completion = await activeAi.chat.completions.create({
           model: targetModel,
-          contents: [
-            {
-              role: 'user',
-              parts: [
-                { inlineData: { mimeType: req.file.mimetype, data: base64Data } },
-                { text: prompt }
-              ]
-            }
+          messages: [
+            { role: 'system', content: SYSTEM_INSTRUCTION },
+            { role: 'user', content: prompt }
           ],
-          config: {
-            systemInstruction: SYSTEM_INSTRUCTION,
-            responseMimeType: 'application/json',
-            responseSchema: taskExtractionSchema,
-            temperature: 0.1
-          }
+          response_format: { type: 'json_object' },
+          temperature: 0.1
         });
+        aiResponseText = completion.choices[0]?.message?.content || '{}';
         lastError = null;
         break; // Success!
       } catch (err) {
@@ -81,11 +72,17 @@ router.post('/file', requireAuth, aiServiceLimiter, upload.single('file'), async
       }
     }
 
-    if (lastError && !aiResponse) {
+    if (lastError && !aiResponseText) {
       throw lastError;
     }
 
-    const parsedData = JSON.parse(aiResponse.text);
+    let parsedData = { tasks: [] };
+    try {
+      parsedData = JSON.parse(aiResponseText);
+    } catch (e) {
+      const match = aiResponseText.match(/\{[\s\S]*\}/);
+      if (match) parsedData = JSON.parse(match[0]);
+    }
 
     if (!parsedData.tasks || parsedData.tasks.length === 0) {
       return res.status(200).json({ document: null, tasks: [], message: 'No academic tasks detected in this document.' });
@@ -154,24 +151,23 @@ router.post('/text', requireAuth, aiServiceLimiter, validateBody(textIngestSchem
 
     const prompt = `Today's date is ${dateStr}. Extract all academic tasks, deadlines, and commitments from the following text:\n\n${textContent}`;
 
-    let aiResponse;
+    let aiResponseText = '';
     let lastError;
-    const keysCount = (process.env.GEMINI_API_KEY_2 ? 2 : 1) + (process.env.GEMINI_API_KEY_3 ? 1 : 0);
 
     for (let attempt = 0; attempt < 3; attempt++) {
       try {
         const activeAi = getAiInstance();
         const targetModel = attempt === 0 ? FLASH_MODEL : FALLBACK_MODEL;
-        aiResponse = await activeAi.models.generateContent({
+        const completion = await activeAi.chat.completions.create({
           model: targetModel,
-          contents: prompt,
-          config: {
-            systemInstruction: SYSTEM_INSTRUCTION,
-            responseMimeType: 'application/json',
-            responseSchema: taskExtractionSchema,
-            temperature: 0.1
-          }
+          messages: [
+            { role: 'system', content: SYSTEM_INSTRUCTION },
+            { role: 'user', content: prompt }
+          ],
+          response_format: { type: 'json_object' },
+          temperature: 0.1
         });
+        aiResponseText = completion.choices[0]?.message?.content || '{}';
         lastError = null;
         break; // Success!
       } catch (err) {
@@ -183,8 +179,8 @@ router.post('/text', requireAuth, aiServiceLimiter, validateBody(textIngestSchem
 
     let parsedData = { tasks: [] };
 
-    if (lastError && !aiResponse) {
-      console.warn('⚠️ [SMART FALLBACK INGESTION ACTIVATED]: Gemini quota exhausted. Generating intelligent mock tasks for live presentation...');
+    if (lastError && !aiResponseText) {
+      console.warn('⚠️ [SMART FALLBACK INGESTION ACTIVATED]: AI quota exhausted. Generating intelligent mock tasks for live presentation...');
       
       const titleMatch = textContent.match(/Title:\s*(.+)/i) || textContent.match(/(Case Study|Assignment|Exam|Project)\s*:?\s*(.+)/i);
       const extractedTitle = titleMatch ? (titleMatch[1] || titleMatch[2]).trim() : 'Machine Learning Case Study';
@@ -218,17 +214,16 @@ router.post('/text', requireAuth, aiServiceLimiter, validateBody(textIngestSchem
       };
     } else {
       try {
-        const rawText = aiResponse.text || '';
         try {
-          parsedData = JSON.parse(rawText);
+          parsedData = JSON.parse(aiResponseText);
         } catch (e) {
-          const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+          const jsonMatch = aiResponseText.match(/\{[\s\S]*\}/);
           if (jsonMatch) {
             parsedData = JSON.parse(jsonMatch[0]);
           }
         }
       } catch (parseErr) {
-        console.error('Failed to parse Gemini response:', aiResponse?.text);
+        console.error('Failed to parse AI response:', aiResponseText);
         return res.status(200).json({ document: null, tasks: [], message: 'No structured academic tasks could be parsed from the response.' });
       }
     }
