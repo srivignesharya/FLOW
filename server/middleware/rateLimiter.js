@@ -6,7 +6,7 @@ import rateLimit from 'express-rate-limit';
  */
 export const standardLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 200,
+  max: 1000,
   standardHeaders: true,
   legacyHeaders: false,
   validate: false,
@@ -16,12 +16,12 @@ export const standardLimiter = rateLimit({
 });
 
 /**
- * AI service limiter: 30 requests per 15 minutes per IP.
+ * AI service limiter: 500 requests per 15 minutes per IP (High capacity for hackathon demo).
  * Applied to AI-powered endpoints (ingest, planner).
  */
 export const aiServiceLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 30,
+  max: 500,
   standardHeaders: true,
   legacyHeaders: false,
   validate: false,
