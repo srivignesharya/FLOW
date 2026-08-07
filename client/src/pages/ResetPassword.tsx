@@ -19,13 +19,33 @@ export const ResetPassword: React.FC = () => {
   const [searchParams] = useSearchParams();
 
   useEffect(() => {
-    // Check if recovery flow was triggered or token present
-    supabase.auth.onAuthStateChange(async (event) => {
-      if (event === 'PASSWORD_RECOVERY') {
-        console.log('[AUTH]: Password recovery session detected');
+    const handleRecoverySession = async () => {
+      // 1. Check if Supabase sent a PKCE code in query string (?code=...)
+      const code = searchParams.get('code');
+      if (code) {
+        console.log('[AUTH]: Exchanging PKCE code for recovery session...');
+        const { error } = await supabase.auth.exchangeCodeForSession(code);
+        if (error) {
+          console.error('[AUTH RECOVERY ERROR]:', error);
+          setError('Password reset link is invalid or has expired. Please request a new one.');
+        }
       }
-    });
-  }, []);
+
+      // 2. Listen to Supabase Auth State Change for PASSWORD_RECOVERY
+      const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+        console.log(`[AUTH EVENT]: ${event}`);
+        if (event === 'PASSWORD_RECOVERY') {
+          console.log('[AUTH]: Password recovery session active.');
+        }
+      });
+
+      return () => {
+        authListener.subscription.unsubscribe();
+      };
+    };
+
+    handleRecoverySession();
+  }, [searchParams]);
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
