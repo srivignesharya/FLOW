@@ -183,6 +183,44 @@ export const verifySmtpConnection = async () => {
 };
 
 /**
+ * Sends email via Brevo HTTP REST API (HTTPS Port 443 — allows sending to ANY recipient email without custom domain).
+ */
+export const sendViaBrevoApi = async ({ toEmail, subject, html }) => {
+  const apiKey = process.env.BREVO_API_KEY;
+  if (!apiKey) return false;
+
+  const senderEmail = process.env.BREVO_FROM_EMAIL || 'flowbyimv@gmail.com';
+  const senderName = process.env.BREVO_FROM_NAME || 'FLOW AI';
+
+  console.log(`📧 [BREVO HTTPS]: Dispatching mail to ${toEmail} via HTTPS Port 443 (from: ${senderName} <${senderEmail}>)...`);
+
+  const res = await fetch('https://api.brevo.com/v3/smtp/email', {
+    method: 'POST',
+    headers: {
+      'api-key': apiKey,
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    },
+    body: JSON.stringify({
+      sender: { name: senderName, email: senderEmail },
+      to: [{ email: toEmail }],
+      subject,
+      htmlContent: html
+    })
+  });
+
+  const data = await res.json();
+  if (!res.ok) {
+    const errorMsg = data.message || `Brevo API Error (HTTP ${res.status})`;
+    console.error(`❌ [BREVO HTTPS ERROR]: ${errorMsg}`);
+    throw new Error(errorMsg);
+  }
+
+  console.log(`✅ [BREVO HTTPS SUCCESS]: Email delivered to ${toEmail} (Message ID: ${data.messageId})`);
+  return true;
+};
+
+/**
  * Sends email via Resend HTTP REST API (HTTPS Port 443 — supported on all cloud platforms including Render).
  */
 export const sendViaResendApi = async ({ toEmail, subject, html }) => {
@@ -252,7 +290,16 @@ export const sendDeadlineReminder = async ({
   });
   const emailSubject = `📚 Reminder: "${assignmentTitle}" is due tomorrow`;
 
-  // Option 1: Fast HTTPS API Dispatch if RESEND_API_KEY is configured
+  // Option 1: Brevo HTTPS REST API (Delivers to ANY email address over HTTPS Port 443)
+  if (process.env.BREVO_API_KEY) {
+    try {
+      return await sendViaBrevoApi({ toEmail, subject: emailSubject, html });
+    } catch (err) {
+      console.warn(`⚠️ [BREVO HTTPS FAILED]: Falling back to Resend / Nodemailer. Error: ${err.message}`);
+    }
+  }
+
+  // Option 2: Resend HTTPS REST API
   if (process.env.RESEND_API_KEY) {
     try {
       return await sendViaResendApi({ toEmail, subject: emailSubject, html });
