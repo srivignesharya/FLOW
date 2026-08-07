@@ -303,20 +303,30 @@ export const TaskManager: React.FC = () => {
               {loading ? (
                 [...Array(4)].map((_, i) => <SkeletonRow key={i} />)
               ) : (
-                filteredTasks.map((task) => {
+                <AnimatePresence>
+                {filteredTasks.map((task) => {
                   const rel = getRelativeDeadline(task.deadline);
                   return (
-                    <tr key={task.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-900/50 transition-colors">
-                      <td className="p-4 text-center">
+                    <motion.tr
+                      key={task.id}
+                      layout
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.95, height: 0 }}
+                      transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                      className="border-b border-slate-100 dark:border-slate-800/60 hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors"
+                    >
+                      <td className="p-4">
                         <button
                           onClick={() => handleStatusToggle(task.id, task.status)}
-                          className={`h-5 w-5 rounded-md border flex items-center justify-center transition-colors ${
+                          className={`p-1.5 rounded-lg transition-transform active:scale-90 ${
                             task.status === 'completed'
-                              ? 'bg-emerald-500 border-emerald-500 text-white'
-                              : 'border-slate-300 dark:border-slate-700 hover:border-brand-500'
+                              ? 'text-emerald-500 bg-emerald-50 dark:bg-emerald-950/60'
+                              : 'text-slate-400 hover:text-emerald-500 hover:bg-slate-100 dark:hover:bg-slate-800'
                           }`}
+                          title={task.status === 'completed' ? 'Mark Pending' : 'Mark Completed'}
                         >
-                          {task.status === 'completed' && <CheckCircle2 className="h-3.5 w-3.5" />}
+                          <CheckCircle2 className={`h-5 w-5 transition-transform duration-200 ${task.status === 'completed' ? 'scale-110' : ''}`} />
                         </button>
                       </td>
 
@@ -398,9 +408,10 @@ export const TaskManager: React.FC = () => {
                           </button>
                         </div>
                       </td>
-                    </tr>
+                    </motion.tr>
                   );
-                })
+                })}
+                </AnimatePresence>
               )}
 
               {filteredTasks.length === 0 && !loading && (

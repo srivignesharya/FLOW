@@ -12,7 +12,7 @@ const links = [
   { to: '/tasks', label: 'Task Manager', icon: CheckSquare, exact: false },
   { to: '/planner', label: 'Study Planner', icon: Calendar, exact: false },
   { to: '/analytics', label: 'Analytics', icon: BarChart3, exact: false },
-  { to: '/copilot', label: 'AI Copilot', icon: Bot, exact: false },
+  { to: '/copilot', label: 'IMvision', icon: Bot, exact: false },
   { to: '/settings', label: 'Settings', icon: Settings, exact: false }
 ];
 

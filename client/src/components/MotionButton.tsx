@@ -12,6 +12,7 @@ interface MotionButtonProps {
   onClick?: (e: React.MouseEvent<HTMLButtonElement>) => void;
   type?: 'button' | 'submit' | 'reset';
   title?: string;
+  id?: string;
 }
 
 export const MotionButton: React.FC<MotionButtonProps> = ({
@@ -23,7 +24,8 @@ export const MotionButton: React.FC<MotionButtonProps> = ({
   disabled = false,
   onClick,
   type = 'button',
-  title
+  title,
+  id
 }) => {
   const getVariantStyles = () => {
     switch (variant) {

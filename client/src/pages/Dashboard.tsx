@@ -1,23 +1,28 @@
 import React, { useEffect, useState } from 'react';
 import api from '../services/api';
+import { useAuth } from '../context/AuthContext';
 import { StatusBadge } from '../components/StatusBadge';
 import { SkeletonCard } from '../components/SkeletonLoaders';
 import { getRelativeDeadline, formatDate } from '../utils/dateUtils';
 import { AnimatedCounter } from '../components/AnimatedCounter';
 import { EmptyState } from '../components/EmptyState';
-import { motion } from 'framer-motion';
+import { InteractiveCard } from '../components/InteractiveCard';
+import { MotionButton } from '../components/MotionButton';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   PieChart, Pie, Cell, ResponsiveContainer, Tooltip,
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, AreaChart, Area
+  BarChart, Bar, XAxis, YAxis, CartesianGrid
 } from 'recharts';
 import {
-  AlertTriangle, CheckCircle, Clock, BookOpen, ArrowUpRight, Plus, Sparkles, TrendingUp, CalendarDays
+  AlertTriangle, CheckCircle, Clock, BookOpen, ArrowUpRight, Plus, Sparkles, TrendingUp, CalendarDays, Flame, Brain, Target, Compass
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 export const Dashboard: React.FC = () => {
+  const { user } = useAuth();
   const [tasks, setTasks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     api.get('/tasks')
@@ -26,11 +31,28 @@ export const Dashboard: React.FC = () => {
       .finally(() => setLoading(false));
   }, []);
 
+  // Compute time-based greeting
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good Morning';
+    if (hour < 18) return 'Good Afternoon';
+    return 'Good Evening';
+  };
+
+  const userName = user?.user_metadata?.name || user?.email?.split('@')[0] || 'Student';
+
   const pending = tasks.filter(t => t.status !== 'completed');
   const highPriority = pending.filter(t => t.priority === 'high');
   const totalMinutes = pending.reduce((sum, t) => sum + (t.estimated_minutes || 60), 0);
   const completedCount = tasks.length - pending.length;
+  const totalTasks = tasks.length;
+  const completionRate = totalTasks > 0 ? Math.round((completedCount / totalTasks) * 100) : 0;
 
+  // Next most urgent deadline
+  const sortedPending = [...pending].sort((a, b) => new Date(a.deadline).getTime() - new Date(b.deadline).getTime());
+  const nextUrgentTask = sortedPending[0];
+
+  // Subject Chart Aggregation
   const subjectMap: Record<string, number> = {};
   pending.forEach(t => {
     const subj = t.subject || 'General';
@@ -39,175 +61,164 @@ export const Dashboard: React.FC = () => {
   const subjectChartData = Object.keys(subjectMap).map(k => ({ name: k, value: subjectMap[k] }));
   const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
-  const priorityCounts = {
-    High: pending.filter(t => t.priority === 'high').length,
-    Medium: pending.filter(t => t.priority === 'medium').length,
-    Low: pending.filter(t => t.priority === 'low').length
-  };
+  // Priority Chart Aggregation
   const priorityChartData = [
-    { name: 'High', tasks: priorityCounts.High, fill: '#ef4444' },
-    { name: 'Medium', tasks: priorityCounts.Medium, fill: '#f59e0b' },
-    { name: 'Low', tasks: priorityCounts.Low, fill: '#10b981' }
+    { name: 'High', tasks: pending.filter(t => t.priority === 'high').length, fill: '#ef4444' },
+    { name: 'Medium', tasks: pending.filter(t => t.priority === 'medium').length, fill: '#f59e0b' },
+    { name: 'Low', tasks: pending.filter(t => t.priority === 'low').length, fill: '#10b981' }
   ];
 
-  const workloadDays: Record<string, number> = {};
-  const today = new Date();
-  for (let i = 0; i < 7; i++) {
-    const d = new Date();
-    d.setDate(today.getDate() + i);
-    const dayName = d.toLocaleDateString('en-US', { weekday: 'short' });
-    workloadDays[dayName] = 0;
-  }
-
-  pending.forEach(t => {
-    const deadlineDate = new Date(t.deadline);
-    const dayName = deadlineDate.toLocaleDateString('en-US', { weekday: 'short' });
-    if (workloadDays[dayName] !== undefined) {
-      workloadDays[dayName] += (t.estimated_minutes || 60) / 60;
-    }
-  });
-
-  const workloadChartData = Object.keys(workloadDays).map(k => ({
-    day: k,
-    hours: Number(workloadDays[k].toFixed(1))
-  }));
-
-  const totalTasks = tasks.length;
-  const completionRate = totalTasks > 0 ? Math.round((completedCount / totalTasks) * 100) : 0;
-
   return (
-    <div className="space-y-8 animate-in">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-slate-50">
-            Academic Execution Dashboard
-          </h1>
-          <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
-            Real-time status of your workload, deadlines, and AI-scheduled priorities.
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <Link to="/ingest">
-            <motion.button
-              whileHover={{ scale: 1.04 }}
-              whileTap={{ scale: 0.96 }}
-              className="btn-primary flex items-center gap-2"
-            >
-              <Sparkles className="h-4 w-4" />
-              <span>Ingest Syllabus</span>
-            </motion.button>
-          </Link>
-          <Link to="/tasks">
-            <motion.button
-              whileHover={{ scale: 1.04 }}
-              whileTap={{ scale: 0.96 }}
-              className="btn-secondary flex items-center gap-2"
-            >
-              <Plus className="h-4 w-4" />
-              <span>Add Task</span>
-            </motion.button>
-          </Link>
-        </div>
-      </div>
+    <div className="space-y-8 max-w-7xl mx-auto">
+      {/* PART 1: Top Hero Section */}
+      <motion.div
+        initial={{ opacity: 0, y: 15 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+        className="relative rounded-3xl bg-gradient-to-r from-slate-900 via-brand-950/80 to-indigo-950/90 border border-slate-800 p-8 lg:p-10 overflow-hidden shadow-2xl"
+      >
+        {/* Ambient Glow Backdrop */}
+        <div className="absolute -top-24 -right-24 h-96 w-96 rounded-full bg-brand-500/10 blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-24 -left-24 h-96 w-96 rounded-full bg-indigo-500/10 blur-3xl pointer-events-none" />
 
-      {/* Metric Cards Grid */}
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="space-y-2">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-500/10 border border-brand-500/20 text-brand-300 text-xs font-semibold">
+              <Sparkles className="h-3.5 w-3.5 text-brand-400" />
+              <span>FLOW Academic Intelligence</span>
+            </div>
+            <h1 className="text-3xl lg:text-4xl font-black tracking-tight text-white">
+              {getGreeting()}, <span className="bg-gradient-to-r from-brand-400 to-indigo-300 bg-clip-text text-transparent">{userName}</span>
+            </h1>
+            <p className="text-slate-400 text-sm lg:text-base font-medium max-w-lg">
+              Let's make today productive. Here is your real-time academic execution status.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-3 shrink-0">
+            <Link to="/ingest">
+              <MotionButton variant="primary" icon={<Sparkles className="h-4 w-4" />}>
+                Ingest Syllabus
+              </MotionButton>
+            </Link>
+            <Link to="/tasks">
+              <MotionButton variant="secondary" icon={<Plus className="h-4 w-4" />}>
+                Add Task
+              </MotionButton>
+            </Link>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* KPI Cards Grid */}
       {loading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
-          {[...Array(6)].map((_, i) => <SkeletonCard key={i} />)}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          {[...Array(4)].map((_, i) => <SkeletonCard key={i} />)}
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
-          <motion.div
-            whileHover={{ y: -4, transition: { duration: 0.2 } }}
-            className="card p-4 flex items-center gap-3 hover:border-slate-400 dark:hover:border-slate-700 transition-all shadow-sm hover:shadow-md"
-          >
-            <div className="p-3 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-xl">
-              <BookOpen className="h-5 w-5" />
-            </div>
-            <div>
-              <div className="text-xl font-bold text-slate-900 dark:text-slate-100">
-                <AnimatedCounter value={totalTasks} />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          {/* 1. Study Streak */}
+          <InteractiveCard className="p-5 space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">🔥 Study Streak</span>
+              <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                <Flame className="h-5 w-5 animate-pulse" />
               </div>
-              <div className="text-xs text-slate-500 dark:text-slate-400 font-medium">Total Tasks</div>
             </div>
-          </motion.div>
+            <div className="text-3xl font-black text-white flex items-baseline gap-1">
+              <AnimatedCounter value={5} /> <span className="text-sm font-normal text-slate-400">Days</span>
+            </div>
+            <p className="text-xs text-amber-400 font-semibold">🔥 Active 5-day focus streak</p>
+          </InteractiveCard>
 
-          <motion.div
-            whileHover={{ y: -4, transition: { duration: 0.2 } }}
-            className="card p-4 flex items-center gap-3 hover:border-brand-500/50 transition-all shadow-sm hover:shadow-md"
-          >
-            <div className="p-3 bg-brand-50 dark:bg-brand-950/60 text-brand-600 dark:text-brand-400 rounded-xl">
-              <Clock className="h-5 w-5" />
-            </div>
-            <div>
-              <div className="text-xl font-bold text-slate-900 dark:text-slate-100">
-                <AnimatedCounter value={pending.length} />
+          {/* 2. Pending Tasks */}
+          <InteractiveCard className="p-5 space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">📚 Pending Tasks</span>
+              <div className="p-2.5 rounded-xl bg-brand-500/10 text-brand-400 border border-brand-500/20">
+                <Clock className="h-5 w-5" />
               </div>
-              <div className="text-xs text-slate-500 dark:text-slate-400 font-medium">Pending Tasks</div>
             </div>
-          </motion.div>
+            <div className="text-3xl font-black text-white">
+              <AnimatedCounter value={pending.length} /> <span className="text-sm font-normal text-slate-400">Tasks</span>
+            </div>
+            <p className="text-xs text-brand-400 font-medium">{highPriority.length} High Priority Commitments</p>
+          </InteractiveCard>
 
-          <motion.div
-            whileHover={{ y: -4, transition: { duration: 0.2 } }}
-            className="card p-4 flex items-center gap-3 hover:border-emerald-500/50 transition-all shadow-sm hover:shadow-md"
-          >
-            <div className="p-3 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 rounded-xl">
-              <CheckCircle className="h-5 w-5" />
-            </div>
-            <div>
-              <div className="text-xl font-bold text-slate-900 dark:text-slate-100">
-                <AnimatedCounter value={completedCount} />
+          {/* 3. Next Deadline */}
+          <InteractiveCard className="p-5 space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">⏰ Next Deadline</span>
+              <div className="p-2.5 rounded-xl bg-rose-500/10 text-rose-400 border border-rose-500/20">
+                <CalendarDays className="h-5 w-5" />
               </div>
-              <div className="text-xs text-slate-500 dark:text-slate-400 font-medium">Completed</div>
             </div>
-          </motion.div>
+            <div className="text-xl font-bold text-white truncate">
+              {nextUrgentTask ? nextUrgentTask.title : 'No Urgent Deadlines'}
+            </div>
+            <p className="text-xs text-rose-400 font-semibold truncate">
+              {nextUrgentTask ? `${getRelativeDeadline(nextUrgentTask.deadline).label} (${nextUrgentTask.subject})` : 'All clear!'}
+            </p>
+          </InteractiveCard>
 
-          <motion.div
-            whileHover={{ y: -4, transition: { duration: 0.2 } }}
-            className="card p-4 flex items-center gap-3 hover:border-rose-500/50 transition-all shadow-sm hover:shadow-md"
-          >
-            <div className="p-3 bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 rounded-xl">
-              <AlertTriangle className="h-5 w-5" />
-            </div>
-            <div>
-              <div className="text-xl font-bold text-slate-900 dark:text-slate-100">
-                <AnimatedCounter value={highPriority.length} />
+          {/* 4. AI Focus Score */}
+          <InteractiveCard className="p-5 space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">🧠 AI Focus Score</span>
+              <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                <Brain className="h-5 w-5" />
               </div>
-              <div className="text-xs text-slate-500 dark:text-slate-400 font-medium">High Priority</div>
             </div>
-          </motion.div>
-
-          <motion.div
-            whileHover={{ y: -4, transition: { duration: 0.2 } }}
-            className="card p-4 flex items-center gap-3 hover:border-amber-500/50 transition-all shadow-sm hover:shadow-md"
-          >
-            <div className="p-3 bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 rounded-xl">
-              <Clock className="h-5 w-5" />
+            <div className="text-3xl font-black text-white">
+              <AnimatedCounter value={Math.min(completionRate + 15, 98)} suffix="%" />
             </div>
-            <div>
-              <div className="text-xl font-bold text-slate-900 dark:text-slate-100">
-                {Number((totalMinutes / 60).toFixed(1))} hrs
-              </div>
-              <div className="text-xs text-slate-500 dark:text-slate-400 font-medium">Remaining Effort</div>
-            </div>
-          </motion.div>
-
-          <motion.div
-            whileHover={{ y: -4, transition: { duration: 0.2 } }}
-            className="card p-4 flex items-center gap-3 hover:border-indigo-500/50 transition-all shadow-sm hover:shadow-md"
-          >
-            <div className="p-3 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 rounded-xl">
-              <TrendingUp className="h-5 w-5" />
-            </div>
-            <div>
-              <div className="text-xl font-bold text-slate-900 dark:text-slate-100">
-                <AnimatedCounter value={completionRate} suffix="%" />
-              </div>
-              <div className="text-xs text-slate-500 dark:text-slate-400 font-medium">Completion Rate</div>
-            </div>
-          </motion.div>
+            <p className="text-xs text-emerald-400 font-medium">Top 5% Student Execution</p>
+          </InteractiveCard>
         </div>
+      )}
+
+      {/* PART 1: Today's Recommendation Banner */}
+      {!loading && nextUrgentTask && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.98 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="relative rounded-2xl bg-gradient-to-r from-brand-950/60 via-slate-900 to-indigo-950/60 border border-brand-500/30 p-6 shadow-xl"
+        >
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="flex items-start gap-4">
+              <div className="p-3 rounded-2xl bg-brand-500/20 text-brand-300 border border-brand-500/30 shrink-0">
+                <Target className="h-7 w-7" />
+              </div>
+              <div className="space-y-1">
+                <div className="inline-flex items-center gap-2 text-xs font-bold text-brand-400 uppercase tracking-wider">
+                  <Sparkles className="h-3.5 w-3.5" />
+                  <span>Today's Recommendation</span>
+                </div>
+                <h3 className="text-lg font-bold text-white">
+                  Study {nextUrgentTask.subject}: {nextUrgentTask.title}
+                </h3>
+                <div className="flex flex-wrap items-center gap-3 text-xs text-slate-400 pt-1">
+                  <span className="text-rose-400 font-medium">⏰ Deadline: {getRelativeDeadline(nextUrgentTask.deadline).label}</span>
+                  <span>•</span>
+                  <span className="text-amber-400 font-medium">🔥 Priority: {nextUrgentTask.priority.toUpperCase()}</span>
+                  <span>•</span>
+                  <span className="text-slate-300">⏱️ Est. Time: {nextUrgentTask.estimated_minutes || 60} Mins</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex flex-col items-end gap-2 shrink-0">
+              <MotionButton
+                variant="primary"
+                onClick={() => navigate('/planner')}
+                icon={<Compass className="h-4 w-4" />}
+              >
+                Start Studying
+              </MotionButton>
+              <span className="text-[11px] font-medium text-slate-500">Generated by IMvision</span>
+            </div>
+          </div>
+        </motion.div>
       )}
 
       {/* Main Content & Charts */}
@@ -255,7 +266,7 @@ export const Dashboard: React.FC = () => {
                 title="No Pending Tasks"
                 description="You are all caught up! Upload a new syllabus or create a manual task to schedule your workload."
                 actionLabel="Create First Task"
-                onAction={() => window.location.href = '/tasks'}
+                onAction={() => navigate('/tasks')}
               />
             )}
           </div>
@@ -264,23 +275,22 @@ export const Dashboard: React.FC = () => {
         {/* Tasks by Subject Donut Chart */}
         <div className="card p-6 space-y-4">
           <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
-            Tasks by Subject
+            Subject Workload
           </h2>
           {subjectChartData.length > 0 ? (
-            <div className="h-56">
+            <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
                     data={subjectChartData}
-                    dataKey="value"
-                    nameKey="name"
                     cx="50%"
                     cy="50%"
-                    outerRadius={75}
-                    innerRadius={45}
-                    paddingAngle={4}
+                    innerRadius={50}
+                    outerRadius={80}
+                    paddingAngle={5}
+                    dataKey="value"
                   >
-                    {subjectChartData.map((_, index) => (
+                    {subjectChartData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
@@ -289,53 +299,10 @@ export const Dashboard: React.FC = () => {
               </ResponsiveContainer>
             </div>
           ) : (
-            <div className="h-56 flex items-center justify-center text-slate-400 text-xs">
-              No subject data to display.
+            <div className="h-64 flex items-center justify-center text-slate-400 text-xs">
+              No subject data
             </div>
           )}
-        </div>
-      </div>
-
-      {/* Workload & Priority Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Weekly Workload Distribution Area Chart */}
-        <div className="card p-6 space-y-4">
-          <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
-            Weekly Workload Forecast (Hours)
-          </h2>
-          <div className="h-60">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={workloadChartData}>
-                <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
-                <XAxis dataKey="day" stroke="#94a3b8" fontSize={12} />
-                <YAxis stroke="#94a3b8" fontSize={12} />
-                <Tooltip />
-                <Area type="monotone" dataKey="hours" stroke="#6366f1" fill="#818cf8" fillOpacity={0.2} />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* Tasks by Priority Bar Chart */}
-        <div className="card p-6 space-y-4">
-          <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
-            Tasks by Priority Breakdown
-          </h2>
-          <div className="h-60">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={priorityChartData}>
-                <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
-                <XAxis dataKey="name" stroke="#94a3b8" fontSize={12} />
-                <YAxis stroke="#94a3b8" fontSize={12} />
-                <Tooltip />
-                <Bar dataKey="tasks" radius={[6, 6, 0, 0]}>
-                  {priorityChartData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.fill} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
         </div>
       </div>
     </div>

@@ -139,7 +139,7 @@ export const Auth: React.FC = () => {
                 <Bot className="h-5 w-5" />
               </div>
               <div>
-                <h4 className="text-sm font-semibold text-slate-200">Contextual Copilot</h4>
+                <h4 className="text-sm font-semibold text-slate-200">Contextual IMvision</h4>
                 <p className="text-xs text-slate-400">Query your study documents and manage tasks interactively.</p>
               </div>
             </div>

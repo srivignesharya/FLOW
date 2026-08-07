@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import api from '../services/api';
-import { Upload, FileText, CheckCircle2, AlertCircle, Sparkles, ArrowRight, Loader2 } from 'lucide-react';
+import { Upload, FileText, CheckCircle2, AlertCircle, Sparkles, ArrowRight, FileCheck, Layers } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { StatusBadge } from '../components/StatusBadge';
+import { MotionButton } from '../components/MotionButton';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export const IngestStudio: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'file' | 'text'>('file');
@@ -11,6 +13,7 @@ export const IngestStudio: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [result, setResult] = useState<{ document: any; tasks: any[] } | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
 
   const navigate = useNavigate();
 
@@ -61,25 +64,43 @@ export const IngestStudio: React.FC = () => {
     }
   };
 
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = () => {
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      setFile(e.dataTransfer.files[0]);
+    }
+  };
+
   return (
-    <div className="space-y-8 max-w-4xl mx-auto animate-in">
+    <div className="space-y-8 max-w-4xl mx-auto">
       <div>
-        <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-slate-50">
-          Ingest Studio
+        <h1 className="text-2xl font-extrabold tracking-tight text-white flex items-center gap-3">
+          <Upload className="h-7 w-7 text-brand-400" />
+          <span>Syllabus & Document Ingest Studio</span>
         </h1>
-        <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
-          Upload course syllabi, lecture slides, assignment PDFs, or paste raw announcement text. Gemini AI extracts commitments automatically.
+        <p className="text-slate-400 text-sm mt-1">
+          Upload course syllabi, lecture slides, assignment PDFs, or paste raw announcement text. IMvision AI extracts commitments automatically.
         </p>
       </div>
 
       {/* Tabs */}
-      <div className="flex border-b border-slate-200 dark:border-slate-800 gap-6">
+      <div className="flex border-b border-slate-800 gap-6">
         <button
           onClick={() => { setActiveTab('file'); setError(''); setResult(null); }}
           className={`pb-3 font-semibold text-sm flex items-center gap-2 border-b-2 transition-all ${
             activeTab === 'file'
-              ? 'border-brand-600 text-brand-600 dark:text-brand-400'
-              : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+              ? 'border-brand-500 text-brand-400 font-bold'
+              : 'border-transparent text-slate-400 hover:text-slate-200'
           }`}
         >
           <Upload className="h-4 w-4" />
@@ -90,8 +111,8 @@ export const IngestStudio: React.FC = () => {
           onClick={() => { setActiveTab('text'); setError(''); setResult(null); }}
           className={`pb-3 font-semibold text-sm flex items-center gap-2 border-b-2 transition-all ${
             activeTab === 'text'
-              ? 'border-brand-600 text-brand-600 dark:text-brand-400'
-              : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+              ? 'border-brand-500 text-brand-400 font-bold'
+              : 'border-transparent text-slate-400 hover:text-slate-200'
           }`}
         >
           <FileText className="h-4 w-4" />
@@ -106,10 +127,21 @@ export const IngestStudio: React.FC = () => {
         </div>
       )}
 
-      {/* File Form */}
+      {/* PART 3: PDF Upload Glass Drag & Drop Zone */}
       {activeTab === 'file' && (
-        <form onSubmit={handleFileUpload} className="card p-6 space-y-6">
-          <div className="border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-brand-500 dark:hover:border-brand-500 rounded-2xl p-8 text-center transition-colors bg-slate-50/50 dark:bg-slate-900/50">
+        <form onSubmit={handleFileUpload} className="card p-6 space-y-6 bg-slate-900/60 backdrop-blur-2xl border-slate-800">
+          <div
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            className={`border-2 border-dashed rounded-3xl p-10 text-center transition-all ${
+              isDragging
+                ? 'border-brand-400 bg-brand-500/10 scale-[1.01]'
+                : file
+                ? 'border-emerald-500/50 bg-emerald-950/20'
+                : 'border-slate-700/80 hover:border-brand-500/50 bg-slate-950/40'
+            }`}
+          >
             <input
               id="file-input"
               type="file"
@@ -117,130 +149,118 @@ export const IngestStudio: React.FC = () => {
               onChange={(e) => setFile(e.target.files?.[0] || null)}
               className="hidden"
             />
-            <label htmlFor="file-input" className="cursor-pointer flex flex-col items-center gap-3">
-              <div className="p-4 bg-brand-50 dark:bg-brand-950/60 text-brand-600 dark:text-brand-400 rounded-2xl">
-                <Upload className="h-8 w-8" />
+            <label htmlFor="file-input" className="cursor-pointer flex flex-col items-center gap-4">
+              <div className="relative">
+                <div className="absolute -inset-3 bg-brand-500/20 rounded-full blur-xl animate-pulse" />
+                <div className="relative p-5 rounded-2xl bg-gradient-to-tr from-brand-600 to-indigo-600 text-white shadow-xl shadow-brand-500/20">
+                  {file ? <FileCheck className="h-10 w-10 text-emerald-300" /> : <Upload className="h-10 w-10" />}
+                </div>
               </div>
               <div>
-                <span className="font-semibold text-sm text-slate-800 dark:text-slate-200">
+                <span className="font-bold text-base text-white">
                   {file ? file.name : 'Click to upload or drag & drop syllabus document'}
                 </span>
-                <p className="text-xs text-slate-400 mt-1">Supports PDF, PNG, JPEG, WebP (Maximum file size: 100 MB)</p>
+                <p className="text-xs text-slate-400 mt-1">
+                  Supports PDF, PNG, JPEG, WebP (Maximum file size limit: 100 MB)
+                </p>
               </div>
             </label>
           </div>
 
           <div className="flex justify-end">
-            <button
+            <MotionButton
               id="ingest-file-btn"
               type="submit"
               disabled={!file || loading}
-              className="btn-primary"
+              isLoading={loading}
+              icon={<Sparkles className="h-4 w-4" />}
             >
-              {loading ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  <span>Processing with Gemini 2.5...</span>
-                </>
-              ) : (
-                <>
-                  <Sparkles className="h-4 w-4" />
-                  <span>Extract Tasks & Commitments</span>
-                </>
-              )}
-            </button>
+              Extract Tasks & Commitments
+            </MotionButton>
           </div>
         </form>
       )}
 
       {/* Text Form */}
       {activeTab === 'text' && (
-        <form onSubmit={handleTextUpload} className="card p-6 space-y-6">
+        <form onSubmit={handleTextUpload} className="card p-6 space-y-6 bg-slate-900/60 backdrop-blur-2xl border-slate-800">
           <div>
             <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
-              Raw Text / Circular Content
+              Raw Syllabus or Circular Text
             </label>
             <textarea
-              id="ingest-text-area"
               rows={8}
-              required
               value={text}
               onChange={(e) => setText(e.target.value)}
-              placeholder="Paste syllabus guidelines, exam schedule details, or homework announcements here..."
-              className="input font-mono text-xs"
+              placeholder="Paste announcement text, assignment guidelines, or syllabus excerpts..."
+              className="input text-sm leading-relaxed"
             />
           </div>
 
           <div className="flex justify-end">
-            <button
+            <MotionButton
               id="ingest-text-btn"
               type="submit"
               disabled={!text.trim() || loading}
-              className="btn-primary"
+              isLoading={loading}
+              icon={<Sparkles className="h-4 w-4" />}
             >
-              {loading ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  <span>Processing with Gemini 2.5...</span>
-                </>
-              ) : (
-                <>
-                  <Sparkles className="h-4 w-4" />
-                  <span>Extract Tasks & Commitments</span>
-                </>
-              )}
-            </button>
+              Extract Tasks & Commitments
+            </MotionButton>
           </div>
         </form>
       )}
 
-      {/* Results Display */}
+      {/* Extracted Results List */}
       {result && (
-        <div className="card p-6 space-y-6 animate-in border-emerald-500/40">
-          <div className="flex items-center justify-between">
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="card p-6 space-y-6 bg-slate-900/80 border-slate-800"
+        >
+          <div className="flex items-center justify-between border-b border-slate-800 pb-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400 rounded-xl">
+              <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400">
                 <CheckCircle2 className="h-6 w-6" />
               </div>
               <div>
-                <h3 className="font-bold text-slate-900 dark:text-slate-100">
-                  Extraction Complete!
+                <h3 className="font-bold text-base text-white">
+                  Successfully Extracted {result.tasks.length} Commitments
                 </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Found {result.tasks.length} academic task(s) saved to your database.
+                <p className="text-xs text-slate-400">
+                  Document: {result.document.file_name}
                 </p>
               </div>
             </div>
-
-            <button
+            <MotionButton
               onClick={() => navigate('/tasks')}
-              className="btn-secondary text-xs flex items-center gap-2"
+              variant="secondary"
+              icon={<ArrowRight className="h-4 w-4" />}
             >
-              <span>View Task Manager</span>
-              <ArrowRight className="h-3.5 w-3.5" />
-            </button>
+              View in Task Manager
+            </MotionButton>
           </div>
 
-          <div className="divide-y divide-slate-100 dark:divide-slate-800">
-            {result.tasks.map((task) => (
-              <div key={task.id} className="py-4 space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="font-bold text-sm text-slate-900 dark:text-slate-100">{task.title}</span>
-                  <div className="flex items-center gap-2">
-                    <StatusBadge type="priority" value={task.priority} />
-                    <StatusBadge type="taskType" value={task.task_type || 'assignment'} />
+          <div className="divide-y divide-slate-800 space-y-4">
+            {result.tasks.map((t, idx) => (
+              <div key={idx} className="pt-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="space-y-1">
+                  <div className="font-bold text-sm text-white">{t.title}</div>
+                  <div className="text-xs text-slate-400 flex items-center gap-2">
+                    <span className="font-medium text-slate-300">{t.subject}</span>
+                    <span>•</span>
+                    <span>Deadline: {new Date(t.deadline).toLocaleDateString()}</span>
                   </div>
+                  <p className="text-xs text-slate-400 italic">"{t.reasoning}"</p>
                 </div>
-                <p className="text-xs text-slate-500 dark:text-slate-400">{task.description}</p>
-                <div className="flex items-center gap-4 text-xs text-slate-400">
-                  <span>Subject: <strong className="text-slate-300">{task.subject}</strong></span>
-                  <span>Deadline: <strong className="text-slate-300">{new Date(task.deadline).toLocaleString()}</strong></span>
-                  <span>Est. Time: <strong className="text-slate-300">{task.estimated_minutes} min</strong></span>
+                <div className="flex items-center gap-2 shrink-0">
+                  <StatusBadge type="priority" value={t.priority} />
+                  <StatusBadge type="taskType" value={t.task_type || 'assignment'} />
                 </div>
               </div>
             ))}
           </div>
-        </div>
+        </motion.div>
       )}
     </div>
   );
