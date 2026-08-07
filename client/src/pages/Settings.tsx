@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import api from '../services/api';
+import { showToast, triggerCelebration } from '../components/ToastContainer';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useToast } from '../context/ToastContext';
@@ -63,7 +64,8 @@ export const Settings: React.FC = () => {
     setError('');
     try {
       const res = await api.post('/test-email');
-      showToast(res.data.message || `Test email sent to ${user?.email}`, 'success');
+      triggerCelebration();
+      showToast(res.data.message || `Test email dispatched to ${user?.email}`, 'success');
     } catch (err: any) {
       console.error(err);
       const msg = err.response?.data?.error || 'Failed to send test email. Verify SMTP settings in server/.env';

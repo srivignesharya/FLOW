@@ -79,17 +79,27 @@ export const Sidebar: React.FC = () => {
             title={collapsed ? link.label : undefined}
             className={({ isActive }) =>
               clsx(
-                'flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium text-sm transition-all group',
+                'relative flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium text-sm transition-all group',
                 collapsed ? 'justify-center' : '',
                 isActive
-                  ? 'bg-brand-50 dark:bg-brand-950/60 text-brand-600 dark:text-brand-400'
-                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/70 hover:text-slate-900 dark:hover:text-slate-100'
+                  ? 'text-brand-600 dark:text-brand-400 font-semibold'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
               )
             }
           >
             {({ isActive }) => (
               <>
-                <link.icon className={clsx('h-5 w-5 shrink-0 transition-colors', isActive ? 'text-brand-600 dark:text-brand-400' : '')} />
+                {isActive && (
+                  <motion.div
+                    layoutId="sidebar-active-pill"
+                    className="absolute inset-0 bg-brand-50 dark:bg-brand-950/60 border border-brand-200/50 dark:border-brand-800/50 rounded-xl shadow-sm"
+                    transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                  />
+                )}
+                <link.icon className={clsx(
+                  'relative z-10 h-5 w-5 shrink-0 transition-transform duration-200 group-hover:scale-110',
+                  isActive ? 'text-brand-600 dark:text-brand-400' : 'group-hover:text-slate-900 dark:group-hover:text-slate-100'
+                )} />
                 <AnimatePresence>
                   {!collapsed && (
                     <motion.span
@@ -97,7 +107,7 @@ export const Sidebar: React.FC = () => {
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
                       transition={{ duration: 0.1 }}
-                      className="whitespace-nowrap"
+                      className="relative z-10 whitespace-nowrap"
                     >
                       {link.label}
                     </motion.span>
@@ -105,8 +115,8 @@ export const Sidebar: React.FC = () => {
                 </AnimatePresence>
                 {!collapsed && isActive && (
                   <motion.div
-                    layoutId="active-indicator"
-                    className="ml-auto h-1.5 w-1.5 rounded-full bg-brand-600 dark:bg-brand-400"
+                    layoutId="active-indicator-dot"
+                    className="relative z-10 ml-auto h-2 w-2 rounded-full bg-brand-500 shadow-sm shadow-brand-500/50"
                   />
                 )}
               </>

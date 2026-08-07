@@ -5,6 +5,7 @@ import { SkeletonRow } from '../components/SkeletonLoaders';
 import { useToast } from '../context/ToastContext';
 import { getRelativeDeadline, formatDate } from '../utils/dateUtils';
 import { getGoogleCalendarUrl, downloadIcsFile } from '../utils/calendar';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Plus, Trash2, CheckCircle2, Clock, Filter, Search, Edit3, X, ArrowUpDown, Calendar, Download
 } from 'lucide-react';
@@ -415,19 +416,34 @@ export const TaskManager: React.FC = () => {
       </div>
 
       {/* Task Creation & Edit Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="card w-full max-w-lg p-6 space-y-6 animate-in">
-            <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-4">
-              <h3 className="font-bold text-lg text-slate-900 dark:text-slate-100">
-                {editingTask ? 'Edit Task Commitment' : 'Create New Task'}
-              </h3>
-              <button onClick={() => setIsModalOpen(false)} className="p-1 rounded-lg text-slate-400 hover:text-slate-200">
-                <X className="h-5 w-5" />
-              </button>
-            </div>
+      <AnimatePresence>
+        {isModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsModalOpen(false)}
+              className="absolute inset-0 bg-slate-950/80 backdrop-blur-md"
+            />
 
-            <form onSubmit={handleSaveTask} className="space-y-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 15 }}
+              transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+              className="card relative z-10 w-full max-w-lg p-6 space-y-6 shadow-2xl"
+            >
+              <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-4">
+                <h3 className="font-bold text-lg text-slate-900 dark:text-slate-100">
+                  {editingTask ? 'Edit Task Commitment' : 'Create New Task'}
+                </h3>
+                <button onClick={() => setIsModalOpen(false)} className="p-1.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors">
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              <form onSubmit={handleSaveTask} className="space-y-4">
               <div>
                 <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">Task Title</label>
                 <input
@@ -533,9 +549,10 @@ export const TaskManager: React.FC = () => {
                 </button>
               </div>
             </form>
-          </div>
+          </motion.div>
         </div>
       )}
-    </div>
-  );
+    </AnimatePresence>
+  </div>
+);
 };

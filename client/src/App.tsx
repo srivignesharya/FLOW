@@ -14,6 +14,8 @@ import { Analytics } from './pages/Analytics';
 import { Copilot } from './pages/Copilot';
 import { Settings } from './pages/Settings';
 
+import { ToastProvider } from './components/ToastContainer';
+
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, loading } = useAuth();
 
@@ -30,7 +32,9 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 
 export const App: React.FC = () => {
   return (
-    <Routes>
+    <>
+      <ToastProvider />
+      <Routes>
       <Route path="/auth" element={<Auth />} />
       <Route path="/reset-password" element={<ResetPassword />} />
 
@@ -100,6 +104,7 @@ export const App: React.FC = () => {
       {/* Catch-all fallback */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
+    </>
   );
 };
 

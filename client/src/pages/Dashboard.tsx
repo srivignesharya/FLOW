@@ -3,12 +3,15 @@ import api from '../services/api';
 import { StatusBadge } from '../components/StatusBadge';
 import { SkeletonCard } from '../components/SkeletonLoaders';
 import { getRelativeDeadline, formatDate } from '../utils/dateUtils';
+import { AnimatedCounter } from '../components/AnimatedCounter';
+import { EmptyState } from '../components/EmptyState';
+import { motion } from 'framer-motion';
 import {
   PieChart, Pie, Cell, ResponsiveContainer, Tooltip,
   BarChart, Bar, XAxis, YAxis, CartesianGrid, AreaChart, Area
 } from 'recharts';
 import {
-  AlertTriangle, CheckCircle, Clock, BookOpen, ArrowUpRight, Plus, Sparkles, TrendingUp
+  AlertTriangle, CheckCircle, Clock, BookOpen, ArrowUpRight, Plus, Sparkles, TrendingUp, CalendarDays
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -28,7 +31,6 @@ export const Dashboard: React.FC = () => {
   const totalMinutes = pending.reduce((sum, t) => sum + (t.estimated_minutes || 60), 0);
   const completedCount = tasks.length - pending.length;
 
-  // 1. Subject Pie Chart Aggregation
   const subjectMap: Record<string, number> = {};
   pending.forEach(t => {
     const subj = t.subject || 'General';
@@ -37,7 +39,6 @@ export const Dashboard: React.FC = () => {
   const subjectChartData = Object.keys(subjectMap).map(k => ({ name: k, value: subjectMap[k] }));
   const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
-  // 2. Priority Bar Chart Aggregation
   const priorityCounts = {
     High: pending.filter(t => t.priority === 'high').length,
     Medium: pending.filter(t => t.priority === 'medium').length,
@@ -49,7 +50,6 @@ export const Dashboard: React.FC = () => {
     { name: 'Low', tasks: priorityCounts.Low, fill: '#10b981' }
   ];
 
-  // 3. Weekly Workload Distribution (Daily estimated study hours next 7 days)
   const workloadDays: Record<string, number> = {};
   const today = new Date();
   for (let i = 0; i < 7; i++) {
@@ -60,22 +60,20 @@ export const Dashboard: React.FC = () => {
   }
 
   pending.forEach(t => {
-    if (t.deadline) {
-      const d = new Date(t.deadline);
-      const dayName = d.toLocaleDateString('en-US', { weekday: 'short' });
-      if (workloadDays[dayName] !== undefined) {
-        workloadDays[dayName] += Number((t.estimated_minutes / 60).toFixed(1));
-      }
+    const deadlineDate = new Date(t.deadline);
+    const dayName = deadlineDate.toLocaleDateString('en-US', { weekday: 'short' });
+    if (workloadDays[dayName] !== undefined) {
+      workloadDays[dayName] += (t.estimated_minutes || 60) / 60;
     }
   });
 
-  const workloadChartData = Object.keys(workloadDays).map(day => ({
-    day,
-    hours: workloadDays[day]
+  const workloadChartData = Object.keys(workloadDays).map(k => ({
+    day: k,
+    hours: Number(workloadDays[k].toFixed(1))
   }));
 
   const totalTasks = tasks.length;
-  const progressPercent = totalTasks > 0 ? Math.round((completedCount / totalTasks) * 100) : 0;
+  const completionRate = totalTasks > 0 ? Math.round((completedCount / totalTasks) * 100) : 0;
 
   return (
     <div className="space-y-8 animate-in">
@@ -90,13 +88,25 @@ export const Dashboard: React.FC = () => {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <Link to="/ingest" className="btn-primary flex items-center gap-2">
-            <Sparkles className="h-4 w-4" />
-            <span>Ingest Syllabus</span>
+          <Link to="/ingest">
+            <motion.button
+              whileHover={{ scale: 1.04 }}
+              whileTap={{ scale: 0.96 }}
+              className="btn-primary flex items-center gap-2"
+            >
+              <Sparkles className="h-4 w-4" />
+              <span>Ingest Syllabus</span>
+            </motion.button>
           </Link>
-          <Link to="/tasks" className="btn-secondary flex items-center gap-2">
-            <Plus className="h-4 w-4" />
-            <span>Add Task</span>
+          <Link to="/tasks">
+            <motion.button
+              whileHover={{ scale: 1.04 }}
+              whileTap={{ scale: 0.96 }}
+              className="btn-secondary flex items-center gap-2"
+            >
+              <Plus className="h-4 w-4" />
+              <span>Add Task</span>
+            </motion.button>
           </Link>
         </div>
       </div>
@@ -108,68 +118,95 @@ export const Dashboard: React.FC = () => {
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
-          <div className="card p-4 flex items-center gap-3 hover:border-slate-400 transition-colors">
+          <motion.div
+            whileHover={{ y: -4, transition: { duration: 0.2 } }}
+            className="card p-4 flex items-center gap-3 hover:border-slate-400 dark:hover:border-slate-700 transition-all shadow-sm hover:shadow-md"
+          >
             <div className="p-3 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-xl">
               <BookOpen className="h-5 w-5" />
             </div>
             <div>
-              <div className="text-xl font-bold text-slate-900 dark:text-slate-100">{totalTasks}</div>
+              <div className="text-xl font-bold text-slate-900 dark:text-slate-100">
+                <AnimatedCounter value={totalTasks} />
+              </div>
               <div className="text-xs text-slate-500 dark:text-slate-400 font-medium">Total Tasks</div>
             </div>
-          </div>
+          </motion.div>
 
-          <div className="card p-4 flex items-center gap-3 hover:border-brand-500/50 transition-colors">
+          <motion.div
+            whileHover={{ y: -4, transition: { duration: 0.2 } }}
+            className="card p-4 flex items-center gap-3 hover:border-brand-500/50 transition-all shadow-sm hover:shadow-md"
+          >
             <div className="p-3 bg-brand-50 dark:bg-brand-950/60 text-brand-600 dark:text-brand-400 rounded-xl">
               <Clock className="h-5 w-5" />
             </div>
             <div>
-              <div className="text-xl font-bold text-slate-900 dark:text-slate-100">{pending.length}</div>
+              <div className="text-xl font-bold text-slate-900 dark:text-slate-100">
+                <AnimatedCounter value={pending.length} />
+              </div>
               <div className="text-xs text-slate-500 dark:text-slate-400 font-medium">Pending Tasks</div>
             </div>
-          </div>
+          </motion.div>
 
-          <div className="card p-4 flex items-center gap-3 hover:border-emerald-500/50 transition-colors">
+          <motion.div
+            whileHover={{ y: -4, transition: { duration: 0.2 } }}
+            className="card p-4 flex items-center gap-3 hover:border-emerald-500/50 transition-all shadow-sm hover:shadow-md"
+          >
             <div className="p-3 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 rounded-xl">
               <CheckCircle className="h-5 w-5" />
             </div>
             <div>
-              <div className="text-xl font-bold text-slate-900 dark:text-slate-100">{completedCount}</div>
+              <div className="text-xl font-bold text-slate-900 dark:text-slate-100">
+                <AnimatedCounter value={completedCount} />
+              </div>
               <div className="text-xs text-slate-500 dark:text-slate-400 font-medium">Completed</div>
             </div>
-          </div>
+          </motion.div>
 
-          <div className="card p-4 flex items-center gap-3 hover:border-red-500/50 transition-colors">
-            <div className="p-3 bg-red-50 dark:bg-red-950/60 text-red-600 dark:text-red-400 rounded-xl">
+          <motion.div
+            whileHover={{ y: -4, transition: { duration: 0.2 } }}
+            className="card p-4 flex items-center gap-3 hover:border-rose-500/50 transition-all shadow-sm hover:shadow-md"
+          >
+            <div className="p-3 bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 rounded-xl">
               <AlertTriangle className="h-5 w-5" />
             </div>
             <div>
-              <div className="text-xl font-bold text-slate-900 dark:text-slate-100">{highPriority.length}</div>
+              <div className="text-xl font-bold text-slate-900 dark:text-slate-100">
+                <AnimatedCounter value={highPriority.length} />
+              </div>
               <div className="text-xs text-slate-500 dark:text-slate-400 font-medium">High Priority</div>
             </div>
-          </div>
+          </motion.div>
 
-          <div className="card p-4 flex items-center gap-3 hover:border-amber-500/50 transition-colors">
+          <motion.div
+            whileHover={{ y: -4, transition: { duration: 0.2 } }}
+            className="card p-4 flex items-center gap-3 hover:border-amber-500/50 transition-all shadow-sm hover:shadow-md"
+          >
             <div className="p-3 bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 rounded-xl">
               <Clock className="h-5 w-5" />
             </div>
             <div>
-              <div className="text-xl font-bold text-slate-900 dark:text-slate-100">{(totalMinutes / 60).toFixed(1)} hrs</div>
+              <div className="text-xl font-bold text-slate-900 dark:text-slate-100">
+                {Number((totalMinutes / 60).toFixed(1))} hrs
+              </div>
               <div className="text-xs text-slate-500 dark:text-slate-400 font-medium">Remaining Effort</div>
             </div>
-          </div>
+          </motion.div>
 
-          <div className="card p-4 flex items-center gap-3 hover:border-indigo-500/50 transition-colors">
+          <motion.div
+            whileHover={{ y: -4, transition: { duration: 0.2 } }}
+            className="card p-4 flex items-center gap-3 hover:border-indigo-500/50 transition-all shadow-sm hover:shadow-md"
+          >
             <div className="p-3 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 rounded-xl">
               <TrendingUp className="h-5 w-5" />
             </div>
-            <div className="w-full min-w-0">
-              <div className="text-xl font-bold text-slate-900 dark:text-slate-100">{progressPercent}%</div>
-              <div className="text-xs text-slate-500 dark:text-slate-400 font-medium">Completion Rate</div>
-              <div className="w-full bg-slate-200 dark:bg-slate-700 h-1.5 rounded-full mt-1 overflow-hidden">
-                <div className="bg-emerald-500 h-full rounded-full transition-all duration-300" style={{ width: `${progressPercent}%` }} />
+            <div>
+              <div className="text-xl font-bold text-slate-900 dark:text-slate-100">
+                <AnimatedCounter value={completionRate} suffix="%" />
               </div>
+              <div className="text-xs text-slate-500 dark:text-slate-400 font-medium">Completion Rate</div>
             </div>
-          </div>
+          </motion.div>
         </div>
       )}
 
@@ -213,9 +250,13 @@ export const Dashboard: React.FC = () => {
             })}
 
             {pending.length === 0 && !loading && (
-              <div className="text-center py-8 text-slate-400 text-sm">
-                🎉 No active pending tasks! Upload a new syllabus to get started.
-              </div>
+              <EmptyState
+                icon={CalendarDays}
+                title="No Pending Tasks"
+                description="You are all caught up! Upload a new syllabus or create a manual task to schedule your workload."
+                actionLabel="Create First Task"
+                onAction={() => window.location.href = '/tasks'}
+              />
             )}
           </div>
         </div>
