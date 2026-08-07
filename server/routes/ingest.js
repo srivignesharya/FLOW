@@ -185,7 +185,23 @@ router.post('/text', requireAuth, aiServiceLimiter, validateBody(textIngestSchem
       throw lastError;
     }
 
-    const parsedData = JSON.parse(aiResponse.text);
+    let parsedData = { tasks: [] };
+    try {
+      const rawText = aiResponse.text || '';
+      // Try direct JSON parse first
+      try {
+        parsedData = JSON.parse(rawText);
+      } catch (e) {
+        // Fallback: extract JSON array or object using regex
+        const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          parsedData = JSON.parse(jsonMatch[0]);
+        }
+      }
+    } catch (parseErr) {
+      console.error('Failed to parse Gemini response:', aiResponse.text);
+      return res.status(200).json({ document: null, tasks: [], message: 'No structured academic tasks could be parsed from the response.' });
+    }
 
     if (!parsedData.tasks || parsedData.tasks.length === 0) {
       return res.status(200).json({ document: null, tasks: [], message: 'No academic tasks detected in the provided text.' });
