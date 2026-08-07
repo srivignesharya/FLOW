@@ -11,6 +11,8 @@ const getApiKeys = () => {
   ].filter(Boolean);
 
   if (keys.length === 0) {
+    console.error('\n❌ [FATAL CONFIG ERROR]: GEMINI_API_KEY environment variable is missing!');
+    console.error('   Please add GEMINI_API_KEY to your server/.env or cloud environment (Render/Vercel).\n');
     throw new Error('GEMINI_API_KEY environment variable is missing. Get one at https://aistudio.google.com/apikey');
   }
   return keys;
