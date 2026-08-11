@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import { Footer } from '../components/Footer';
 import { validatePassword } from '../utils/passwordValidator';
 import { PasswordStrengthMeter } from '../components/PasswordStrengthMeter';
+import { GoogleIcon } from '../components/GoogleIcon';
 
 type AuthViewMode = 'signin' | 'signup' | 'forgot_password';
 
@@ -19,9 +20,36 @@ export const Auth: React.FC = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const navigate = useNavigate();
+
+  const handleGoogleSignIn = async () => {
+    if (googleLoading || loading) return;
+    setGoogleLoading(true);
+    setError('');
+    setMessage('');
+
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`
+        }
+      });
+
+      if (error) throw error;
+    } catch (err: any) {
+      console.error('[GOOGLE OAUTH ERROR]:', err);
+      let formattedMsg = err.message || 'Failed to initialize Google login.';
+      if (err.message?.includes('popup_closed_by_user')) {
+        formattedMsg = 'Google sign-in was cancelled.';
+      }
+      setError(formattedMsg);
+      setGoogleLoading(false);
+    }
+  };
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -259,27 +287,10 @@ export const Auth: React.FC = () => {
                 </div>
               )}
 
-              {!isSignUp && !isForgotPassword && (
-                <div className="flex justify-end">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setViewMode('forgot_password');
-                      setError('');
-                      setMessage('');
-                    }}
-                    className="text-xs font-medium text-brand-400 hover:text-brand-300 transition-colors flex items-center gap-1"
-                  >
-                    <KeyRound className="h-3.5 w-3.5" />
-                    <span>Forgot Password?</span>
-                  </button>
-                </div>
-              )}
-
               <button
                 id="auth-submit-btn"
                 type="submit"
-                disabled={loading}
+                disabled={loading || googleLoading}
                 className="w-full py-3.5 px-4 bg-brand-600 hover:bg-brand-500 text-white font-semibold rounded-xl transition-all shadow-lg shadow-brand-600/30 flex items-center justify-center gap-2 text-sm disabled:opacity-50"
               >
                 {loading ? (
@@ -298,6 +309,52 @@ export const Auth: React.FC = () => {
                 )}
               </button>
             </form>
+
+            {!isForgotPassword && (
+              <div className="space-y-4 pt-1">
+                <div className="relative flex items-center justify-center my-2">
+                  <div className="border-t border-slate-800 w-full" />
+                  <span className="bg-slate-950 px-3 text-[11px] font-medium uppercase tracking-wider text-slate-500 shrink-0">
+                    OR
+                  </span>
+                  <div className="border-t border-slate-800 w-full" />
+                </div>
+
+                <button
+                  id="google-signin-btn"
+                  type="button"
+                  onClick={handleGoogleSignIn}
+                  disabled={googleLoading || loading}
+                  className="w-full py-3 px-4 bg-slate-900 hover:bg-slate-800/80 active:scale-[0.99] text-slate-200 font-medium rounded-xl border border-slate-800 transition-all flex items-center justify-center gap-3 text-sm disabled:opacity-50 shadow-sm"
+                >
+                  {googleLoading ? (
+                    <span className="text-slate-300">Signing in with Google...</span>
+                  ) : (
+                    <>
+                      <GoogleIcon className="h-5 w-5 shrink-0" />
+                      <span>Continue with Google</span>
+                    </>
+                  )}
+                </button>
+
+                {!isSignUp && (
+                  <div className="flex justify-center pt-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setViewMode('forgot_password');
+                        setError('');
+                        setMessage('');
+                      }}
+                      className="text-xs font-medium text-brand-400 hover:text-brand-300 transition-colors flex items-center gap-1"
+                    >
+                      <KeyRound className="h-3.5 w-3.5" />
+                      <span>Forgot Password?</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
 
             <div className="pt-4 border-t border-slate-800/80 text-center space-y-2">
               {isForgotPassword ? (

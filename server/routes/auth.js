@@ -14,14 +14,24 @@ router.post('/sync', requireAuth, async (req, res, next) => {
   try {
     const { id, email, user_metadata } = req.user;
 
+    const fullName =
+      user_metadata?.full_name ||
+      user_metadata?.name ||
+      'Student';
+
+    const avatarUrl =
+      user_metadata?.avatar_url ||
+      user_metadata?.picture ||
+      '';
+
     const { data, error } = await supabaseAdmin
       .from('profiles')
       .upsert(
         {
           id,
           email,
-          full_name: user_metadata?.full_name || 'Student',
-          avatar_url: user_metadata?.avatar_url || ''
+          full_name: fullName,
+          avatar_url: avatarUrl
         },
         { onConflict: 'id' }
       )
