@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import multer from 'multer';
+import PDFParser from 'pdf2json';
 import { requireAuth } from '../middleware/authMiddleware.js';
 import { validateBody, textIngestSchema } from '../middleware/validation.js';
 import { aiServiceLimiter } from '../middleware/rateLimiter.js';
@@ -66,13 +67,46 @@ router.post('/file', requireAuth, aiServiceLimiter, upload.single('file'), async
     const userId = req.user.id;
     const dateStr = new Date().toISOString();
 
-    let ocrText = '';
-    if (req.file.mimetype.includes('image') || req.file.originalname.toLowerCase().includes('scanned')) {
-      ocrText = await performVisionOcr(req.file.buffer, req.file.mimetype);
+    console.log(`[PDF] File received: ${req.file.originalname}`);
+    console.log(`[PDF] File size: ${req.file.size} bytes`);
+    console.log(`[PDF] MIME type: ${req.file.mimetype}`);
+    console.log(`[PDF] Text extraction started`);
+
+    let extractedText = '';
+    
+    if (req.file.mimetype === 'application/pdf') {
+      try {
+        extractedText = await new Promise((resolve, reject) => {
+          const pdfParser = new PDFParser(null, 1);
+          pdfParser.on("pdfParser_dataError", errData => {
+            console.error(`[PDF] Parser Error:`, errData.parserError);
+            reject(errData.parserError);
+          });
+          pdfParser.on("pdfParser_dataReady", () => {
+            resolve(pdfParser.getRawTextContent());
+          });
+          pdfParser.parseBuffer(req.file.buffer);
+        });
+      } catch (err) {
+        console.error(`[PDF] PDF parsing failed: ${err}`);
+      }
+    } else if (req.file.mimetype.includes('image') || req.file.originalname.toLowerCase().includes('scanned')) {
+      extractedText = await performVisionOcr(req.file.buffer, req.file.mimetype);
     }
 
-    const prompt = `Today's date is ${dateStr}. Analyze this academic document ${ocrText ? '(OCR Preprocessed Text included below)' : ''} thoroughly and extract ALL tasks, assignments, exams, announcements, and deadlines.
-Return a JSON array of tasks with fields: title, subject, deadline (ISO 8601), priority (critical/high/medium/low), estimatedMinutes (number), description, taskType (assignment/exam/reading/announcement).\n${ocrText ? `OCR Text:\n${ocrText}` : ''}`;
+    // Clean up excessive newlines and page break marks from pdf2json
+    extractedText = extractedText.replace(/----------------Page \(\d+\) Break----------------/g, '\n\n').trim();
+
+    console.log(`[PDF] Extracted text length: ${extractedText.length} characters`);
+
+    if (extractedText.trim().length === 0) {
+      return res.status(200).json({ document: null, tasks: [], message: 'Could not extract readable text from this PDF.' });
+    }
+
+    console.log(`[EXTRACTION] Sending ${extractedText.length} characters to AI`);
+
+    const prompt = `Today's date is ${dateStr}. Analyze this academic document thoroughly and extract ALL tasks, assignments, exams, announcements, and deadlines.
+Return a JSON array of tasks with fields: title, subject, deadline (ISO 8601), priority (critical/high/medium/low), estimatedMinutes (number), description, taskType (assignment/exam/reading/announcement).\nDocument Text:\n${extractedText}`;
 
     let aiResponseText = '';
     let lastError;
@@ -103,7 +137,9 @@ Return a JSON array of tasks with fields: title, subject, deadline (ISO 8601), p
       throw lastError;
     }
 
+    console.log(`[EXTRACTION] AI response received`);
     const rawTaskList = extractTasksFromAiResponse(aiResponseText);
+    console.log(`[EXTRACTION] Parsed commitments: ${rawTaskList.length}`);
     const validTasks = sanitizeTaskBatch(rawTaskList, 'Academic Document');
 
     console.log(`[EXTRACTION] File "${req.file.originalname}": ${rawTaskList.length} raw parsed, ${validTasks.length} valid`);
