@@ -25,9 +25,37 @@ const upload = multer({
 
 const router = Router();
 
+// Helper to safely extract task array from arbitrary AI response structure
+const extractTasksFromAiResponse = (aiResponseText) => {
+  let parsedData = null;
+  try {
+    parsedData = JSON.parse(aiResponseText);
+  } catch (e) {
+    const jsonMatch = aiResponseText.match(/\[[\s\S]*\]/) || aiResponseText.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      try { parsedData = JSON.parse(jsonMatch[0]); } catch (e2) {}
+    }
+  }
+
+  let rawList = [];
+  if (Array.isArray(parsedData)) {
+    rawList = parsedData;
+  } else if (parsedData && typeof parsedData === 'object') {
+    if (Array.isArray(parsedData.tasks)) rawList = parsedData.tasks;
+    else if (Array.isArray(parsedData.commitments)) rawList = parsedData.commitments;
+    else if (Array.isArray(parsedData.assignments)) rawList = parsedData.assignments;
+    else if (Array.isArray(parsedData.data)) rawList = parsedData.data;
+    else {
+      const foundArray = Object.values(parsedData).find(v => Array.isArray(v));
+      if (foundArray) rawList = foundArray;
+    }
+  }
+  return rawList;
+};
+
 // ============================================================
 // POST /api/v1/ingest/file
-// Upload a PDF or image → Vision OCR Preprocessing → Gemini → Smart Priority Engine
+// Upload a PDF or image → Vision OCR Preprocessing → Groq → Smart Priority Engine
 // ============================================================
 router.post('/file', requireAuth, aiServiceLimiter, upload.single('file'), async (req, res, next) => {
   try {
@@ -37,15 +65,14 @@ router.post('/file', requireAuth, aiServiceLimiter, upload.single('file'), async
 
     const userId = req.user.id;
     const dateStr = new Date().toISOString();
-    const base64Data = req.file.buffer.toString('base64');
 
-    // Phase 1: Pre-process scanned PDFs/images with Vision OCR if image or scanned
     let ocrText = '';
     if (req.file.mimetype.includes('image') || req.file.originalname.toLowerCase().includes('scanned')) {
       ocrText = await performVisionOcr(req.file.buffer, req.file.mimetype);
     }
 
-    const prompt = `Today's date is ${dateStr}. Analyze this academic document ${ocrText ? '(OCR Preprocessed Text included below)' : ''} thoroughly and extract ALL tasks, assignments, exams, announcements, and deadlines. Include estimated study/completion time for each.\n${ocrText ? `OCR Text:\n${ocrText}` : ''}`;
+    const prompt = `Today's date is ${dateStr}. Analyze this academic document ${ocrText ? '(OCR Preprocessed Text included below)' : ''} thoroughly and extract ALL tasks, assignments, exams, announcements, and deadlines.
+Return a JSON array of tasks with fields: title, subject, deadline (ISO 8601), priority (critical/high/medium/low), estimatedMinutes (number), description, taskType (assignment/exam/reading/lab).\n${ocrText ? `OCR Text:\n${ocrText}` : ''}`;
 
     let aiResponseText = '';
     let lastError;
@@ -60,12 +87,11 @@ router.post('/file', requireAuth, aiServiceLimiter, upload.single('file'), async
             { role: 'system', content: SYSTEM_INSTRUCTION },
             { role: 'user', content: prompt }
           ],
-          response_format: { type: 'json_object' },
           temperature: 0.1
         });
         aiResponseText = completion.choices[0]?.message?.content || '{}';
         lastError = null;
-        break; // Success!
+        break;
       } catch (err) {
         lastError = err;
         console.warn(`⚠️ [INGEST FILE ATTEMPT ${attempt + 1} FAILED]: ${err.message}. Rotating key...`);
@@ -77,17 +103,10 @@ router.post('/file', requireAuth, aiServiceLimiter, upload.single('file'), async
       throw lastError;
     }
 
-    let parsedData = { tasks: [] };
-    try {
-      parsedData = JSON.parse(aiResponseText);
-    } catch (e) {
-      const match = aiResponseText.match(/\{[\s\S]*\}/);
-      if (match) parsedData = JSON.parse(match[0]);
-    }
+    const rawTaskList = extractTasksFromAiResponse(aiResponseText);
+    const validTasks = sanitizeTaskBatch(rawTaskList, 'Academic Document');
 
-    if (!parsedData.tasks || parsedData.tasks.length === 0) {
-      return res.status(200).json({ document: null, tasks: [], message: 'No academic tasks detected in this document.' });
-    }
+    console.log(`[EXTRACTION] File "${req.file.originalname}": ${rawTaskList.length} raw parsed, ${validTasks.length} valid`);
 
     // Save document record
     const { data: doc, error: docErr } = await supabaseAdmin
@@ -103,14 +122,11 @@ router.post('/file', requireAuth, aiServiceLimiter, upload.single('file'), async
 
     if (docErr) throw docErr;
 
-    // Sanitize and filter out invalid/null title tasks
-    const validTasks = sanitizeTaskBatch(parsedData.tasks, 'Academic Document');
-
     if (validTasks.length === 0) {
-      return res.status(200).json({ document: doc, tasks: [], message: 'No valid academic tasks with valid titles could be extracted.' });
+      return res.status(200).json({ document: doc, tasks: [], message: 'No academic commitments detected in this file.' });
     }
 
-    // Phase 2 & 7: Map and process tasks through Smart Priority & Explainable AI Engine
+    // Map and process tasks through Smart Priority Engine
     const tasksToInsert = validTasks.map(t => {
       const smartPriority = calculateSmartPriority({
         deadline: t.deadline,
@@ -119,6 +135,8 @@ router.post('/file', requireAuth, aiServiceLimiter, upload.single('file'), async
         taskType: t.taskType || 'assignment',
         remainingTasksCount: validTasks.length
       });
+
+      console.log(`[EXTRACTION] Inserting task: "${t.title}" (${t.subject}) - Priority: ${smartPriority.priority}`);
 
       return {
         user_id: userId,
@@ -144,13 +162,14 @@ router.post('/file', requireAuth, aiServiceLimiter, upload.single('file'), async
 
     res.json({ document: doc, tasks: insertedTasks });
   } catch (err) {
+    console.error(`[INGEST FILE ERROR]:`, err.message);
     next(err);
   }
 });
 
 // ============================================================
 // POST /api/v1/ingest/text
-// Paste text → Gemini extracts tasks → saves to DB
+// Paste text → Groq extracts tasks → saves to DB
 // ============================================================
 router.post('/text', requireAuth, aiServiceLimiter, validateBody(textIngestSchema), async (req, res, next) => {
   try {
@@ -158,7 +177,7 @@ router.post('/text', requireAuth, aiServiceLimiter, validateBody(textIngestSchem
     const { textContent } = req.body;
     const dateStr = new Date().toISOString();
 
-    const prompt = `Today's date is ${dateStr}. Extract all academic tasks, deadlines, and commitments from the following text:\n\n${textContent}`;
+    const prompt = `Today's date is ${dateStr}. Extract all academic tasks, assignments, exams, and deadlines from the following announcement/syllabus text:\n\n${textContent}\n\nReturn a JSON array of task objects with fields: title, subject, deadline (ISO 8601), priority (critical/high/medium/low), estimatedMinutes (number), description, taskType (assignment/exam/reading/lab).`;
 
     let aiResponseText = '';
     let lastError;
@@ -173,12 +192,11 @@ router.post('/text', requireAuth, aiServiceLimiter, validateBody(textIngestSchem
             { role: 'system', content: SYSTEM_INSTRUCTION },
             { role: 'user', content: prompt }
           ],
-          response_format: { type: 'json_object' },
           temperature: 0.1
         });
         aiResponseText = completion.choices[0]?.message?.content || '{}';
         lastError = null;
-        break; // Success!
+        break;
       } catch (err) {
         lastError = err;
         console.warn(`⚠️ [INGEST TEXT ATTEMPT ${attempt + 1} FAILED]: ${err.message}. Rotating key...`);
@@ -186,62 +204,15 @@ router.post('/text', requireAuth, aiServiceLimiter, validateBody(textIngestSchem
       }
     }
 
-    let parsedData = { tasks: [] };
-
     if (lastError && !aiResponseText) {
-      console.warn('⚠️ [SMART FALLBACK INGESTION ACTIVATED]: AI quota exhausted. Generating intelligent mock tasks for live presentation...');
-      
-      const titleMatch = textContent.match(/Title:\s*(.+)/i) || textContent.match(/(Case Study|Assignment|Exam|Project)\s*:?\s*(.+)/i);
-      const extractedTitle = titleMatch ? (titleMatch[1] || titleMatch[2]).trim() : 'Machine Learning Case Study';
-      
-      const tomorrow = new Date(Date.now() + 24 * 3600 * 1000).toISOString();
-      const inThreeDays = new Date(Date.now() + 3 * 24 * 3600 * 1000).toISOString();
-
-      parsedData = {
-        tasks: [
-          {
-            title: extractedTitle,
-            subject: 'Computer Science',
-            deadline: inThreeDays,
-            weightage: 20,
-            priority: 'high',
-            estimatedMinutes: 120,
-            description: 'Complete analysis report and submit implementation notebooks.',
-            taskType: 'assignment'
-          },
-          {
-            title: `${extractedTitle} — Peer Review & Literature Reading`,
-            subject: 'Computer Science',
-            deadline: tomorrow,
-            weightage: 10,
-            priority: 'medium',
-            estimatedMinutes: 60,
-            description: 'Read background papers and outline core methodologies.',
-            taskType: 'reading'
-          }
-        ]
-      };
-    } else {
-      try {
-        try {
-          parsedData = JSON.parse(aiResponseText);
-        } catch (e) {
-          const jsonMatch = aiResponseText.match(/\{[\s\S]*\}/);
-          if (jsonMatch) {
-            parsedData = JSON.parse(jsonMatch[0]);
-          }
-        }
-      } catch (parseErr) {
-        console.error('Failed to parse AI response:', aiResponseText);
-        return res.status(200).json({ document: null, tasks: [], message: 'No structured academic tasks could be parsed from the response.' });
-      }
+      console.error(`[INGEST TEXT FATAL ERROR]: AI request failed:`, lastError.message);
+      return res.status(503).json({ error: 'Unable to analyse this content. Please try again.' });
     }
 
-    const validTasks = sanitizeTaskBatch(parsedData.tasks, 'Text Syllabus');
+    const rawTaskList = extractTasksFromAiResponse(aiResponseText);
+    const validTasks = sanitizeTaskBatch(rawTaskList, 'Text Syllabus');
 
-    if (validTasks.length === 0) {
-      return res.status(200).json({ document: null, tasks: [], message: 'No valid academic tasks with non-null titles detected in the provided text.' });
-    }
+    console.log(`[EXTRACTION] Text excerpt: ${rawTaskList.length} raw parsed, ${validTasks.length} valid`);
 
     // Save document record for text ingestion
     const { data: doc, error: docErr } = await supabaseAdmin
@@ -257,19 +228,26 @@ router.post('/text', requireAuth, aiServiceLimiter, validateBody(textIngestSchem
 
     if (docErr) throw docErr;
 
-    const tasksToInsert = validTasks.map(t => ({
-      user_id: userId,
-      document_id: doc.id,
-      title: t.title,
-      subject: t.subject || 'General',
-      deadline: t.deadline,
-      weightage: t.weightage || 0,
-      priority: t.priority,
-      estimated_minutes: t.estimatedMinutes || 60,
-      description: t.description || '',
-      task_type: t.taskType || 'assignment',
-      notification_sent: false
-    }));
+    if (validTasks.length === 0) {
+      return res.status(200).json({ document: doc, tasks: [], message: 'No academic commitments detected in the provided text.' });
+    }
+
+    const tasksToInsert = validTasks.map(t => {
+      console.log(`[EXTRACTION] Inserting task: "${t.title}" (${t.subject})`);
+      return {
+        user_id: userId,
+        document_id: doc.id,
+        title: t.title,
+        subject: t.subject || 'General',
+        deadline: t.deadline,
+        weightage: t.weightage || 0,
+        priority: t.priority,
+        estimated_minutes: t.estimatedMinutes || 60,
+        description: t.description || '',
+        task_type: t.taskType || 'assignment',
+        notification_sent: false
+      };
+    });
 
     const { data: insertedTasks, error: taskErr } = await supabaseAdmin
       .from('tasks')
@@ -280,6 +258,7 @@ router.post('/text', requireAuth, aiServiceLimiter, validateBody(textIngestSchem
 
     res.json({ document: doc, tasks: insertedTasks });
   } catch (err) {
+    console.error(`[INGEST TEXT UNHANDLED ERROR]:`, err.message);
     next(err);
   }
 });

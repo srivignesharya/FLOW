@@ -10,18 +10,18 @@ export const sanitizeAndValidateTask = (rawTask, index = 0, defaultSubject = 'Ge
   }
 
   // 1. Title Validation & Fallbacks (MUST NOT BE NULL OR EMPTY)
-  let title = (rawTask.title || rawTask.name || rawTask.heading || rawTask.task_title || '').toString().trim();
+  let title = (rawTask.title || rawTask.name || rawTask.heading || rawTask.task_title || rawTask.task || '').toString().trim();
   
   if (!title) {
     // Attempt fallback from description or subject
-    const rawDesc = (rawTask.description || '').toString().trim();
+    const rawDesc = (rawTask.description || rawTask.desc || rawTask.details || '').toString().trim();
     if (rawDesc.length > 0) {
       title = rawDesc.split(/[\n.]/)[0].slice(0, 60).trim();
     }
   }
 
   if (!title) {
-    const rawSubject = (rawTask.subject || defaultSubject).toString().trim();
+    const rawSubject = (rawTask.subject || rawTask.course || rawTask.topic || defaultSubject).toString().trim();
     title = `${rawSubject} — Academic Commitment ${index + 1}`;
   }
 
@@ -31,12 +31,13 @@ export const sanitizeAndValidateTask = (rawTask, index = 0, defaultSubject = 'Ge
   }
 
   // 2. Deadline Validation (Ensure valid ISO 8601 string)
-  let deadline = rawTask.deadline;
-  if (!deadline || isNaN(Date.parse(deadline))) {
+  let rawDate = rawTask.deadline || rawTask.dueDate || rawTask.due_date || rawTask.date || rawTask.due;
+  let deadline;
+  if (!rawDate || isNaN(Date.parse(rawDate))) {
     // Default deadline to 3 days from today if unparseable
     deadline = new Date(Date.now() + 3 * 24 * 3600 * 1000).toISOString();
   } else {
-    deadline = new Date(deadline).toISOString();
+    deadline = new Date(rawDate).toISOString();
   }
 
   // 3. Priority Normalization & Validation
@@ -47,17 +48,17 @@ export const sanitizeAndValidateTask = (rawTask, index = 0, defaultSubject = 'Ge
   }
 
   // 4. Task Type Normalization
-  const validTypes = ['assignment', 'exam', 'announcement', 'reading', 'project'];
-  let taskType = (rawTask.taskType || rawTask.task_type || 'assignment').toString().toLowerCase().trim();
+  const validTypes = ['assignment', 'exam', 'announcement', 'reading', 'project', 'lab'];
+  let taskType = (rawTask.taskType || rawTask.task_type || rawTask.type || 'assignment').toString().toLowerCase().trim();
   if (!validTypes.includes(taskType)) {
     taskType = 'assignment';
   }
 
   // 5. Subject & Numerical Bounds
-  const subject = (rawTask.subject || defaultSubject).toString().trim() || 'General';
+  const subject = (rawTask.subject || rawTask.course || rawTask.topic || defaultSubject).toString().trim() || 'General';
   const weightage = Math.max(0, Math.min(100, Number(rawTask.weightage) || 0));
-  const estimatedMinutes = Math.max(15, Math.min(1440, Number(rawTask.estimatedMinutes || rawTask.estimated_minutes) || 60));
-  const description = (rawTask.description || '').toString().trim();
+  const estimatedMinutes = Math.max(15, Math.min(1440, Number(rawTask.estimatedMinutes || rawTask.estimated_minutes || rawTask.duration || rawTask.time) || 60));
+  const description = (rawTask.description || rawTask.desc || rawTask.details || '').toString().trim();
 
   return {
     title,

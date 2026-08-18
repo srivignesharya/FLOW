@@ -251,7 +251,7 @@ export const IngestStudio: React.FC = () => {
                   Extracted {result.tasks.length} Commitments
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
-                  Document: {result.document.file_name}
+                  Document: {result.document?.file_name || 'Extracted Text Excerpt'}
                 </p>
               </div>
             </div>

@@ -183,7 +183,7 @@ export const MobileIngestStudio: React.FC<MobileIngestStudioProps> = ({
                   Extracted {result.tasks.length} Tasks
                 </h3>
                 <p className="text-[10px] text-slate-400 truncate max-w-[170px]">
-                  {result.document.file_name}
+                  {result.document?.file_name || 'Extracted Text'}
                 </p>
               </div>
             </div>
