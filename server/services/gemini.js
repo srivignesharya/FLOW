@@ -41,6 +41,8 @@ export const FLASH_MODEL = 'openai/gpt-oss-120b';
 export const PRO_MODEL = 'openai/gpt-oss-120b';
 export const FALLBACK_MODEL = 'openai/gpt-oss-20b';
 
+console.log(`🧠 [AI ENGINE INITIALIZED]: Provider = Groq | Keys available = ${getApiKeys().length} | Primary = ${PRO_MODEL} | Fallback = ${FALLBACK_MODEL}`);
+
 // ============================================================
 // SYSTEM INSTRUCTIONS
 // ============================================================

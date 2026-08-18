@@ -11,9 +11,15 @@ const router = Router();
 // Context-aware AI chat using Gemini Pro
 // ============================================================
 router.post('/chat', requireAuth, validateBody(copilotQuerySchema), async (req, res, next) => {
+  const reqStart = Date.now();
   try {
     const userId = req.user.id;
     const { query, documentId } = req.body;
+
+    console.log(`\n============================================================`);
+    console.log(`[IMVISION] Request received from user ${userId}`);
+    console.log(`[IMVISION] Query: "${query}"`);
+    console.log(`[IMVISION] Document Attached: ${documentId || 'None'}`);
 
     // Build document context if a specific document is selected
     let docContext = 'No specific document selected.';
@@ -28,7 +34,7 @@ router.post('/chat', requireAuth, validateBody(copilotQuerySchema), async (req, 
       if (doc) {
         docContext = `Document: "${doc.file_name}" (${doc.file_type})\n${
           doc.raw_text_content
-            ? `Content:\n${doc.raw_text_content.slice(0, 3000)}` // Limit context size
+            ? `Content:\n${doc.raw_text_content.slice(0, 3000)}`
             : 'Binary file — no raw text available.'
         }`;
       }
@@ -71,10 +77,12 @@ router.post('/chat', requireAuth, validateBody(copilotQuerySchema), async (req, 
       .single();
 
     const todayStr = new Date().toISOString();
+    console.log(`[IMVISION] Context loaded: ${tasks?.length || 0} active tasks | Active schedule: ${Boolean(activeSchedule)} | Profile: "${profile?.full_name || 'Student'}"`);
 
     const systemContext = `
-You are IMvision, an elite AI academic assistant built into FLOW (Built by IMV).
-You help students understand concepts, answer general and academic questions, explain topics, manage study schedules, prioritize deadlines, and solve problems.
+You are IMvision, the intelligent academic assistant inside FLOW (Built by IMV).
+
+Answer the user's question directly and accurately.
 
 Student Profile:
 Name: ${profile?.full_name || 'Student'}
@@ -91,10 +99,10 @@ ${JSON.stringify(activeSchedule?.generated_plan || 'No active plan generated yet
 ${docContext !== 'No specific document selected.' ? `Selected Document Context:\n${docContext}` : ''}
 
 Key Instructions:
-1. When asked general academic, science, programming, or conceptual questions (e.g. "What is AI?", "Explain recursion", "What is Bayes theorem?"), answer directly, concisely, and accurately with clear explanations and examples. You DO NOT need stored tasks to answer general questions.
-2. When asked about deadlines or tasks (e.g. "What should I study today?", "Which assignment is due next?"), reference the student's stored tasks and active study plan.
-3. If the student has zero stored tasks and asks a general question, answer normally without mentioning task shortages.
-4. Format all responses cleanly using Markdown formatting (bold, lists, code blocks).
+1. If the user asks a general academic question (e.g. "What is AI?", "Explain recursion", "What is Bayes theorem?"), answer directly, concisely, and accurately with clear academic explanations and code/diagrams where helpful. You DO NOT need stored tasks to answer general questions.
+2. If the user asks about their schedule or deadlines (e.g. "What should I study today?", "Which assignment is due next?"), reference the student's stored tasks and active study plan.
+3. If the user asks about an attached document, reference the Selected Document Context.
+4. Format all responses cleanly using Markdown headers, bullet points, and code blocks.
 `;
 
     // Build conversation messages for Groq format
@@ -111,9 +119,10 @@ Key Instructions:
     let lastError;
 
     for (let attempt = 0; attempt < 3; attempt++) {
+      const targetModel = attempt === 0 ? PRO_MODEL : FALLBACK_MODEL;
+      console.log(`[IMVISION] Calling AI provider: Groq | Attempt ${attempt + 1} | Model: ${targetModel}`);
       try {
         const activeAi = getAiInstance();
-        const targetModel = attempt === 0 ? PRO_MODEL : FALLBACK_MODEL;
         const completion = await activeAi.chat.completions.create({
           model: targetModel,
           messages: groqMessages,
@@ -121,16 +130,21 @@ Key Instructions:
         });
         reply = completion.choices[0]?.message?.content || '';
         lastError = null;
+        console.log(`[IMVISION] AI response received: ${reply.length} chars in ${Date.now() - reqStart}ms`);
         break;
       } catch (err) {
         lastError = err;
-        console.warn(`⚠️ [IMVISION CHAT ATTEMPT ${attempt + 1} FAILED]: ${err.message}. Rotating key...`);
+        console.error(`[IMVISION ERROR] Attempt ${attempt + 1} failed: ${err.message}`);
         rotateAiKey();
       }
     }
 
     if (lastError && !reply) {
-      reply = 'IMvision is temporarily unavailable. Please try again in a few moments.';
+      console.error(`[IMVISION FATAL]: All Groq attempts failed. Last error:`, lastError.message);
+      return res.status(503).json({
+        error: 'IMvision is temporarily unavailable. Please try again.',
+        details: lastError.message
+      });
     }
 
     // Persist both user message and assistant reply
@@ -139,8 +153,11 @@ Key Instructions:
       { user_id: userId, document_id: documentId || null, role: 'assistant', content: reply }
     ]);
 
+    console.log(`[IMVISION] Returning response to frontend (${Date.now() - reqStart}ms total)`);
+    console.log(`============================================================\n`);
     res.json({ reply });
   } catch (err) {
+    console.error(`[IMVISION UNHANDLED ERROR]:`, err.message);
     next(err);
   }
 });
