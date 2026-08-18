@@ -7,6 +7,7 @@ import { Footer } from '../components/Footer';
 import { validatePassword } from '../utils/passwordValidator';
 import { PasswordStrengthMeter } from '../components/PasswordStrengthMeter';
 import { GoogleIcon } from '../components/GoogleIcon';
+import { MobileAuth } from '../components/mobile/MobileAuth';
 
 type AuthViewMode = 'signin' | 'signup' | 'forgot_password';
 
@@ -109,9 +110,35 @@ export const Auth: React.FC = () => {
   const isForgotPassword = viewMode === 'forgot_password';
 
   return (
-    <div className="min-h-screen flex bg-slate-950 text-slate-100">
-      {/* Left Feature Showcase Panel */}
-      <div className="hidden lg:flex flex-1 flex-col justify-between p-12 bg-gradient-to-br from-brand-950 via-slate-900 to-slate-950 border-r border-slate-800 relative overflow-hidden">
+    <>
+      {/* 1. Purpose-Built Dedicated Mobile Authentication (< md) */}
+      <div className="md:hidden">
+        <MobileAuth
+          viewMode={viewMode}
+          setViewMode={setViewMode}
+          email={email}
+          setEmail={setEmail}
+          password={password}
+          setPassword={setPassword}
+          confirmPassword={confirmPassword}
+          setConfirmPassword={setConfirmPassword}
+          showPassword={showPassword}
+          setShowPassword={setShowPassword}
+          showConfirmPassword={showConfirmPassword}
+          setShowConfirmPassword={setShowConfirmPassword}
+          loading={loading}
+          googleLoading={googleLoading}
+          error={error}
+          message={message}
+          onSubmit={handleAuth}
+          onGoogleSignIn={handleGoogleSignIn}
+        />
+      </div>
+
+      {/* 2. Desktop Authentication Interface (>= md) - PRESERVED 100% */}
+      <div className="hidden md:flex min-h-screen bg-slate-950 text-slate-100">
+        {/* Left Feature Showcase Panel */}
+        <div className="hidden lg:flex flex-1 flex-col justify-between p-12 bg-gradient-to-br from-brand-950 via-slate-900 to-slate-950 border-r border-slate-800 relative overflow-hidden">
         <div className="absolute -top-32 -left-32 w-96 h-96 bg-brand-600/20 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute -bottom-32 -right-32 w-96 h-96 bg-indigo-600/20 rounded-full blur-3xl pointer-events-none" />
 
@@ -400,5 +427,6 @@ export const Auth: React.FC = () => {
         <Footer className="border-t border-slate-800/80 bg-slate-950 text-slate-500 lg:hidden" />
       </div>
     </div>
-  );
+  </>
+);
 };

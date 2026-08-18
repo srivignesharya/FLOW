@@ -70,7 +70,7 @@ export const Sidebar: React.FC = () => {
       )}
 
       {/* Nav Links */}
-      <nav className="flex-1 p-3 space-y-1.5 overflow-y-auto overflow-x-hidden">
+      <nav className="flex-1 p-3 space-y-1.5 overflow-y-auto overflow-x-hidden min-h-0">
         {links.map((link) => (
           <NavLink
             key={link.to}
@@ -132,7 +132,7 @@ export const Sidebar: React.FC = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="p-4 border-t border-slate-200 dark:border-slate-800"
+            className="p-4 border-t border-slate-200 dark:border-slate-800 shrink-0"
           >
             <div className="px-3 py-2.5 rounded-xl bg-brand-50/50 dark:bg-slate-950/60 border border-brand-200 dark:border-brand-500/20">
               <p className="text-xs font-extrabold bg-gradient-to-r from-brand-600 to-amber-600 dark:from-brand-400 dark:to-amber-400 bg-clip-text text-transparent">FLOW</p>

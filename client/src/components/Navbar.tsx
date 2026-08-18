@@ -11,7 +11,7 @@ export const Navbar: React.FC = () => {
   const initials = user?.email?.charAt(0).toUpperCase() || 'U';
 
   return (
-    <header className="h-16 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200/80 dark:border-slate-800/80 px-4 sm:px-6 flex items-center justify-between sticky top-0 z-30 shadow-sm dark:shadow-md">
+    <header className="h-16 shrink-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200/80 dark:border-slate-800/80 px-4 sm:px-6 flex items-center justify-between sticky top-0 z-30 shadow-sm dark:shadow-md">
       {/* Left Badge / Mobile Brand */}
       <div className="flex items-center gap-2.5">
         {/* Mobile Brand Logo */}

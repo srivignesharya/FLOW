@@ -7,6 +7,7 @@ import { useTheme } from '../context/ThemeContext';
 import { useToast } from '../context/ToastContext';
 import { User, Building, Clock, Sun, Moon, Save, CheckCircle2, AlertCircle, Mail, Send, Loader2, Trash2, ShieldAlert } from 'lucide-react';
 import { SkeletonCard } from '../components/SkeletonLoaders';
+import { MobileSettings } from '../components/mobile/MobileSettings';
 
 export const Settings: React.FC = () => {
   const { user, signOut } = useAuth();
@@ -100,7 +101,6 @@ export const Settings: React.FC = () => {
     }
   };
 
-
   if (loading) {
     return (
       <div className="space-y-4 max-w-3xl mx-auto">
@@ -111,15 +111,42 @@ export const Settings: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6 sm:space-y-8 max-w-3xl mx-auto animate-in">
-      <div>
-        <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-slate-900 dark:text-slate-50">
-          Account & Academic Settings
-        </h1>
-        <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm mt-1">
-          Customize your study preferences to tune the Gemini AI planner algorithm.
-        </p>
+    <>
+      {/* 1. Purpose-Built Mobile Settings (< md) */}
+      <div className="md:hidden">
+        <MobileSettings
+          user={user}
+          fullName={fullName}
+          setFullName={setFullName}
+          institution={institution}
+          setInstitution={setInstitution}
+          studyHours={studyHours}
+          setStudyHours={setStudyHours}
+          saving={saving}
+          onSave={handleSave}
+          sendingTestEmail={sendingTestEmail}
+          onSendTestEmail={handleSendTestEmail}
+          isDark={isDark}
+          onToggleTheme={toggleTheme}
+          onSignOut={async () => {
+            await signOut();
+            navigate('/auth');
+          }}
+          onDeleteAccount={handleDeleteAccount}
+          deletingAccount={deletingAccount}
+        />
       </div>
+
+      {/* 2. Desktop Settings (>= md) - PRESERVED 100% */}
+      <div className="hidden md:block space-y-6 sm:space-y-8 max-w-3xl mx-auto animate-in">
+        <div>
+          <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-slate-900 dark:text-slate-50">
+            Account & Academic Settings
+          </h1>
+          <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm mt-1">
+            Customize your study preferences to tune the Gemini AI planner algorithm.
+          </p>
+        </div>
 
       {error && (
         <div className="p-4 bg-red-950/50 border border-red-800/80 text-red-400 text-xs rounded-xl flex items-center gap-3">
@@ -348,6 +375,7 @@ export const Settings: React.FC = () => {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 };

@@ -6,6 +6,7 @@ import { SkeletonCard } from '../components/SkeletonLoaders';
 import { StatusBadge } from '../components/StatusBadge';
 import { Sparkles, Calendar, Clock, CheckCircle2, AlertCircle, RefreshCw, Layers, CheckSquare, Upload } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { MobileStudyPlanner } from '../components/mobile/MobileStudyPlanner';
 
 export const StudyPlanner: React.FC = () => {
   const [schedule, setSchedule] = useState<any>(null);
@@ -85,9 +86,22 @@ export const StudyPlanner: React.FC = () => {
   const plan = schedule?.generated_plan;
 
   return (
-    <div className="space-y-8 animate-in max-w-5xl mx-auto">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="animate-in max-w-5xl mx-auto">
+      {/* 1. Purpose-Built Mobile Study Planner (< md) */}
+      <div className="md:hidden">
+        <MobileStudyPlanner
+          plan={plan}
+          loading={loading}
+          generating={generating}
+          onGenerate={handleGeneratePlan}
+          onToggleBlock={handleToggleBlockCompletion}
+        />
+      </div>
+
+      {/* 2. Desktop Study Planner Layout (>= md) - PRESERVED 100% */}
+      <div className="hidden md:block space-y-8">
+        {/* Header */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-slate-50 flex items-center gap-3">
             <span>AI Study Planner</span>
@@ -269,6 +283,7 @@ export const StudyPlanner: React.FC = () => {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 };

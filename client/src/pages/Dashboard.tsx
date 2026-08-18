@@ -18,12 +18,24 @@ import {
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 
+import { MobileDashboard } from '../components/mobile/MobileDashboard';
+
 export const Dashboard: React.FC = () => {
   const { user } = useAuth();
   const [tasks, setTasks] = useState<any[]>([]);
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+
+  const handleToggleTask = async (taskId: string, currentStatus: string) => {
+    const newStatus = currentStatus === 'completed' ? 'pending' : 'completed';
+    try {
+      await api.patch(`/tasks/${taskId}`, { status: newStatus });
+      setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status: newStatus } : t));
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   useEffect(() => {
     Promise.all([
@@ -76,14 +88,26 @@ export const Dashboard: React.FC = () => {
   ];
 
   return (
-    <div className="space-y-6 sm:space-y-8 max-w-7xl mx-auto">
-      {/* PART 1: Top Hero Section */}
-      <motion.div
-        initial={{ opacity: 0, y: 15 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
-        className="relative rounded-2xl sm:rounded-3xl bg-gradient-to-r from-slate-900 via-brand-950/80 to-indigo-950/90 border border-slate-800 p-5 sm:p-8 lg:p-10 overflow-hidden shadow-xl sm:shadow-2xl"
-      >
+    <>
+      {/* Dedicated Purpose-Built Mobile Dashboard (< md) */}
+      <div className="md:hidden">
+        <MobileDashboard
+          user={user}
+          tasks={tasks}
+          studyPlan={null}
+          onToggleTask={handleToggleTask}
+        />
+      </div>
+
+      {/* Desktop Dashboard (>= md) - PRESERVED 100% */}
+      <div className="hidden md:block space-y-6 sm:space-y-8 max-w-7xl mx-auto">
+        {/* PART 1: Top Hero Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="relative rounded-2xl sm:rounded-3xl bg-gradient-to-r from-slate-900 via-brand-950/80 to-indigo-950/90 border border-slate-800 p-5 sm:p-8 lg:p-10 overflow-hidden shadow-xl sm:shadow-2xl"
+        >
         {/* Ambient Glow Backdrop */}
         <div className="absolute -top-24 -right-24 h-96 w-96 rounded-full bg-brand-500/10 blur-3xl pointer-events-none" />
         <div className="absolute -bottom-24 -left-24 h-96 w-96 rounded-full bg-indigo-500/10 blur-3xl pointer-events-none" />
@@ -318,5 +342,6 @@ export const Dashboard: React.FC = () => {
         </div>
       </div>
     </div>
-  );
+  </>
+);
 };

@@ -7,6 +7,9 @@ import { InteractiveCard } from '../components/InteractiveCard';
 import { Send, Bot, User, Trash2, Sparkles, Loader2, Compass, BookOpen, Calendar, HelpCircle, FileText, Zap } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 
+import { useAuth } from '../context/AuthContext';
+import { MobileCopilot } from '../components/mobile/MobileCopilot';
+
 const QUICK_ACTIONS = [
   { label: 'Summarize PDF', query: 'Can you summarize the uploaded PDF syllabus and list key topics?', icon: FileText },
   { label: 'Generate Study Plan', query: 'Generate an optimized study plan for my upcoming exams', icon: Calendar },
@@ -16,6 +19,7 @@ const QUICK_ACTIONS = [
 ];
 
 export const Copilot: React.FC = () => {
+  const { user } = useAuth();
   const [messages, setMessages] = useState<any[]>([]);
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(false);
@@ -105,20 +109,38 @@ export const Copilot: React.FC = () => {
   };
 
   return (
-    <div className="h-[calc(100dvh-12.5rem)] md:h-[calc(100vh-6.5rem)] flex flex-col space-y-3 sm:space-y-4 max-w-5xl mx-auto">
-      {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 shrink-0">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white flex items-center gap-2 sm:gap-3">
-            <span>IMvision Intelligence</span>
-            <span className="text-[10px] sm:text-xs px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full bg-brand-500/10 text-brand-600 dark:text-brand-300 font-semibold border border-brand-500/20">
-              Gemini 2.5 Pro
-            </span>
-          </h1>
-          <p className="text-slate-500 dark:text-slate-400 text-xs mt-0.5">
-            Your intelligent academic assistant built into FLOW.
-          </p>
-        </div>
+    <>
+      {/* 1. Purpose-Built Mobile IMvision Assistant (< md) */}
+      <div className="md:hidden">
+        <MobileCopilot
+          user={user}
+          messages={messages}
+          loading={loading}
+          query={query}
+          setQuery={setQuery}
+          onSend={handleSend}
+          onClearHistory={handleClearHistory}
+          documents={documents}
+          selectedDocId={selectedDocId}
+          setSelectedDocId={setSelectedDocId}
+        />
+      </div>
+
+      {/* 2. Desktop IMvision Chat Interface (>= md) - PRESERVED 100% */}
+      <div className="hidden md:flex h-[calc(100vh-6.5rem)] flex-col space-y-4 max-w-5xl mx-auto">
+        {/* Top Header */}
+        <div className="flex items-center justify-between shrink-0">
+          <div>
+            <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white flex items-center gap-3">
+              <span>IMvision Intelligence</span>
+              <span className="text-xs px-3 py-1 rounded-full bg-brand-500/10 text-brand-600 dark:text-brand-300 font-semibold border border-brand-500/20">
+                Gemini 2.5 Pro Architecture
+              </span>
+            </h1>
+            <p className="text-slate-500 dark:text-slate-400 text-xs mt-0.5">
+              Your intelligent academic assistant built into FLOW.
+            </p>
+          </div>
 
         <div className="flex items-center gap-2 self-end sm:self-auto">
           <select
@@ -260,5 +282,6 @@ export const Copilot: React.FC = () => {
         </MotionButton>
       </form>
     </div>
-  );
+  </>
+);
 };

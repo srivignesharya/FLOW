@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { StatusBadge } from '../components/StatusBadge';
 import { MotionButton } from '../components/MotionButton';
 import { motion, AnimatePresence } from 'framer-motion';
+import { MobileIngestStudio } from '../components/mobile/MobileIngestStudio';
 
 export const IngestStudio: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'file' | 'text'>('file');
@@ -82,16 +83,36 @@ export const IngestStudio: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 sm:space-y-8 max-w-4xl mx-auto">
-      <div>
-        <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white flex items-center gap-2.5 sm:gap-3">
-          <Upload className="h-6 sm:h-7 w-6 sm:w-7 text-brand-500" />
-          <span>Syllabus & Document Ingest Studio</span>
-        </h1>
-        <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm mt-1">
-          Upload course syllabi, lecture slides, assignment PDFs, or paste announcement text. IMvision AI extracts commitments automatically.
-        </p>
+    <>
+      {/* 1. Purpose-Built Mobile Ingest Studio (< md) */}
+      <div className="md:hidden">
+        <MobileIngestStudio
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          file={file}
+          setFile={setFile}
+          text={text}
+          setText={setText}
+          loading={loading}
+          error={error}
+          result={result}
+          onFileUpload={handleFileUpload}
+          onTextUpload={handleTextUpload}
+          onNavigateTasks={() => navigate('/tasks')}
+        />
       </div>
+
+      {/* 2. Desktop Ingest Studio (>= md) - PRESERVED 100% */}
+      <div className="hidden md:block space-y-6 sm:space-y-8 max-w-4xl mx-auto">
+        <div>
+          <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white flex items-center gap-2.5 sm:gap-3">
+            <Upload className="h-6 sm:h-7 w-6 sm:w-7 text-brand-500" />
+            <span>Syllabus & Document Ingest Studio</span>
+          </h1>
+          <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm mt-1">
+            Upload course syllabi, lecture slides, assignment PDFs, or paste announcement text. IMvision AI extracts commitments automatically.
+          </p>
+        </div>
 
       {/* Tabs */}
       <div className="flex border-b border-slate-200 dark:border-slate-800 gap-4 sm:gap-6 overflow-x-auto pb-px">
@@ -267,6 +288,7 @@ export const IngestStudio: React.FC = () => {
           </div>
         </motion.div>
       )}
-    </div>
+      </div>
+    </>
   );
 };
