@@ -7,8 +7,7 @@ const getApiKeys = () => {
   const keys = [
     process.env.GROQ_API_KEY,
     process.env.GROQ_API_KEY_2,
-    process.env.GROQ_API_KEY_3,
-    process.env.GEMINI_API_KEY // Backward compatibility fallback
+    process.env.GROQ_API_KEY_3
   ].filter(Boolean);
 
   if (keys.length === 0) {
@@ -38,9 +37,9 @@ export const rotateAiKey = () => {
 export const ai = getAiInstance();
 
 // Current ultra-fast production models on Groq
-export const FLASH_MODEL = 'llama-3.3-70b-versatile';
-export const PRO_MODEL = 'llama-3.3-70b-versatile';
-export const FALLBACK_MODEL = 'llama-3.1-8b-instant';
+export const FLASH_MODEL = 'openai/gpt-oss-120b';
+export const PRO_MODEL = 'openai/gpt-oss-120b';
+export const FALLBACK_MODEL = 'openai/gpt-oss-20b';
 
 // ============================================================
 // SYSTEM INSTRUCTIONS

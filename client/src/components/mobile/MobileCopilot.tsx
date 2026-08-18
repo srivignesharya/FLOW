@@ -78,7 +78,7 @@ export const MobileCopilot: React.FC<MobileCopilotProps> = ({
             <div className="flex items-center gap-1.5">
               <h1 className="text-sm font-black text-slate-900 dark:text-white">IMvision</h1>
               <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-orange-500/10 text-orange-600 dark:text-orange-400 border border-orange-500/20">
-                Gemini 2.5
+                Academic AI
               </span>
             </div>
             <p className="text-[10px] text-slate-400">Your Academic AI Companion</p>

@@ -73,8 +73,8 @@ router.post('/chat', requireAuth, validateBody(copilotQuerySchema), async (req, 
     const todayStr = new Date().toISOString();
 
     const systemContext = `
-You are Flow Copilot, an elite AI academic assistant built on Google Gemini 2.5 Pro.
-You help students manage their study schedule, understand assignments, prioritize deadlines, and answer academic questions accurately.
+You are IMvision, an elite AI academic assistant built into FLOW (Built by IMV).
+You help students understand concepts, answer general and academic questions, explain topics, manage study schedules, prioritize deadlines, and solve problems.
 
 Student Profile:
 Name: ${profile?.full_name || 'Student'}
@@ -90,11 +90,11 @@ ${JSON.stringify(activeSchedule?.generated_plan || 'No active plan generated yet
 
 ${docContext !== 'No specific document selected.' ? `Selected Document Context:\n${docContext}` : ''}
 
-Key Capabilities & Instructions:
-- Answer specific questions directly (e.g. "What should I study today?", "Which assignment is due next?", "Which task has highest priority?", "How many hours are left?").
-- Calculate exact hours remaining or overdue relative to current date (${todayStr}).
-- If asked "What should I study today?", reference the active study plan's blocks for today.
-- Format responses cleanly using Markdown headers, bullet points, and bold text.
+Key Instructions:
+1. When asked general academic, science, programming, or conceptual questions (e.g. "What is AI?", "Explain recursion", "What is Bayes theorem?"), answer directly, concisely, and accurately with clear explanations and examples. You DO NOT need stored tasks to answer general questions.
+2. When asked about deadlines or tasks (e.g. "What should I study today?", "Which assignment is due next?"), reference the student's stored tasks and active study plan.
+3. If the student has zero stored tasks and asks a general question, answer normally without mentioning task shortages.
+4. Format all responses cleanly using Markdown formatting (bold, lists, code blocks).
 `;
 
     // Build conversation messages for Groq format
@@ -124,16 +124,13 @@ Key Capabilities & Instructions:
         break;
       } catch (err) {
         lastError = err;
-        console.warn(`⚠️ [COPILOT CHAT ATTEMPT ${attempt + 1} FAILED]: ${err.message}. Rotating key...`);
+        console.warn(`⚠️ [IMVISION CHAT ATTEMPT ${attempt + 1} FAILED]: ${err.message}. Rotating key...`);
         rotateAiKey();
       }
     }
 
     if (lastError && !reply) {
-      reply = `I am currently receiving high academic query traffic. Here is what I can tell you based on your stored tasks:\n\n` +
-        `• **Pending Tasks**: You have ${tasks?.length || 0} active commitments.\n` +
-        `• **Next Urgent Goal**: ${tasks?.[0] ? `${tasks[0].title} (${tasks[0].subject})` : 'All tasks up to date!'}\n\n` +
-        `Please try your question again in a moment!`;
+      reply = 'IMvision is temporarily unavailable. Please try again in a few moments.';
     }
 
     // Persist both user message and assistant reply
