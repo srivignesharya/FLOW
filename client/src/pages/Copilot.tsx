@@ -127,9 +127,9 @@ export const Copilot: React.FC = () => {
       </div>
 
       {/* 2. Desktop IMvision Chat Interface (>= md) */}
-      <div className="hidden md:flex flex-col h-[calc(100vh-9rem)] max-w-5xl mx-auto space-y-3 min-h-0">
+      <div className="hidden md:flex flex-col h-[calc(100vh-10.5rem)] max-w-5xl mx-auto space-y-3 min-h-0 pt-1">
         {/* Top Header */}
-        <div className="flex items-center justify-between shrink-0">
+        <div className="flex items-center justify-between shrink-0 pb-1">
           <div>
             <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white flex items-center gap-3">
               <span>IMvision</span>
@@ -142,7 +142,7 @@ export const Copilot: React.FC = () => {
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2.5">
             <select
               value={selectedDocId}
               onChange={(e) => setSelectedDocId(e.target.value)}
@@ -157,11 +157,11 @@ export const Copilot: React.FC = () => {
             {messages.length > 0 && (
               <button
                 onClick={handleClearHistory}
-                className="p-2 rounded-xl text-slate-400 hover:text-red-500 hover:bg-red-500/10 transition-colors min-h-[38px] min-w-[38px] flex items-center justify-center"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-rose-500 hover:bg-rose-500/10 border border-rose-500/20 transition-all min-h-[36px]"
                 title="Clear Chat History"
-                aria-label="Clear chat history"
               >
-                <Trash2 className="h-4 w-4" />
+                <Trash2 className="h-3.5 w-3.5" />
+                <span>Clear Chat</span>
               </button>
             )}
           </div>
