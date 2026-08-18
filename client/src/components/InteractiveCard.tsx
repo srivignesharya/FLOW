@@ -53,6 +53,8 @@ export const InteractiveCard: React.FC<InteractiveCardProps> = ({
     mouseY.set(0);
   };
 
+  const isTouchDevice = typeof window !== 'undefined' && window.matchMedia && !window.matchMedia('(hover: hover)').matches;
+
   return (
     <motion.div
       ref={cardRef}
@@ -61,17 +63,17 @@ export const InteractiveCard: React.FC<InteractiveCardProps> = ({
       onMouseLeave={handleMouseLeave}
       onClick={onClick}
       style={{
-        rotateX: tiltEffect ? rotateX : 0,
-        rotateY: tiltEffect ? rotateY : 0,
-        transformStyle: 'preserve-3d'
+        rotateX: tiltEffect && !isTouchDevice ? rotateX : 0,
+        rotateY: tiltEffect && !isTouchDevice ? rotateY : 0,
+        transformStyle: isTouchDevice ? 'flat' : 'preserve-3d'
       }}
       animate={{
-        scale: isHovered ? 1.015 : 1,
-        y: isHovered ? -4 : 0
+        scale: isHovered && !isTouchDevice ? 1.015 : 1,
+        y: isHovered && !isTouchDevice ? -4 : 0
       }}
       transition={{ type: 'spring', stiffness: 400, damping: 30 }}
       className={`relative rounded-2xl bg-white dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 backdrop-blur-xl shadow-sm dark:shadow-lg transition-colors duration-300 overflow-hidden group ${
-        onClick ? 'cursor-pointer' : ''
+        onClick ? 'cursor-pointer active:scale-[0.98]' : ''
       } ${className}`}
     >
       {/* Dynamic Cursor Spotlight / Border Glow */}

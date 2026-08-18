@@ -54,6 +54,24 @@ body {
   @apply bg-brand-500/50;
 }
 
+/* Safe Area Insets for Mobile */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 16px);
+}
+
+.pt-safe {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+.mb-safe {
+  margin-bottom: env(safe-area-inset-bottom, 16px);
+}
+
+/* Prevent double-tap zoom delay on mobile buttons */
+button, a, input, select, textarea {
+  touch-action: manipulation;
+}
+
 /* ============================================================
    COMPONENT UTILITIES (DUAL THEME DESIGN SYSTEM)
    ============================================================ */

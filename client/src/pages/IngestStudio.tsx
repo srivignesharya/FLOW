@@ -82,25 +82,25 @@ export const IngestStudio: React.FC = () => {
   };
 
   return (
-    <div className="space-y-8 max-w-4xl mx-auto">
+    <div className="space-y-6 sm:space-y-8 max-w-4xl mx-auto">
       <div>
-        <h1 className="text-2xl font-extrabold tracking-tight text-white flex items-center gap-3">
-          <Upload className="h-7 w-7 text-brand-400" />
+        <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white flex items-center gap-2.5 sm:gap-3">
+          <Upload className="h-6 sm:h-7 w-6 sm:w-7 text-brand-500" />
           <span>Syllabus & Document Ingest Studio</span>
         </h1>
-        <p className="text-slate-400 text-sm mt-1">
-          Upload course syllabi, lecture slides, assignment PDFs, or paste raw announcement text. IMvision AI extracts commitments automatically.
+        <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm mt-1">
+          Upload course syllabi, lecture slides, assignment PDFs, or paste announcement text. IMvision AI extracts commitments automatically.
         </p>
       </div>
 
       {/* Tabs */}
-      <div className="flex border-b border-slate-800 gap-6">
+      <div className="flex border-b border-slate-200 dark:border-slate-800 gap-4 sm:gap-6 overflow-x-auto pb-px">
         <button
           onClick={() => { setActiveTab('file'); setError(''); setResult(null); }}
-          className={`pb-3 font-semibold text-sm flex items-center gap-2 border-b-2 transition-all ${
+          className={`pb-3 font-semibold text-xs sm:text-sm flex items-center gap-2 border-b-2 transition-all whitespace-nowrap min-h-[44px] ${
             activeTab === 'file'
-              ? 'border-brand-500 text-brand-400 font-bold'
-              : 'border-transparent text-slate-400 hover:text-slate-200'
+              ? 'border-brand-500 text-brand-600 dark:text-brand-400 font-bold'
+              : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
           }`}
         >
           <Upload className="h-4 w-4" />
@@ -109,14 +109,14 @@ export const IngestStudio: React.FC = () => {
 
         <button
           onClick={() => { setActiveTab('text'); setError(''); setResult(null); }}
-          className={`pb-3 font-semibold text-sm flex items-center gap-2 border-b-2 transition-all ${
+          className={`pb-3 font-semibold text-xs sm:text-sm flex items-center gap-2 border-b-2 transition-all whitespace-nowrap min-h-[44px] ${
             activeTab === 'text'
-              ? 'border-brand-500 text-brand-400 font-bold'
-              : 'border-transparent text-slate-400 hover:text-slate-200'
+              ? 'border-brand-500 text-brand-600 dark:text-brand-400 font-bold'
+              : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
           }`}
         >
           <FileText className="h-4 w-4" />
-          <span>Paste Syllabus / Announcement Text</span>
+          <span>Paste Text Excerpt</span>
         </button>
       </div>
 
@@ -127,19 +127,19 @@ export const IngestStudio: React.FC = () => {
         </div>
       )}
 
-      {/* PART 3: PDF Upload Glass Drag & Drop Zone */}
+      {/* PDF Upload Glass Drag & Drop Zone */}
       {activeTab === 'file' && (
-        <form onSubmit={handleFileUpload} className="card p-6 space-y-6 bg-slate-900/60 backdrop-blur-2xl border-slate-800">
+        <form onSubmit={handleFileUpload} className="card p-4 sm:p-6 space-y-4 sm:space-y-6 bg-white dark:bg-slate-900/60 backdrop-blur-2xl border-slate-200 dark:border-slate-800">
           <div
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
-            className={`border-2 border-dashed rounded-3xl p-10 text-center transition-all ${
+            className={`border-2 border-dashed rounded-2xl sm:rounded-3xl p-6 sm:p-10 text-center transition-all ${
               isDragging
                 ? 'border-brand-400 bg-brand-500/10 scale-[1.01]'
                 : file
-                ? 'border-emerald-500/50 bg-emerald-950/20'
-                : 'border-slate-700/80 hover:border-brand-500/50 bg-slate-950/40'
+                ? 'border-emerald-500/50 bg-emerald-50 dark:bg-emerald-950/20'
+                : 'border-slate-300 dark:border-slate-700/80 hover:border-brand-500/50 bg-slate-50/50 dark:bg-slate-950/40'
             }`}
           >
             <input
@@ -149,19 +149,19 @@ export const IngestStudio: React.FC = () => {
               onChange={(e) => setFile(e.target.files?.[0] || null)}
               className="hidden"
             />
-            <label htmlFor="file-input" className="cursor-pointer flex flex-col items-center gap-4">
+            <label htmlFor="file-input" className="cursor-pointer flex flex-col items-center gap-3 sm:gap-4 min-h-[140px] justify-center">
               <div className="relative">
                 <div className="absolute -inset-3 bg-brand-500/20 rounded-full blur-xl animate-pulse" />
-                <div className="relative p-5 rounded-2xl bg-gradient-to-tr from-brand-600 to-indigo-600 text-white shadow-xl shadow-brand-500/20">
-                  {file ? <FileCheck className="h-10 w-10 text-emerald-300" /> : <Upload className="h-10 w-10" />}
+                <div className="relative p-3.5 sm:p-5 rounded-2xl bg-gradient-to-tr from-brand-600 to-indigo-600 text-white shadow-xl shadow-brand-500/20">
+                  {file ? <FileCheck className="h-7 sm:h-10 w-7 sm:w-10 text-emerald-300" /> : <Upload className="h-7 sm:h-10 w-7 sm:w-10" />}
                 </div>
               </div>
-              <div>
-                <span className="font-bold text-base text-white">
-                  {file ? file.name : 'Click to upload or drag & drop syllabus document'}
+              <div className="space-y-1">
+                <span className="font-bold text-sm sm:text-base text-slate-900 dark:text-white block break-words">
+                  {file ? file.name : 'Tap to choose or drag & drop syllabus document'}
                 </span>
-                <p className="text-xs text-slate-400 mt-1">
-                  Supports PDF, PNG, JPEG, WebP (Maximum file size limit: 100 MB)
+                <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400">
+                  Supports PDF, PNG, JPEG, WebP (Max limit: 100 MB)
                 </p>
               </div>
             </label>
@@ -174,6 +174,7 @@ export const IngestStudio: React.FC = () => {
               disabled={!file || loading}
               isLoading={loading}
               icon={<Sparkles className="h-4 w-4" />}
+              className="w-full sm:w-auto justify-center"
             >
               Extract Tasks & Commitments
             </MotionButton>
@@ -183,9 +184,9 @@ export const IngestStudio: React.FC = () => {
 
       {/* Text Form */}
       {activeTab === 'text' && (
-        <form onSubmit={handleTextUpload} className="card p-6 space-y-6 bg-slate-900/60 backdrop-blur-2xl border-slate-800">
+        <form onSubmit={handleTextUpload} className="card p-4 sm:p-6 space-y-4 sm:space-y-6 bg-white dark:bg-slate-900/60 backdrop-blur-2xl border-slate-200 dark:border-slate-800">
           <div>
-            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+            <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
               Raw Syllabus or Circular Text
             </label>
             <textarea
@@ -193,7 +194,7 @@ export const IngestStudio: React.FC = () => {
               value={text}
               onChange={(e) => setText(e.target.value)}
               placeholder="Paste announcement text, assignment guidelines, or syllabus excerpts..."
-              className="input text-sm leading-relaxed"
+              className="input text-xs sm:text-sm leading-relaxed"
             />
           </div>
 
@@ -204,6 +205,7 @@ export const IngestStudio: React.FC = () => {
               disabled={!text.trim() || loading}
               isLoading={loading}
               icon={<Sparkles className="h-4 w-4" />}
+              className="w-full sm:w-auto justify-center"
             >
               Extract Tasks & Commitments
             </MotionButton>
@@ -216,18 +218,18 @@ export const IngestStudio: React.FC = () => {
         <motion.div
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
-          className="card p-6 space-y-6 bg-slate-900/80 border-slate-800"
+          className="card p-4 sm:p-6 space-y-4 sm:space-y-6 bg-white dark:bg-slate-900/80 border-slate-200 dark:border-slate-800"
         >
-          <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-800 pb-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400">
-                <CheckCircle2 className="h-6 w-6" />
+              <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-500 dark:text-emerald-400 shrink-0">
+                <CheckCircle2 className="h-5 sm:h-6 w-5 sm:w-6" />
               </div>
-              <div>
-                <h3 className="font-bold text-base text-white">
-                  Successfully Extracted {result.tasks.length} Commitments
+              <div className="min-w-0">
+                <h3 className="font-bold text-sm sm:text-base text-slate-900 dark:text-white">
+                  Extracted {result.tasks.length} Commitments
                 </h3>
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
                   Document: {result.document.file_name}
                 </p>
               </div>
@@ -236,24 +238,27 @@ export const IngestStudio: React.FC = () => {
               onClick={() => navigate('/tasks')}
               variant="secondary"
               icon={<ArrowRight className="h-4 w-4" />}
+              className="w-full sm:w-auto justify-center"
             >
               View in Task Manager
             </MotionButton>
           </div>
 
-          <div className="divide-y divide-slate-800 space-y-4">
+          <div className="divide-y divide-slate-100 dark:divide-slate-800 space-y-3">
             {result.tasks.map((t, idx) => (
-              <div key={idx} className="pt-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div className="space-y-1">
-                  <div className="font-bold text-sm text-white">{t.title}</div>
-                  <div className="text-xs text-slate-400 flex items-center gap-2">
-                    <span className="font-medium text-slate-300">{t.subject}</span>
+              <div key={idx} className="pt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-4">
+                <div className="space-y-1 min-w-0">
+                  <div className="font-bold text-sm text-slate-900 dark:text-white break-words">{t.title}</div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400 flex flex-wrap items-center gap-2">
+                    <span className="font-semibold text-brand-600 dark:text-brand-400">{t.subject}</span>
                     <span>•</span>
                     <span>Deadline: {new Date(t.deadline).toLocaleDateString()}</span>
                   </div>
-                  <p className="text-xs text-slate-400 italic">"{t.reasoning}"</p>
+                  {t.reasoning && (
+                    <p className="text-[11px] text-slate-400 italic">"{t.reasoning}"</p>
+                  )}
                 </div>
-                <div className="flex items-center gap-2 shrink-0">
+                <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 self-start sm:self-auto">
                   <StatusBadge type="priority" value={t.priority} />
                   <StatusBadge type="taskType" value={t.task_type || 'assignment'} />
                 </div>

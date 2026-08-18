@@ -87,12 +87,12 @@ export const Settings: React.FC = () => {
   }
 
   return (
-    <div className="space-y-8 max-w-3xl mx-auto animate-in">
+    <div className="space-y-6 sm:space-y-8 max-w-3xl mx-auto animate-in">
       <div>
-        <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-slate-50">
+        <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-slate-900 dark:text-slate-50">
           Account & Academic Settings
         </h1>
-        <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
+        <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm mt-1">
           Customize your study preferences to tune the Gemini AI planner algorithm.
         </p>
       </div>
@@ -104,15 +104,15 @@ export const Settings: React.FC = () => {
         </div>
       )}
 
-      <form onSubmit={handleSave} className="space-y-6">
+      <form onSubmit={handleSave} className="space-y-4 sm:space-y-6">
         {/* Profile Card */}
-        <div className="card p-6 space-y-4">
-          <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+        <div className="card p-4 sm:p-6 space-y-4">
+          <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
             <User className="h-5 w-5 text-brand-500" />
             <span>Personal Profile</span>
           </h2>
 
-          <div className="space-y-4">
+          <div className="space-y-3.5 sm:space-y-4">
             <div>
               <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">Email Address</label>
               <input
@@ -151,13 +151,13 @@ export const Settings: React.FC = () => {
         </div>
 
         {/* Study Preferences Card */}
-        <div className="card p-6 space-y-4">
-          <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+        <div className="card p-4 sm:p-6 space-y-4">
+          <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
             <Clock className="h-5 w-5 text-brand-500" />
             <span>AI Planner Algorithm Preferences</span>
           </h2>
 
-          <div>
+          <div className="space-y-2">
             <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">
               Preferred Study Hours per Day ({studyHours} hours)
             </label>
@@ -167,7 +167,7 @@ export const Settings: React.FC = () => {
               max={12}
               value={studyHours}
               onChange={(e) => setStudyHours(Number(e.target.value))}
-              className="w-full accent-brand-600 cursor-pointer"
+              className="w-full accent-brand-600 cursor-pointer h-2 bg-slate-200 dark:bg-slate-800 rounded-lg"
             />
             <div className="flex justify-between text-xs text-slate-400 mt-1">
               <span>1 hr (Light)</span>
@@ -178,14 +178,14 @@ export const Settings: React.FC = () => {
         </div>
 
         {/* Email Reminders Test Card */}
-        <div className="card p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="card p-4 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 sm:gap-4">
           <div className="space-y-1">
             <h2 className="text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
               <Mail className="h-5 w-5 text-brand-500" />
               <span>Email Reminder System</span>
             </h2>
             <p className="text-xs text-slate-400">
-              Verify Nodemailer SMTP connection by sending an immediate test deadline reminder to <strong className="text-slate-200">{user?.email}</strong>.
+              Verify Nodemailer SMTP connection by sending a test reminder to <strong className="text-slate-700 dark:text-slate-200">{user?.email}</strong>.
             </p>
           </div>
 
@@ -193,12 +193,12 @@ export const Settings: React.FC = () => {
             type="button"
             disabled={sendingTestEmail}
             onClick={handleSendTestEmail}
-            className="btn-secondary flex items-center gap-2 shrink-0 self-start sm:self-auto"
+            className="btn-secondary flex items-center justify-center gap-2 shrink-0 w-full sm:w-auto min-h-[44px]"
           >
             {sendingTestEmail ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin text-brand-500" />
-                <span>Sending Test Email...</span>
+                <span>Sending...</span>
               </>
             ) : (
               <>
@@ -210,8 +210,7 @@ export const Settings: React.FC = () => {
         </div>
 
         {/* Theme Preference Card */}
-        <div className="card p-6 flex items-center justify-between">
-
+        <div className="card p-4 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0">
           <div className="space-y-1">
             <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">Interface Theme</h2>
             <p className="text-xs text-slate-400">Switch between dark mode and light mode appearance.</p>
@@ -223,7 +222,7 @@ export const Settings: React.FC = () => {
               toggleTheme();
               showToast(`Theme switched to ${isDark ? 'light' : 'dark'} mode`, 'info');
             }}
-            className="btn-secondary flex items-center gap-2"
+            className="btn-secondary flex items-center justify-center gap-2 w-full sm:w-auto min-h-[44px]"
           >
             {isDark ? (
               <>
@@ -240,11 +239,11 @@ export const Settings: React.FC = () => {
         </div>
 
         {/* Submit */}
-        <div className="flex justify-end">
+        <div className="flex justify-end pt-2">
           <button
             type="submit"
             disabled={saving}
-            className="btn-primary flex items-center gap-2 px-6 py-3"
+            className="btn-primary flex items-center justify-center gap-2 px-6 py-3 w-full sm:w-auto min-h-[44px]"
           >
             <Save className="h-4 w-4" />
             <span>{saving ? 'Saving Preferences...' : 'Save Profile Settings'}</span>

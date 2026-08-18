@@ -23,7 +23,7 @@ export const Sidebar: React.FC = () => {
     <motion.aside
       animate={{ width: collapsed ? 72 : 240 }}
       transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-      className="relative bg-white dark:bg-slate-900/90 border-r border-slate-200 dark:border-slate-800 flex flex-col h-screen sticky top-0 overflow-hidden z-20 backdrop-blur-xl shadow-sm dark:shadow-2xl"
+      className="hidden md:flex relative bg-white dark:bg-slate-900/90 border-r border-slate-200 dark:border-slate-800 flex-col h-screen sticky top-0 overflow-hidden z-20 backdrop-blur-xl shadow-sm dark:shadow-2xl shrink-0"
     >
       {/* Logo */}
       <div className={clsx(

@@ -183,15 +183,25 @@ export const Auth: React.FC = () => {
       <div className="flex-1 flex flex-col justify-between bg-slate-950">
         <div className="my-auto flex items-center justify-center p-6 sm:p-12 w-full">
           <div className="w-full max-w-md space-y-8">
+            {/* Mobile Brand Logo */}
+            <div className="flex items-center justify-center gap-2.5 lg:hidden mb-6">
+              <div className="h-9 w-9 rounded-xl bg-gradient-to-tr from-brand-600 to-indigo-500 flex items-center justify-center text-white shadow-lg shadow-brand-500/30">
+                <Sparkles className="h-5 w-5" />
+              </div>
+              <span className="text-2xl font-black tracking-tight bg-gradient-to-r from-brand-400 to-indigo-300 bg-clip-text text-transparent">
+                FLOW
+              </span>
+            </div>
+
             <div className="text-center lg:text-left">
-              <h2 className="text-3xl font-bold tracking-tight text-white">
+              <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
                 {isForgotPassword
                   ? 'Reset your password'
                   : isSignUp
                   ? 'Create your account'
                   : 'Welcome back'}
               </h2>
-              <p className="text-slate-400 text-sm mt-2">
+              <p className="text-slate-400 text-xs sm:text-sm mt-2">
                 {isForgotPassword
                   ? 'Enter your registered email address to receive a secure password reset link.'
                   : isSignUp

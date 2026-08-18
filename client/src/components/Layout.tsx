@@ -2,6 +2,7 @@ import React from 'react';
 import { Sidebar } from './Sidebar';
 import { Navbar } from './Navbar';
 import { Footer } from './Footer';
+import { MobileBottomNav } from './MobileBottomNav';
 import { motion } from 'framer-motion';
 import { useLocation } from 'react-router-dom';
 
@@ -9,11 +10,11 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
   const location = useLocation();
 
   return (
-    <div className="flex min-h-screen bg-slate-50 dark:bg-slate-950">
+    <div className="flex min-h-screen bg-slate-50 dark:bg-slate-950 overflow-x-hidden">
       <Sidebar />
       <div className="flex-1 flex flex-col min-w-0 min-h-screen">
         <Navbar />
-        <main className="flex-1 p-6 lg:p-8 overflow-y-auto">
+        <main className="flex-1 p-3.5 sm:p-6 lg:p-8 pb-24 md:pb-6 overflow-y-auto overflow-x-hidden">
           <motion.div
             key={location.pathname}
             initial={{ opacity: 0, y: 8, scale: 0.99 }}
@@ -23,8 +24,9 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
             {children}
           </motion.div>
         </main>
-        <Footer />
+        <Footer className="hidden md:block" />
       </div>
+      <MobileBottomNav />
     </div>
   );
 };

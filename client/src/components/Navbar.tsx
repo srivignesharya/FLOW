@@ -11,10 +11,21 @@ export const Navbar: React.FC = () => {
   const initials = user?.email?.charAt(0).toUpperCase() || 'U';
 
   return (
-    <header className="h-16 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200/80 dark:border-slate-800/80 px-6 flex items-center justify-between sticky top-0 z-30 shadow-sm dark:shadow-md">
-      {/* Left Badge */}
-      <div className="flex items-center gap-2">
-        <span className="text-xs font-bold px-3 py-1 rounded-full bg-brand-500/10 text-brand-600 dark:text-brand-300 border border-brand-500/20 flex items-center gap-1.5 shadow-sm">
+    <header className="h-16 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200/80 dark:border-slate-800/80 px-4 sm:px-6 flex items-center justify-between sticky top-0 z-30 shadow-sm dark:shadow-md">
+      {/* Left Badge / Mobile Brand */}
+      <div className="flex items-center gap-2.5">
+        {/* Mobile Brand Logo */}
+        <div className="flex items-center gap-2 md:hidden">
+          <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-brand-500 via-orange-500 to-amber-500 flex items-center justify-center text-white shadow-md shadow-brand-500/25 border border-brand-400/20">
+            <span className="font-black text-xs tracking-wider">FL</span>
+          </div>
+          <span className="text-lg font-black tracking-tight bg-gradient-to-r from-brand-500 via-amber-400 to-orange-400 bg-clip-text text-transparent">
+            FLOW
+          </span>
+        </div>
+
+        {/* Desktop Academic Workspace Badge */}
+        <span className="hidden md:inline-flex text-xs font-bold px-3 py-1 rounded-full bg-brand-500/10 text-brand-600 dark:text-brand-300 border border-brand-500/20 items-center gap-1.5 shadow-sm">
           <Sparkles className="h-3.5 w-3.5 text-brand-500 dark:text-brand-400" />
           <span>Academic Workspace</span>
         </span>

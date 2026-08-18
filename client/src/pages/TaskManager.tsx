@@ -284,8 +284,8 @@ export const TaskManager: React.FC = () => {
         </div>
       </div>
 
-      {/* Tasks Table */}
-      <div className="card overflow-hidden">
+      {/* Tasks Table (Desktop >= md) */}
+      <div className="hidden md:block card overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead className="bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
@@ -426,10 +426,145 @@ export const TaskManager: React.FC = () => {
         </div>
       </div>
 
-      {/* Task Creation & Edit Modal */}
+      {/* Mobile Task Cards (Mobile < md) */}
+      <div className="block md:hidden space-y-3">
+        {loading ? (
+          <div className="space-y-3">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="card p-4 animate-pulse space-y-3">
+                <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-3/4" />
+                <div className="h-3 bg-slate-200 dark:bg-slate-800 rounded w-1/2" />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <AnimatePresence>
+            {filteredTasks.map((task) => {
+              const rel = getRelativeDeadline(task.deadline);
+              return (
+                <motion.div
+                  key={task.id}
+                  layout
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                  className={`card p-4 space-y-3 transition-all ${
+                    task.status === 'completed'
+                      ? 'bg-slate-50/60 dark:bg-slate-900/40 border-slate-200 dark:border-slate-800/60 opacity-75'
+                      : 'border-slate-200 dark:border-slate-800'
+                  }`}
+                >
+                  {/* Top Row: Checkbox + Title + Priority */}
+                  <div className="flex items-start gap-3">
+                    <button
+                      onClick={() => handleStatusToggle(task.id, task.status)}
+                      className={`p-2 rounded-xl transition-transform active:scale-90 min-h-[44px] min-w-[44px] flex items-center justify-center shrink-0 ${
+                        task.status === 'completed'
+                          ? 'text-emerald-500 bg-emerald-50 dark:bg-emerald-950/60'
+                          : 'text-slate-400 hover:text-emerald-500 bg-slate-100 dark:bg-slate-800'
+                      }`}
+                      aria-label={task.status === 'completed' ? 'Mark task as pending' : 'Mark task as completed'}
+                    >
+                      <CheckCircle2 className={`h-5 w-5 ${task.status === 'completed' ? 'scale-110' : ''}`} />
+                    </button>
+
+                    <div className="flex-1 min-w-0">
+                      <h3 className={`font-bold text-sm text-slate-900 dark:text-slate-100 break-words ${
+                        task.status === 'completed' ? 'line-through text-slate-400 dark:text-slate-500' : ''
+                      }`}>
+                        {task.title}
+                      </h3>
+                      <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 flex flex-wrap items-center gap-1.5">
+                        <span className="font-semibold text-brand-600 dark:text-brand-400">{task.subject}</span>
+                        <span>•</span>
+                        <span className="flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          {task.estimated_minutes || 60}m
+                        </span>
+                      </div>
+                    </div>
+
+                    <StatusBadge type="priority" value={task.priority} />
+                  </div>
+
+                  {/* Middle Row: Badges & Relative Deadline */}
+                  <div className="flex items-center justify-between text-xs pt-1 border-t border-slate-100 dark:border-slate-800/80">
+                    <StatusBadge type="taskType" value={task.task_type || 'assignment'} />
+                    <span className={`text-[11px] font-semibold ${rel.isOverdue ? 'text-red-500' : rel.isUrgent ? 'text-amber-500' : 'text-slate-600 dark:text-slate-300'}`}>
+                      {rel.label} ({formatDate(task.deadline)})
+                    </span>
+                  </div>
+
+                  {/* Bottom Row: Actions */}
+                  <div className="flex items-center justify-between pt-1 border-t border-slate-100 dark:border-slate-800/80">
+                    <span className="text-[11px] text-slate-400">Quick Actions</span>
+                    <div className="flex items-center gap-1">
+                      <a
+                        href={getGoogleCalendarUrl({
+                          title: task.title,
+                          description: task.description,
+                          deadline: task.deadline,
+                          estimatedMinutes: task.estimated_minutes,
+                          subject: task.subject
+                        })}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-2 rounded-xl text-slate-400 hover:text-indigo-500 bg-slate-50 dark:bg-slate-800/60 min-h-[44px] min-w-[44px] flex items-center justify-center transition-colors"
+                        aria-label="Add to Google Calendar"
+                      >
+                        <Calendar className="h-4 w-4" />
+                      </a>
+
+                      <button
+                        onClick={() => downloadIcsFile({
+                          title: task.title,
+                          description: task.description,
+                          deadline: task.deadline,
+                          estimatedMinutes: task.estimated_minutes,
+                          subject: task.subject
+                        })}
+                        className="p-2 rounded-xl text-slate-400 hover:text-emerald-500 bg-slate-50 dark:bg-slate-800/60 min-h-[44px] min-w-[44px] flex items-center justify-center transition-colors"
+                        aria-label="Export iCal"
+                      >
+                        <Download className="h-4 w-4" />
+                      </button>
+
+                      <button
+                        onClick={() => openEditModal(task)}
+                        className="p-2 rounded-xl text-slate-400 hover:text-brand-500 bg-slate-50 dark:bg-slate-800/60 min-h-[44px] min-w-[44px] flex items-center justify-center transition-colors"
+                        aria-label="Edit Task"
+                      >
+                        <Edit3 className="h-4 w-4" />
+                      </button>
+
+                      <button
+                        onClick={() => handleDelete(task.id)}
+                        className="p-2 rounded-xl text-slate-400 hover:text-red-500 bg-slate-50 dark:bg-slate-800/60 min-h-[44px] min-w-[44px] flex items-center justify-center transition-colors"
+                        aria-label="Delete Task"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </AnimatePresence>
+        )}
+
+        {filteredTasks.length === 0 && !loading && (
+          <div className="card p-8 text-center text-slate-400 text-sm space-y-2">
+            <p className="font-semibold text-slate-300">No tasks found</p>
+            <p className="text-xs">Try resetting your filters or create a new task.</p>
+          </div>
+        )}
+      </div>
+
+      {/* Task Creation & Edit Modal (Desktop Centered + Mobile Bottom Sheet) */}
       <AnimatePresence>
         {isModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -439,131 +574,138 @@ export const TaskManager: React.FC = () => {
             />
 
             <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 15 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 15 }}
-              transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-              className="card relative z-10 w-full max-w-lg p-6 space-y-6 shadow-2xl"
+              initial={{ opacity: 0, y: 40 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 40 }}
+              transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+              className="card relative z-10 w-full sm:max-w-lg p-5 sm:p-6 space-y-5 shadow-2xl rounded-b-none sm:rounded-2xl rounded-t-3xl max-h-[90vh] overflow-y-auto"
             >
-              <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-4">
-                <h3 className="font-bold text-lg text-slate-900 dark:text-slate-100">
+              {/* Mobile Drag Indicator */}
+              <div className="w-12 h-1.5 bg-slate-300 dark:bg-slate-700 rounded-full mx-auto sm:hidden mb-1" />
+
+              <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3 sm:pb-4">
+                <h3 className="font-bold text-base sm:text-lg text-slate-900 dark:text-slate-100">
                   {editingTask ? 'Edit Task Commitment' : 'Create New Task'}
                 </h3>
-                <button onClick={() => setIsModalOpen(false)} className="p-1.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors">
+                <button
+                  onClick={() => setIsModalOpen(false)}
+                  className="p-2 rounded-xl text-slate-400 hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+                  aria-label="Close dialog"
+                >
                   <X className="h-5 w-5" />
                 </button>
               </div>
 
               <form onSubmit={handleSaveTask} className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">Task Title</label>
-                <input
-                  type="text"
-                  required
-                  value={newTitle}
-                  onChange={(e) => setNewTitle(e.target.value)}
-                  placeholder="e.g. Organic Chemistry Problem Set 4"
-                  className="input"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">Subject</label>
+                  <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">Task Title</label>
                   <input
                     type="text"
                     required
-                    value={newSubject}
-                    onChange={(e) => setNewSubject(e.target.value)}
+                    value={newTitle}
+                    onChange={(e) => setNewTitle(e.target.value)}
+                    placeholder="e.g. Organic Chemistry Problem Set 4"
                     className="input"
                   />
                 </div>
 
-                <div>
-                  <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">Priority</label>
-                  <select
-                    value={newPriority}
-                    onChange={(e) => setNewPriority(e.target.value as any)}
-                    className="select"
-                  >
-                    <option value="high">High</option>
-                    <option value="medium">Medium</option>
-                    <option value="low">Low</option>
-                  </select>
-                </div>
-              </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">Subject</label>
+                    <input
+                      type="text"
+                      required
+                      value={newSubject}
+                      onChange={(e) => setNewSubject(e.target.value)}
+                      className="input"
+                    />
+                  </div>
 
-              <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">Priority</label>
+                    <select
+                      value={newPriority}
+                      onChange={(e) => setNewPriority(e.target.value as any)}
+                      className="select"
+                    >
+                      <option value="high">High Priority</option>
+                      <option value="medium">Medium Priority</option>
+                      <option value="low">Low Priority</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">Deadline</label>
+                    <input
+                      type="datetime-local"
+                      required
+                      value={newDeadline}
+                      onChange={(e) => setNewDeadline(e.target.value)}
+                      className="input"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">Task Type</label>
+                    <select
+                      value={newTaskType}
+                      onChange={(e) => setNewTaskType(e.target.value as any)}
+                      className="select"
+                    >
+                      <option value="assignment">Assignment</option>
+                      <option value="exam">Exam</option>
+                      <option value="announcement">Announcement</option>
+                      <option value="reading">Reading</option>
+                    </select>
+                  </div>
+                </div>
+
                 <div>
-                  <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">Deadline</label>
+                  <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">Estimated Minutes</label>
                   <input
-                    type="datetime-local"
-                    required
-                    value={newDeadline}
-                    onChange={(e) => setNewDeadline(e.target.value)}
+                    type="number"
+                    min={15}
+                    step={15}
+                    value={newEstMinutes}
+                    onChange={(e) => setNewEstMinutes(Number(e.target.value))}
                     className="input"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">Task Type</label>
-                  <select
-                    value={newTaskType}
-                    onChange={(e) => setNewTaskType(e.target.value as any)}
-                    className="select"
-                  >
-                    <option value="assignment">Assignment</option>
-                    <option value="exam">Exam</option>
-                    <option value="announcement">Announcement</option>
-                    <option value="reading">Reading</option>
-                  </select>
+                  <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">Description</label>
+                  <textarea
+                    rows={3}
+                    value={newDescription}
+                    onChange={(e) => setNewDescription(e.target.value)}
+                    placeholder="Optional details, guidelines, or submission instructions..."
+                    className="input"
+                  />
                 </div>
-              </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">Estimated Minutes</label>
-                <input
-                  type="number"
-                  min={15}
-                  step={15}
-                  value={newEstMinutes}
-                  onChange={(e) => setNewEstMinutes(Number(e.target.value))}
-                  className="input"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">Description</label>
-                <textarea
-                  rows={3}
-                  value={newDescription}
-                  onChange={(e) => setNewDescription(e.target.value)}
-                  placeholder="Optional details, guidelines, or submission instructions..."
-                  className="input"
-                />
-              </div>
-
-              <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
-                <button
-                  type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="btn-secondary"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={createLoading}
-                  className="btn-primary"
-                >
-                  {createLoading ? 'Saving...' : editingTask ? 'Update Task' : 'Create Task'}
-                </button>
-              </div>
-            </form>
-          </motion.div>
-        </div>
-      )}
-    </AnimatePresence>
+                <div className="flex flex-col-reverse sm:flex-row justify-end gap-2.5 sm:gap-3 pt-3 sm:pt-4 border-t border-slate-200 dark:border-slate-800">
+                  <button
+                    type="button"
+                    onClick={() => setIsModalOpen(false)}
+                    className="btn-secondary w-full sm:w-auto"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={createLoading}
+                    className="btn-primary w-full sm:w-auto"
+                  >
+                    {createLoading ? 'Saving...' : editingTask ? 'Update Task' : 'Create Task'}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
   </div>
 );
 };
