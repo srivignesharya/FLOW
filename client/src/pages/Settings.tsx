@@ -1,16 +1,18 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { showToast, triggerCelebration } from '../components/ToastContainer';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useToast } from '../context/ToastContext';
-import { User, Building, Clock, Sun, Moon, Save, CheckCircle2, AlertCircle, Mail, Send, Loader2 } from 'lucide-react';
+import { User, Building, Clock, Sun, Moon, Save, CheckCircle2, AlertCircle, Mail, Send, Loader2, Trash2, ShieldAlert } from 'lucide-react';
 import { SkeletonCard } from '../components/SkeletonLoaders';
 
 export const Settings: React.FC = () => {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const { isDark, toggleTheme } = useTheme();
   const { showToast } = useToast();
+  const navigate = useNavigate();
 
   const [fullName, setFullName] = useState('');
   const [institution, setInstitution] = useState('');
@@ -18,6 +20,8 @@ export const Settings: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [sendingTestEmail, setSendingTestEmail] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [deletingAccount, setDeletingAccount] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -73,6 +77,26 @@ export const Settings: React.FC = () => {
       showToast(msg, 'error');
     } finally {
       setSendingTestEmail(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    setDeletingAccount(true);
+    setError('');
+
+    try {
+      await api.delete('/auth/account');
+      setIsDeleteModalOpen(false);
+      showToast('Your FLOW account has been permanently deleted.', 'info');
+      await signOut();
+      navigate('/auth', { replace: true });
+    } catch (err: any) {
+      console.error('[DELETE ACCOUNT FAILED]:', err);
+      const msg = err.response?.data?.error || 'Failed to delete account. Please try again or contact support.';
+      setError(msg);
+      showToast(msg, 'error');
+    } finally {
+      setDeletingAccount(false);
     }
   };
 
@@ -250,6 +274,80 @@ export const Settings: React.FC = () => {
           </button>
         </div>
       </form>
+
+      {/* Danger Zone: Account Deletion */}
+      <div className="card p-4 sm:p-6 border-red-500/30 dark:border-red-900/50 bg-red-500/5 dark:bg-red-950/10 space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+          <div className="space-y-1">
+            <h2 className="text-base font-bold text-red-600 dark:text-red-400 flex items-center gap-2">
+              <ShieldAlert className="h-5 w-5" />
+              <span>Danger Zone: Delete Account</span>
+            </h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              This permanently deletes your FLOW account and associated data.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setIsDeleteModalOpen(true)}
+            className="px-4 py-2.5 rounded-xl border border-red-500/40 text-red-600 dark:text-red-400 hover:bg-red-500/10 active:scale-[0.98] font-semibold text-xs transition-all flex items-center justify-center gap-2 shrink-0 min-h-[44px]"
+          >
+            <Trash2 className="h-4 w-4" />
+            <span>Delete Account</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Account Deletion Confirmation Modal */}
+      {isDeleteModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in">
+          <div className="card p-6 max-w-md w-full space-y-5 bg-white dark:bg-slate-900 border-red-500/40 shadow-2xl">
+            <div className="flex items-start gap-3.5">
+              <div className="p-3 rounded-2xl bg-red-500/10 text-red-500 shrink-0">
+                <ShieldAlert className="h-6 w-6" />
+              </div>
+              <div className="space-y-1">
+                <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                  Permanently Delete Account?
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                  Are you sure you want to permanently delete your account? This action cannot be undone. All your tasks, study schedules, uploaded documents, and IMvision chat history will be permanently deleted from the database.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                type="button"
+                disabled={deletingAccount}
+                onClick={() => setIsDeleteModalOpen(false)}
+                className="btn-secondary text-xs px-4 py-2.5 min-h-[40px]"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={deletingAccount}
+                onClick={handleDeleteAccount}
+                className="px-4 py-2.5 bg-red-600 hover:bg-red-700 active:scale-[0.98] text-white font-semibold rounded-xl text-xs flex items-center gap-2 transition-all shadow-lg shadow-red-600/30 min-h-[40px] disabled:opacity-50"
+              >
+                {deletingAccount ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span>Deleting Account...</span>
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="h-4 w-4" />
+                    <span>Delete Account</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

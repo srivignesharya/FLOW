@@ -56,7 +56,8 @@ router.post('/', requireAuth, validateBody(manualTaskSchema), async (req, res, n
         priority: cleanTask.priority,
         estimated_minutes: cleanTask.estimatedMinutes,
         description: cleanTask.description,
-        task_type: cleanTask.taskType
+        task_type: cleanTask.taskType,
+        notification_sent: false
       })
       .select()
       .single();

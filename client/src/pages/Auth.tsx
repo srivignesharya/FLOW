@@ -320,6 +320,7 @@ export const Auth: React.FC = () => {
               </button>
             </form>
 
+            {/* Google Sign In Option — Visible on both Login and Signup */}
             {!isForgotPassword && (
               <div className="space-y-4 pt-1">
                 <div className="relative flex items-center justify-center my-2">
@@ -335,7 +336,7 @@ export const Auth: React.FC = () => {
                   type="button"
                   onClick={handleGoogleSignIn}
                   disabled={googleLoading || loading}
-                  className="w-full py-3 px-4 bg-slate-900 hover:bg-slate-800/80 active:scale-[0.99] text-slate-200 font-medium rounded-xl border border-slate-800 transition-all flex items-center justify-center gap-3 text-sm disabled:opacity-50 shadow-sm"
+                  className="w-full py-3.5 px-4 bg-slate-900 hover:bg-slate-800 active:scale-[0.99] text-slate-200 font-medium rounded-xl border border-slate-800 hover:border-slate-700 transition-all flex items-center justify-center gap-3 text-sm disabled:opacity-50 shadow-sm min-h-[46px]"
                 >
                   {googleLoading ? (
                     <span className="text-slate-300">Signing in with Google...</span>
@@ -356,7 +357,7 @@ export const Auth: React.FC = () => {
                         setError('');
                         setMessage('');
                       }}
-                      className="text-xs font-medium text-brand-400 hover:text-brand-300 transition-colors flex items-center gap-1"
+                      className="text-xs font-medium text-brand-400 hover:text-brand-300 transition-colors flex items-center gap-1 min-h-[36px] py-1"
                     >
                       <KeyRound className="h-3.5 w-3.5" />
                       <span>Forgot Password?</span>

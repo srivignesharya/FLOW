@@ -130,7 +130,8 @@ router.post('/file', requireAuth, aiServiceLimiter, upload.single('file'), async
         priority: smartPriority.priority,
         estimated_minutes: t.estimatedMinutes || 60,
         description: `${t.description || ''}\n\n💡 AI Priority Analysis: ${smartPriority.reasoning}`.trim(),
-        task_type: t.taskType || 'assignment'
+        task_type: t.taskType || 'assignment',
+        notification_sent: false
       };
     });
 
@@ -266,7 +267,8 @@ router.post('/text', requireAuth, aiServiceLimiter, validateBody(textIngestSchem
       priority: t.priority,
       estimated_minutes: t.estimatedMinutes || 60,
       description: t.description || '',
-      task_type: t.taskType || 'assignment'
+      task_type: t.taskType || 'assignment',
+      notification_sent: false
     }));
 
     const { data: insertedTasks, error: taskErr } = await supabaseAdmin
