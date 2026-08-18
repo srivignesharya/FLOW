@@ -72,7 +72,7 @@ router.post('/file', requireAuth, aiServiceLimiter, upload.single('file'), async
     }
 
     const prompt = `Today's date is ${dateStr}. Analyze this academic document ${ocrText ? '(OCR Preprocessed Text included below)' : ''} thoroughly and extract ALL tasks, assignments, exams, announcements, and deadlines.
-Return a JSON array of tasks with fields: title, subject, deadline (ISO 8601), priority (critical/high/medium/low), estimatedMinutes (number), description, taskType (assignment/exam/reading/lab).\n${ocrText ? `OCR Text:\n${ocrText}` : ''}`;
+Return a JSON array of tasks with fields: title, subject, deadline (ISO 8601), priority (critical/high/medium/low), estimatedMinutes (number), description, taskType (assignment/exam/reading/announcement).\n${ocrText ? `OCR Text:\n${ocrText}` : ''}`;
 
     let aiResponseText = '';
     let lastError;
@@ -177,7 +177,7 @@ router.post('/text', requireAuth, aiServiceLimiter, validateBody(textIngestSchem
     const { textContent } = req.body;
     const dateStr = new Date().toISOString();
 
-    const prompt = `Today's date is ${dateStr}. Extract all academic tasks, assignments, exams, and deadlines from the following announcement/syllabus text:\n\n${textContent}\n\nReturn a JSON array of task objects with fields: title, subject, deadline (ISO 8601), priority (critical/high/medium/low), estimatedMinutes (number), description, taskType (assignment/exam/reading/lab).`;
+    const prompt = `Today's date is ${dateStr}. Extract all academic tasks, assignments, exams, and deadlines from the following announcement/syllabus text:\n\n${textContent}\n\nReturn a JSON array of task objects with fields: title, subject, deadline (ISO 8601), priority (critical/high/medium/low), estimatedMinutes (number), description, taskType (assignment/exam/reading/announcement).`;
 
     let aiResponseText = '';
     let lastError;

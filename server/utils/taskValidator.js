@@ -48,10 +48,28 @@ export const sanitizeAndValidateTask = (rawTask, index = 0, defaultSubject = 'Ge
   }
 
   // 4. Task Type Normalization
-  const validTypes = ['assignment', 'exam', 'announcement', 'reading', 'project', 'lab'];
-  let taskType = (rawTask.taskType || rawTask.task_type || rawTask.type || 'assignment').toString().toLowerCase().trim();
+  let rawTaskType = (rawTask.taskType || rawTask.task_type || rawTask.type || 'assignment').toString().toLowerCase().trim();
+  
+  // Normalization mapping for DB constraints
+  const typeMap = {
+    'project': 'assignment',
+    'lab': 'assignment',
+    'homework': 'assignment',
+    'quiz': 'exam',
+    'test': 'exam',
+    'midterm': 'exam',
+    'final': 'exam',
+    'study': 'reading'
+  };
+
+  let taskType = typeMap[rawTaskType] || rawTaskType;
+
+  const validTypes = ['assignment', 'exam', 'announcement', 'reading'];
   if (!validTypes.includes(taskType)) {
+    console.warn(`[EXTRACTION] AI task type: ${rawTaskType} | Normalized task type: assignment | Reason: invalid type fallback`);
     taskType = 'assignment';
+  } else {
+    console.log(`[EXTRACTION] AI task type: ${rawTaskType} | Normalized task type: ${taskType}`);
   }
 
   // 5. Subject & Numerical Bounds
