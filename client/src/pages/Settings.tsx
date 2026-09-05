@@ -8,6 +8,7 @@ import { useToast } from '../context/ToastContext';
 import { User, Building, Clock, Sun, Moon, Save, CheckCircle2, AlertCircle, Mail, Send, Loader2, Trash2, ShieldAlert } from 'lucide-react';
 import { SkeletonCard } from '../components/SkeletonLoaders';
 import { MobileSettings } from '../components/mobile/MobileSettings';
+import { TimedUndoAction } from '../components/TimedUndoAction';
 
 export const Settings: React.FC = () => {
   const { user, signOut } = useAuth();
@@ -304,25 +305,24 @@ export const Settings: React.FC = () => {
 
       {/* Danger Zone: Account Deletion */}
       <div className="card p-4 sm:p-6 border-red-500/30 dark:border-red-900/50 bg-red-500/5 dark:bg-red-950/10 space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div className="space-y-1">
             <h2 className="text-base font-bold text-red-600 dark:text-red-400 flex items-center gap-2">
               <ShieldAlert className="h-5 w-5" />
               <span>Danger Zone: Delete Account</span>
             </h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              This permanently deletes your FLOW account and associated data.
+            <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md leading-relaxed">
+              This permanently deletes your FLOW account and associated data. Once triggered, you have 10 seconds to cancel deletion before your account is erased.
             </p>
           </div>
 
-          <button
-            type="button"
-            onClick={() => setIsDeleteModalOpen(true)}
-            className="px-4 py-2.5 rounded-xl border border-red-500/40 text-red-600 dark:text-red-400 hover:bg-red-500/10 active:scale-[0.98] font-semibold text-xs transition-all flex items-center justify-center gap-2 shrink-0 min-h-[44px]"
-          >
-            <Trash2 className="h-4 w-4" />
-            <span>Delete Account</span>
-          </button>
+          <TimedUndoAction
+            initialSeconds={10}
+            deleteLabel="Delete Account"
+            undoLabel="Cancel Deletion"
+            onConfirm={handleDeleteAccount}
+            isDeleting={deletingAccount}
+          />
         </div>
       </div>
 
@@ -339,7 +339,7 @@ export const Settings: React.FC = () => {
                   Permanently Delete Account?
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                  Are you sure you want to permanently delete your account? This action cannot be undone. All your tasks, study schedules, uploaded documents, and IMvision chat history will be permanently deleted from the database.
+                  Are you sure you want to permanently delete your account? This action cannot be undone. All your tasks, study schedules, and uploaded documents will be permanently deleted from the database.
                 </p>
               </div>
             </div>

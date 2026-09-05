@@ -110,7 +110,7 @@ export const IngestStudio: React.FC = () => {
             <span>Syllabus & Document Ingest Studio</span>
           </h1>
           <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm mt-1">
-            Upload course syllabi, lecture slides, assignment PDFs, or paste announcement text. IMvision AI extracts commitments automatically.
+            Upload course syllabi, lecture slides, assignment PDFs, or paste announcement text. FLOW AI extracts commitments automatically.
           </p>
         </div>
 

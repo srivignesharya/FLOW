@@ -57,7 +57,7 @@ export const MobileStudyPlanner: React.FC<MobileStudyPlannerProps> = ({
           <Sparkles className="h-7 w-7" />
         </div>
         <div className="space-y-1">
-          <h3 className="text-sm font-bold text-slate-900 dark:text-white">IMvision AI is Planning...</h3>
+          <h3 className="text-sm font-bold text-slate-900 dark:text-white">Generating Study Plan...</h3>
           <p className="text-xs text-slate-400">Optimizing cognitive workload & deadline distribution</p>
         </div>
       </div>

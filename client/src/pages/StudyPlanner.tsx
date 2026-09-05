@@ -142,7 +142,7 @@ export const StudyPlanner: React.FC = () => {
               {generating ? (
                 <>
                   <RefreshCw className="h-4 w-4 animate-spin" />
-                  <span>IMvision is analysing...</span>
+                  <span>Generating plan...</span>
                 </>
               ) : (
                 <>

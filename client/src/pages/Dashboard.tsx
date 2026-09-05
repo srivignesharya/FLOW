@@ -243,14 +243,13 @@ export const Dashboard: React.FC = () => {
             </div>
 
             <div className="flex flex-row md:flex-col items-center md:items-end justify-between md:justify-center gap-2 shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-slate-200/50 dark:border-slate-800">
-              <span className="text-[11px] font-medium text-slate-500 md:order-2">By IMvision</span>
               <MotionButton
                 variant="primary"
                 onClick={() => navigate('/planner')}
                 icon={<Compass className="h-4 w-4" />}
-                className="md:order-1"
+                className="w-full sm:w-auto"
               >
-                Start Studying
+                <span>Start Studying</span>
               </MotionButton>
             </div>
           </div>

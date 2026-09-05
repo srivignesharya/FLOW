@@ -18,6 +18,7 @@ import {
   X
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { TimedUndoAction } from '../TimedUndoAction';
 
 interface MobileSettingsProps {
   user: any;
@@ -220,14 +221,14 @@ export const MobileSettings: React.FC<MobileSettingsProps> = ({
               </p>
             </div>
 
-            <button
-              type="button"
-              onClick={() => setIsDeleteModalOpen(true)}
-              className="w-full py-2.5 px-3 rounded-2xl bg-rose-600 hover:bg-rose-700 active:scale-[0.98] text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-md shadow-rose-600/25 min-h-[42px]"
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-              <span>Delete Account</span>
-            </button>
+            <TimedUndoAction
+              initialSeconds={10}
+              deleteLabel="Delete Account"
+              undoLabel="Cancel Deletion"
+              onConfirm={onDeleteAccount}
+              isDeleting={deletingAccount}
+              className="w-full"
+            />
           </div>
         </div>
       </form>
@@ -262,7 +263,7 @@ export const MobileSettings: React.FC<MobileSettingsProps> = ({
                     Permanently Delete Account?
                   </h3>
                   <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                    Are you sure you want to permanently delete your FLOW account? All your tasks, study schedules, uploaded documents, and IMvision chat history will be permanently deleted from the database.
+                    Are you sure you want to permanently delete your FLOW account? All your tasks, study schedules, and uploaded documents will be permanently deleted from the database.
                   </p>
                 </div>
               </div>

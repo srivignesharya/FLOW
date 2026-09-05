@@ -1,12 +1,14 @@
 import React from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
-import { Sun, Moon, LogOut, Sparkles } from 'lucide-react';
+import { Sun, Moon, LogOut, Sparkles, Bot } from 'lucide-react';
 import { NotificationCenter } from './NotificationCenter';
+import { useCopilot } from '../context/CopilotContext';
 
 export const Navbar: React.FC = () => {
   const { user, signOut } = useAuth();
   const { isDark, toggleTheme } = useTheme();
+  const { openCopilot } = useCopilot();
 
   const initials = user?.email?.charAt(0).toUpperCase() || 'U';
 
@@ -33,6 +35,17 @@ export const Navbar: React.FC = () => {
 
       {/* Right User Controls */}
       <div className="flex items-center gap-3">
+        {/* AI Copilot Trigger */}
+        <button
+          id="navbar-copilot-btn"
+          onClick={openCopilot}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-brand-500/10 via-orange-500/10 to-amber-500/10 hover:from-brand-500/20 hover:to-orange-500/20 text-brand-600 dark:text-brand-400 border border-brand-500/30 transition-all font-semibold text-xs shadow-sm hover:scale-[1.02] active:scale-95"
+          title="Open AI Copilot (Ctrl+J)"
+        >
+          <Bot className="h-4 w-4 text-brand-500 dark:text-brand-400" />
+          <span className="hidden sm:inline">Copilot</span>
+        </button>
+
         {/* Notification Center */}
         <NotificationCenter />
 

@@ -65,7 +65,7 @@ export const MobileAuth: React.FC<MobileAuthProps> = ({
         </div>
         <div>
           <h1 className="text-2xl font-black tracking-tight text-white">FLOW</h1>
-          <span className="text-[11px] font-semibold text-slate-400">Built by IMV</span>
+          <span className="text-[11px] font-semibold text-slate-400">Academic Workspace</span>
         </div>
       </div>
 

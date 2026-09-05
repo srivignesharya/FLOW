@@ -1,291 +1,375 @@
-import React, { useEffect, useState, useRef } from 'react';
-import api from '../services/api';
-import { showToast, triggerCelebration } from '../components/ToastContainer';
+import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MotionButton } from '../components/MotionButton';
-import { InteractiveCard } from '../components/InteractiveCard';
-import { Send, Bot, User, Trash2, Sparkles, Loader2, Compass, BookOpen, Calendar, HelpCircle, FileText, Zap } from 'lucide-react';
-import ReactMarkdown from 'react-markdown';
-
+import {
+  Sparkles,
+  Bot,
+  Send,
+  Paperclip,
+  Trash2,
+  FileText,
+  Check,
+  ChevronDown,
+  Zap,
+  Calendar,
+  BookOpen,
+  BrainCircuit,
+  ArrowRight,
+  ShieldCheck,
+  Clock,
+  Layers,
+  X
+} from 'lucide-react';
+import { useCopilot } from '../context/CopilotContext';
 import { useAuth } from '../context/AuthContext';
-import { MobileCopilot } from '../components/mobile/MobileCopilot';
+import { CopilotMessageItem } from '../components/copilot/CopilotMessageItem';
+import { CopilotThinkingIndicator } from '../components/copilot/CopilotThinkingIndicator';
 
-const QUICK_ACTIONS = [
-  { label: 'Summarize PDF', query: 'Can you summarize the uploaded PDF syllabus and list key topics?', icon: FileText },
-  { label: 'Generate Study Plan', query: 'Generate an optimized study plan for my upcoming exams', icon: Calendar },
-  { label: 'Explain Topic', query: 'Explain the core concepts of my most urgent assignment', icon: BookOpen },
-  { label: 'Revision Plan', query: 'Create a quick revision plan for high priority tasks', icon: Zap },
-  { label: 'Ask Questions', query: 'What should I prioritize studying today?', icon: HelpCircle }
+const SUGGESTED_PROMPTS = [
+  {
+    icon: Zap,
+    label: 'What should I focus on studying today?',
+    prompt: 'Based on my active course deadlines and study schedule, what specific subjects and tasks should I study today?'
+  },
+  {
+    icon: Calendar,
+    label: 'Break down upcoming deadlines by priority',
+    prompt: 'Analyze all my registered assignments and exams. Sort them by urgency and give me a clear preparation roadmap.'
+  },
+  {
+    icon: BookOpen,
+    label: 'Summarize key concepts from attached syllabus',
+    prompt: 'Summarize the core topics, weighted deliverables, and examination structure from my selected document.'
+  },
+  {
+    icon: BrainCircuit,
+    label: 'Generate a 3-hour Pomodoro study sprint',
+    prompt: 'Build a high-productivity 3-hour study session with 45-minute focus intervals and 10-minute breaks targeted at my most critical tasks.'
+  }
 ];
 
 export const Copilot: React.FC = () => {
+  const {
+    messages,
+    loading,
+    historyLoading,
+    activeDocumentId,
+    documents,
+    setActiveDocumentId,
+    sendMessage,
+    clearHistory
+  } = useCopilot();
+
   const { user } = useAuth();
-  const [messages, setMessages] = useState<any[]>([]);
-  const [query, setQuery] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [documents, setDocuments] = useState<any[]>([]);
-  const [selectedDocId, setSelectedDocId] = useState<string>('');
+  const [inputText, setInputText] = useState('');
+  const [showDocPicker, setShowDocPicker] = useState(false);
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
-  const fetchHistory = async () => {
-    try {
-      const res = await api.get('/copilot/history');
-      setMessages(res.data);
-    } catch (err) {
-      console.error('[IMvision History Error]:', err);
-    }
-  };
-
-  const fetchDocuments = async () => {
-    try {
-      const res = await api.get('/tasks');
-      const docsMap: Record<string, any> = {};
-      res.data.forEach((t: any) => {
-        if (t.documents) {
-          docsMap[t.document_id] = t.documents;
-        }
-      });
-      setDocuments(Object.keys(docsMap).map(id => ({ id, ...docsMap[id] })));
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  useEffect(() => {
-    fetchHistory();
-    fetchDocuments();
-  }, []);
+  const selectedDoc = documents.find((d) => d.id === activeDocumentId);
+  const userInitial = user?.email?.charAt(0).toUpperCase() || 'U';
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  }, [messages, loading]);
 
-  const handleSend = async (customQuery?: string) => {
-    const textToSend = customQuery || query;
-    if (!textToSend.trim() || loading) return;
+  const handleSend = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!inputText.trim() || loading) return;
 
-    if (!customQuery) setQuery('');
-    setLoading(true);
-
-    const tempUserMsg = {
-      id: Date.now().toString(),
-      role: 'user',
-      content: textToSend,
-      created_at: new Date().toISOString()
-    };
-    setMessages(prev => [...prev, tempUserMsg]);
-
-    try {
-      const res = await api.post('/copilot/chat', {
-        query: textToSend,
-        documentId: selectedDocId || null
-      });
-
-      const assistantMsg = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: res.data.reply,
-        created_at: new Date().toISOString()
-      };
-      setMessages(prev => [...prev, assistantMsg]);
-    } catch (err: any) {
-      console.error('[IMvision Error]:', err);
-      const errorMsg = err.response?.data?.error || 'IMvision service temporarily unavailable. Please try again.';
-      showToast(errorMsg, 'error');
-    } finally {
-      setLoading(false);
-    }
+    const query = inputText;
+    setInputText('');
+    await sendMessage(query);
   };
 
-  const handleClearHistory = async () => {
-    try {
-      await api.delete('/copilot/history');
-      setMessages([]);
-      showToast('IMvision chat history cleared', 'info');
-    } catch (err) {
-      console.error(err);
-      showToast('Failed to clear chat history', 'error');
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
     }
   };
 
   return (
-    <>
-      {/* 1. Purpose-Built Mobile IMvision Assistant (< md) */}
-      <div className="md:hidden">
-        <MobileCopilot
-          user={user}
-          messages={messages}
-          loading={loading}
-          query={query}
-          setQuery={setQuery}
-          onSend={handleSend}
-          onClearHistory={handleClearHistory}
-          documents={documents}
-          selectedDocId={selectedDocId}
-          setSelectedDocId={setSelectedDocId}
-        />
-      </div>
-
-      {/* 2. Desktop IMvision Chat Interface (>= md) */}
-      <div className="hidden md:flex flex-col h-[calc(100vh-10.5rem)] max-w-5xl mx-auto space-y-3 min-h-0 pt-1">
-        {/* Top Header */}
-        <div className="flex items-center justify-between shrink-0 pb-1">
+    <div className="h-[calc(100vh-6rem)] md:h-[calc(100vh-5.5rem)] flex flex-col max-w-6xl mx-auto space-y-4">
+      {/* Top Workstation Header */}
+      <div className="card p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800/80 shrink-0 shadow-sm">
+        <div className="flex items-center gap-3.5">
+          <div className="h-11 w-11 rounded-2xl bg-gradient-to-tr from-brand-500 via-orange-500 to-amber-500 flex items-center justify-center text-white shadow-lg shadow-brand-500/25 border border-brand-400/20 shrink-0">
+            <Bot className="h-6 w-6" />
+          </div>
           <div>
-            <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white flex items-center gap-3">
-              <span>IMvision</span>
-              <span className="text-xs px-3 py-0.5 rounded-full bg-brand-500/10 text-brand-600 dark:text-brand-300 font-bold border border-brand-500/20">
-                Academic AI
+            <div className="flex items-center gap-2">
+              <h1 className="text-lg sm:text-xl font-black tracking-tight text-slate-900 dark:text-white">
+                AI Academic Copilot
+              </h1>
+              <span className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[11px] font-bold border border-emerald-500/20">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span>Active</span>
               </span>
-            </h1>
-            <p className="text-slate-500 dark:text-slate-400 text-xs mt-0.5">
-              Your intelligent academic assistant built into FLOW.
+            </div>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Autonomous context-aware study architect powered by Gemini AI
             </p>
           </div>
-
-          <div className="flex items-center gap-2.5">
-            <select
-              value={selectedDocId}
-              onChange={(e) => setSelectedDocId(e.target.value)}
-              className="select text-xs py-1.5 max-w-[200px]"
-            >
-              <option value="">No doc attached</option>
-              {documents.map(d => (
-                <option key={d.id} value={d.id}>📄 {d.file_name}</option>
-              ))}
-            </select>
-
-            {messages.length > 0 && (
-              <button
-                onClick={handleClearHistory}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-rose-500 hover:bg-rose-500/10 border border-rose-500/20 transition-all min-h-[36px]"
-                title="Clear Chat History"
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-                <span>Clear Chat</span>
-              </button>
-            )}
-          </div>
         </div>
 
-        {/* Main Chat Area Card */}
-        <div className="flex-1 card p-4 overflow-hidden flex flex-col min-h-0 bg-white/70 dark:bg-slate-900/40 border-slate-200/80 dark:border-slate-800 backdrop-blur-xl">
-          <div className="flex-1 overflow-y-auto space-y-4 pr-1 min-h-0">
-            {messages.length === 0 && !loading ? (
-              /* Centered Welcome Page Screen */
-              <div className="h-full flex flex-col items-center justify-center text-center p-6 max-w-xl mx-auto space-y-5">
-                <div className="relative">
-                  <div className="absolute -inset-3 bg-brand-500/20 rounded-full blur-xl animate-pulse" />
-                  <div className="relative h-16 w-16 sm:h-20 sm:w-20 rounded-2xl sm:rounded-3xl bg-gradient-to-tr from-brand-500 via-orange-500 to-amber-500 flex items-center justify-center text-white shadow-xl shadow-brand-500/30 border border-white/20">
-                    <Bot className="h-8 w-8 sm:h-10 sm:w-10" />
-                  </div>
-                </div>
+        {/* Right Controls: Document Selector & Clear Chat */}
+        <div className="flex items-center gap-2.5 self-end sm:self-auto">
+          {/* Document Context Selector Dropdown */}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setShowDocPicker(!showDocPicker)}
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold border transition-all ${
+                selectedDoc
+                  ? 'bg-brand-500/10 border-brand-500/30 text-brand-600 dark:text-brand-400 shadow-sm'
+                  : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-750'
+              }`}
+            >
+              <Paperclip className="h-3.5 w-3.5" />
+              <span className="max-w-[140px] truncate">
+                {selectedDoc ? selectedDoc.file_name : 'Attach Document Context'}
+              </span>
+              <ChevronDown className="h-3 w-3" />
+            </button>
 
-                <div className="space-y-1 sm:space-y-2">
-                  <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
-                    Hi, I'm <span className="bg-gradient-to-r from-brand-500 to-amber-500 bg-clip-text text-transparent">IMvision</span>.
-                  </h2>
-                  <p className="text-slate-600 dark:text-slate-300 text-xs sm:text-sm leading-relaxed">
-                    How can I help you excel today? Ask about your course syllabus, revision, concepts, or deadlines.
+            {/* Dropdown Menu */}
+            <AnimatePresence>
+              {showDocPicker && (
+                <motion.div
+                  initial={{ opacity: 0, y: 8, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 8, scale: 0.95 }}
+                  className="absolute right-0 mt-2 w-72 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl p-2 z-50 text-xs"
+                >
+                  <p className="px-3 py-1.5 font-bold text-slate-400 uppercase text-[10px] tracking-wider">
+                    Select Context Document
                   </p>
-                </div>
 
-                {/* Quick Actions Grid */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 w-full pt-1">
-                  {QUICK_ACTIONS.map((action, idx) => (
-                    <InteractiveCard
-                      key={idx}
-                      onClick={() => handleSend(action.query)}
-                      className="p-3 text-left border-slate-200 dark:border-slate-800 hover:border-brand-500/40"
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <div className="p-1.5 rounded-lg bg-brand-500/10 text-brand-600 dark:text-brand-400 shrink-0">
-                          <action.icon className="h-4 w-4" />
-                        </div>
-                        <span className="text-xs font-semibold text-slate-900 dark:text-white line-clamp-1">{action.label}</span>
-                      </div>
-                    </InteractiveCard>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <AnimatePresence initial={false}>
-                {messages.map((msg) => (
-                  <motion.div
-                    key={msg.id}
-                    initial={{ opacity: 0, y: 8, scale: 0.99 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.95 }}
-                    transition={{ duration: 0.15 }}
-                    className={`flex gap-3 max-w-[85%] ${
-                      msg.role === 'user' ? 'ml-auto flex-row-reverse' : ''
+                  <button
+                    onClick={() => {
+                      setActiveDocumentId(null);
+                      setShowDocPicker(false);
+                    }}
+                    className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-left transition-colors ${
+                      !activeDocumentId
+                        ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400 font-bold'
+                        : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
                     }`}
                   >
-                    <div className={`h-8 w-8 rounded-xl flex items-center justify-center shrink-0 text-white font-bold text-xs shadow-md ${
-                      msg.role === 'user'
-                        ? 'bg-brand-500'
-                        : 'bg-gradient-to-tr from-brand-600 via-orange-500 to-amber-500'
-                    }`}>
-                      {msg.role === 'user' ? <User className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
-                    </div>
+                    <span>General Academic Context (All Docs)</span>
+                    {!activeDocumentId && <Check className="h-3.5 w-3.5 text-brand-500" />}
+                  </button>
 
-                    <div className={`p-3.5 sm:p-4 rounded-2xl text-xs sm:text-sm leading-relaxed shadow-xs ${
-                      msg.role === 'user'
-                        ? 'bg-orange-gradient text-white rounded-tr-none font-medium'
-                        : 'bg-slate-100 dark:bg-slate-800/90 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-700/80 rounded-tl-none prose-flow'
-                    }`}>
-                      {msg.role === 'user' ? (
-                        msg.content
-                      ) : (
-                        <ReactMarkdown>{msg.content}</ReactMarkdown>
-                      )}
-                    </div>
-                  </motion.div>
-                ))}
-              </AnimatePresence>
-            )}
+                  <div className="my-1 border-t border-slate-100 dark:border-slate-800" />
 
-            {loading && (
-              <motion.div
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="flex gap-3 max-w-[85%]"
-              >
-                <div className="h-8 w-8 rounded-xl bg-gradient-to-tr from-brand-500 to-amber-500 flex items-center justify-center text-white shrink-0">
-                  <Bot className="h-4 w-4 animate-spin" />
-                </div>
-                <div className="p-3.5 rounded-2xl bg-slate-100 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700/80 text-slate-400 text-xs sm:text-sm flex items-center gap-1.5 rounded-tl-none">
-                  <span className="h-2 w-2 rounded-full bg-brand-400 animate-bounce" style={{ animationDelay: '0ms' }} />
-                  <span className="h-2 w-2 rounded-full bg-orange-400 animate-bounce" style={{ animationDelay: '150ms' }} />
-                  <span className="h-2 w-2 rounded-full bg-amber-400 animate-bounce" style={{ animationDelay: '300ms' }} />
-                  <span className="text-xs ml-2 font-medium text-slate-500 dark:text-slate-300">IMvision is thinking...</span>
-                </div>
-              </motion.div>
-            )}
-
-            <div ref={messagesEndRef} />
+                  <div className="max-h-56 overflow-y-auto space-y-0.5">
+                    {documents.length === 0 ? (
+                      <p className="px-3 py-4 text-center text-slate-400 italic text-[11px]">
+                        No course documents uploaded yet. Upload in Ingest Studio!
+                      </p>
+                    ) : (
+                      documents.map((doc) => (
+                        <button
+                          key={doc.id}
+                          onClick={() => {
+                            setActiveDocumentId(doc.id);
+                            setShowDocPicker(false);
+                          }}
+                          className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-left transition-colors ${
+                            activeDocumentId === doc.id
+                              ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400 font-bold'
+                              : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2 min-w-0 pr-2">
+                            <FileText className="h-3.5 w-3.5 text-brand-500 shrink-0" />
+                            <span className="truncate">{doc.file_name}</span>
+                          </div>
+                          {activeDocumentId === doc.id && <Check className="h-3.5 w-3.5 text-brand-500 shrink-0" />}
+                        </button>
+                      ))
+                    )}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
+
+          {/* Clear History Button */}
+          <button
+            type="button"
+            onClick={() => setShowClearConfirm(true)}
+            disabled={messages.length === 0}
+            className="p-2 rounded-xl text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 transition-colors disabled:opacity-30 disabled:pointer-events-none"
+            title="Clear Chat History"
+          >
+            <Trash2 className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+
+      {/* Clear Confirmation Banner */}
+      <AnimatePresence>
+        {showClearConfirm && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="card bg-rose-500/10 border-rose-500/30 p-3 sm:px-5 flex items-center justify-between text-xs"
+          >
+            <span className="font-semibold text-rose-600 dark:text-rose-400">
+              Are you sure you want to clear your Copilot conversation history?
+            </span>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setShowClearConfirm(false)}
+                className="px-3 py-1.5 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 font-semibold"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  clearHistory();
+                  setShowClearConfirm(false);
+                }}
+                className="px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-bold shadow-md shadow-rose-600/30"
+              >
+                Clear History
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Main Conversational Workspace */}
+      <div className="flex-1 card p-0 flex flex-col bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800/80 overflow-hidden shadow-sm min-h-0">
+        {/* Chat Feed */}
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-2 min-h-0">
+          {historyLoading ? (
+            <div className="h-full flex flex-col items-center justify-center space-y-3 text-slate-400 text-xs">
+              <Sparkles className="h-7 w-7 text-brand-500 animate-spin" />
+              <p className="font-medium">Connecting to Gemini AI and synchronizing syllabus context...</p>
+            </div>
+          ) : messages.length === 0 ? (
+            /* Welcoming Empty State */
+            <div className="h-full flex flex-col justify-center items-center text-center p-4 max-w-xl mx-auto space-y-6">
+              <div className="relative">
+                <div className="absolute -inset-4 bg-gradient-to-r from-brand-500/20 via-orange-500/20 to-amber-500/20 rounded-full blur-2xl animate-pulse" />
+                <div className="relative h-18 w-18 rounded-3xl bg-gradient-to-tr from-brand-500 via-orange-500 to-amber-500 flex items-center justify-center text-white shadow-xl shadow-brand-500/30 border border-brand-400/30">
+                  <Sparkles className="h-9 w-9 animate-pulse" />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <h2 className="text-xl font-black tracking-tight text-slate-900 dark:text-white">
+                  Welcome to your Academic Copilot
+                </h2>
+                <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed max-w-md">
+                  Ask me questions about your uploaded course syllabi, plan study sprints, or let me synthesize your upcoming deadlines into structured steps.
+                </p>
+              </div>
+
+              {/* Quick Suggestion Cards */}
+              <div className="w-full space-y-2.5 text-left">
+                <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider px-1">
+                  Try one of these prompts
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  {SUGGESTED_PROMPTS.map((item, idx) => {
+                    const Icon = item.icon;
+                    return (
+                      <motion.button
+                        key={idx}
+                        whileHover={{ scale: 1.02, y: -2 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() => sendMessage(item.prompt)}
+                        className="flex items-start gap-3 p-3.5 rounded-2xl bg-white dark:bg-slate-800/60 hover:bg-brand-50/50 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-700/60 hover:border-brand-500/40 transition-all text-xs text-left shadow-sm group"
+                      >
+                        <div className="p-2 rounded-xl bg-brand-500/10 text-brand-500 group-hover:bg-brand-500 group-hover:text-white transition-colors shrink-0 mt-0.5">
+                          <Icon className="h-4 w-4" />
+                        </div>
+                        <span className="font-semibold text-slate-700 dark:text-slate-200 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors leading-snug">
+                          {item.label}
+                        </span>
+                      </motion.button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <>
+              {messages.map((msg, index) => (
+                <CopilotMessageItem
+                  key={msg.id || index}
+                  message={msg}
+                  userInitial={userInitial}
+                />
+              ))}
+              {loading && <CopilotThinkingIndicator />}
+              <div ref={messagesEndRef} />
+            </>
+          )}
         </div>
 
-        {/* Input Box */}
-        <form onSubmit={(e) => { e.preventDefault(); handleSend(); }} className="shrink-0 flex items-center gap-2 sm:gap-3">
-          <input
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Ask IMvision anything..."
-            className="input flex-1 py-3 text-xs sm:text-sm"
-          />
-          <MotionButton
-            type="submit"
-            disabled={loading || !query.trim()}
-            isLoading={loading}
-            icon={<Send className="h-4 w-4" />}
-            className="min-h-[44px] shrink-0"
-          >
-            <span className="hidden sm:inline">Send</span>
-          </MotionButton>
-        </form>
+        {/* Input Bar */}
+        <div className="p-4 border-t border-slate-200/80 dark:border-slate-800/80 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shrink-0">
+          {selectedDoc && (
+            <div className="flex items-center justify-between mb-3 px-3 py-1.5 rounded-xl bg-brand-50 dark:bg-brand-500/10 border border-brand-200 dark:border-brand-500/20 text-xs">
+              <div className="flex items-center gap-2 min-w-0">
+                <FileText className="h-3.5 w-3.5 text-brand-500 shrink-0" />
+                <span className="text-slate-600 dark:text-slate-300 font-medium truncate">
+                  Active Document Context: <strong className="text-brand-600 dark:text-brand-400 font-bold">{selectedDoc.file_name}</strong>
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setActiveDocumentId(null)}
+                className="p-1 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 transition-colors shrink-0 ml-2"
+                title="Detach context"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          )}
+
+          <form onSubmit={handleSend} className="relative flex items-end gap-2.5">
+            <div className="relative flex-1 bg-slate-100 dark:bg-slate-800/80 rounded-2xl border border-slate-200 dark:border-slate-700/80 focus-within:border-brand-500 focus-within:ring-2 focus-within:ring-brand-500/20 transition-all">
+              <textarea
+                ref={inputRef}
+                rows={1}
+                value={inputText}
+                onChange={(e) => setInputText(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder={
+                  selectedDoc
+                    ? `Ask Copilot questions specifically about "${selectedDoc.file_name}"...`
+                    : 'Ask anything about your coursework, assignments, or study strategy...'
+                }
+                className="w-full px-4 py-3 bg-transparent text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none resize-none max-h-36 min-h-[48px]"
+                style={{ height: 'auto', minHeight: '48px' }}
+              />
+            </div>
+
+            <motion.button
+              whileHover={{ scale: 1.04 }}
+              whileTap={{ scale: 0.96 }}
+              type="submit"
+              disabled={!inputText.trim() || loading}
+              className="h-12 w-12 rounded-2xl bg-gradient-to-tr from-brand-500 via-orange-500 to-amber-500 hover:from-brand-600 hover:to-orange-600 text-white flex items-center justify-center shadow-lg shadow-brand-500/30 transition-all disabled:opacity-40 disabled:pointer-events-none shrink-0"
+              title="Send message (Enter)"
+            >
+              <Send className="h-5 w-5" />
+            </motion.button>
+          </form>
+
+          <div className="flex items-center justify-between mt-2 text-[11px] text-slate-400 px-1">
+            <span>Press <kbd className="px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-800 font-mono text-[10px]">Enter ↵</kbd> to send</span>
+            <span>Supports rich Markdown, Code snippets, & Task auto-conversion</span>
+          </div>
+        </div>
       </div>
-    </>
+    </div>
   );
 };

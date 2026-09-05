@@ -207,7 +207,7 @@ export const MobileDashboard: React.FC<MobileDashboardProps> = ({
         </div>
       </motion.div>
 
-      {/* 4. IMVISION RECOMMENDATION CARD */}
+      {/* 4. ACADEMIC RECOMMENDATION CARD */}
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
@@ -220,7 +220,7 @@ export const MobileDashboard: React.FC<MobileDashboardProps> = ({
               <Sparkles className="h-3.5 w-3.5" />
             </div>
             <span className="text-xs font-black uppercase tracking-wider bg-gradient-to-r from-orange-500 to-amber-500 bg-clip-text text-transparent">
-              IMvision Insight
+              Study Recommendation
             </span>
           </div>
         </div>
@@ -228,14 +228,14 @@ export const MobileDashboard: React.FC<MobileDashboardProps> = ({
         <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
           {topFocusTask
             ? `Focus on "${topFocusTask.subject || topFocusTask.title}" today because your deadline is ${formatRelativeDeadline(topFocusTask.deadline).toLowerCase()}.`
-            : "You're all caught up on urgent deadlines! Let's review upcoming syllabus topics or generate a revision schedule."}
+            : "You're all caught up on urgent deadlines! Review your upcoming syllabus topics or generate an optimized study plan."}
         </p>
 
         <button
-          onClick={() => navigate('/copilot')}
+          onClick={() => navigate('/planner')}
           className="w-full py-2 px-3 rounded-xl bg-white/80 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 text-xs font-bold text-slate-900 dark:text-white flex items-center justify-center gap-1.5 hover:bg-white dark:hover:bg-slate-800 transition-colors min-h-[38px]"
         >
-          <span>Ask IMvision</span>
+          <span>View Study Plan</span>
           <ArrowRight className="h-3.5 w-3.5 text-orange-500" />
         </button>
       </motion.div>

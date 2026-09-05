@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { useNavigate } from 'react-router-dom';
-import { Sparkles, ArrowRight, BookOpen, Calendar, Bot, Eye, EyeOff, KeyRound, CheckCircle2 } from 'lucide-react';
+import { Sparkles, ArrowRight, BookOpen, Calendar, Bot, Eye, EyeOff, KeyRound, CheckCircle2, Target } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Footer } from '../components/Footer';
 import { validatePassword } from '../utils/passwordValidator';
@@ -165,7 +165,7 @@ export const Auth: React.FC = () => {
             transition={{ delay: 0.1 }}
             className="text-slate-400 text-base leading-relaxed"
           >
-            Powered by Google Gemini models. Extract deadlines from syllabus PDFs, schedule intelligent 7-day study blocks, and consult your document-aware AI copilot.
+            Powered by Google Gemini models. Extract deadlines from syllabus PDFs, schedule intelligent 7-day study blocks, and execute structured academic plans.
           </motion.p>
 
           <div className="grid grid-cols-1 gap-4 pt-4">
@@ -191,18 +191,18 @@ export const Auth: React.FC = () => {
 
             <div className="flex items-center gap-3 p-3.5 rounded-xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-sm">
               <div className="p-2 rounded-lg bg-purple-500/10 text-purple-400">
-                <Bot className="h-5 w-5" />
+                <Target className="h-5 w-5" />
               </div>
               <div>
-                <h4 className="text-sm font-semibold text-slate-200">Contextual IMvision</h4>
-                <p className="text-xs text-slate-400">Query your study documents and manage tasks interactively.</p>
+                <h4 className="text-sm font-semibold text-slate-200">Smart Academic Tracking</h4>
+                <p className="text-xs text-slate-400">Track deadlines, progress metrics, and assignments seamlessly.</p>
               </div>
             </div>
           </div>
         </div>
 
         <div className="relative z-10 text-xs text-slate-500">
-          © 2026 FLOW • Built by IMV
+          © 2026 FLOW • All rights reserved
         </div>
       </div>
 

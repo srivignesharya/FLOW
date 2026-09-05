@@ -78,6 +78,138 @@ button, a, input, select, textarea {
 
 @layer components {
 
+  /* Liquid Glass System */
+  .liquid-glass {
+    background: rgba(255, 255, 255, 0.025);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.08);
+    position: relative;
+    overflow: hidden;
+    border: none;
+  }
+
+  .liquid-glass::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.01) 50%, rgba(255, 255, 255, 0.06));
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .liquid-glass-strong {
+    background: rgba(255, 255, 255, 0.04);
+    backdrop-filter: blur(40px);
+    -webkit-backdrop-filter: blur(40px);
+    box-shadow: 4px 4px 20px rgba(0, 0, 0, 0.08), inset 0 1px 1px rgba(255, 255, 255, 0.12);
+    position: relative;
+    overflow: hidden;
+    border: none;
+  }
+
+  .liquid-glass-strong::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.02) 45%, rgba(255, 255, 255, 0.08));
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .liquid-glass-interactive {
+    @apply liquid-glass transition-all duration-300 ease-out;
+  }
+
+  .liquid-glass-interactive:hover {
+    background: rgba(255, 255, 255, 0.045);
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.14), 0 8px 24px rgba(0, 0, 0, 0.2);
+  }
+
+  .liquid-glass-btn {
+    background: rgba(255, 255, 255, 0.035);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.1);
+    position: relative;
+    overflow: hidden;
+    border: none;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .liquid-glass-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.02) 60%, rgba(255, 255, 255, 0.08));
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+
+  .liquid-glass-btn:hover {
+    background: rgba(255, 255, 255, 0.07);
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.16), 0 4px 16px rgba(0, 0, 0, 0.25);
+    transform: translateY(-1px);
+  }
+
+  .liquid-glass-btn:active {
+    transform: scale(0.97);
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  /* Ambient Glass Glow Orbs */
+  .glass-glow-orb-1 {
+    position: absolute;
+    top: -10%;
+    left: 20%;
+    width: 600px;
+    height: 600px;
+    border-radius: 9999px;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.025) 0%, rgba(255, 255, 255, 0.005) 45%, transparent 70%);
+    filter: blur(60px);
+    pointer-events: none;
+    animation: slowDrift 24s ease-in-out infinite alternate;
+  }
+
+  .glass-glow-orb-2 {
+    position: absolute;
+    bottom: -15%;
+    right: 15%;
+    width: 500px;
+    height: 500px;
+    border-radius: 9999px;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.02) 0%, transparent 60%);
+    filter: blur(80px);
+    pointer-events: none;
+    animation: slowDrift 30s ease-in-out infinite alternate-reverse;
+  }
+
+  @keyframes slowDrift {
+    0% {
+      transform: translate(0, 0) scale(1);
+    }
+    50% {
+      transform: translate(30px, -20px) scale(1.08);
+    }
+    100% {
+      transform: translate(-20px, 25px) scale(0.95);
+    }
+  }
+
   /* Surface Cards */
   .card {
     @apply bg-white dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/90 rounded-2xl;

@@ -12,8 +12,8 @@ import { IngestStudio } from './pages/IngestStudio';
 import { TaskManager } from './pages/TaskManager';
 import { StudyPlanner } from './pages/StudyPlanner';
 import { Analytics } from './pages/Analytics';
-import { Copilot } from './pages/Copilot';
 import { Settings } from './pages/Settings';
+import { Copilot } from './pages/Copilot';
 
 import { ToastProvider } from './components/ToastContainer';
 
@@ -50,6 +50,15 @@ export const App: React.FC = () => {
       />
 
       <Route
+        path="/copilot"
+        element={
+          <ProtectedRoute>
+            <Copilot />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
         path="/ingest"
         element={
           <ProtectedRoute>
@@ -81,15 +90,6 @@ export const App: React.FC = () => {
         element={
           <ProtectedRoute>
             <Analytics />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/copilot"
-        element={
-          <ProtectedRoute>
-            <Copilot />
           </ProtectedRoute>
         }
       />

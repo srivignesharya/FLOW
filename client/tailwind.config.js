@@ -31,11 +31,16 @@ export default {
         }
       },
       fontFamily: {
-        sans: ['Plus Jakarta Sans', 'Inter', 'SF Pro Display', 'system-ui', 'sans-serif']
+        sans: ['Poppins', 'system-ui', 'sans-serif'],
+        poppins: ['Poppins', 'system-ui', 'sans-serif'],
+        serif: ['"Source Serif 4"', 'Georgia', 'serif']
       },
       boxShadow: {
         'glow-orange': '0 0 25px -5px rgba(255, 107, 0, 0.25)',
         'glow-orange-lg': '0 0 50px -10px rgba(255, 107, 0, 0.35)',
+        'glow-subtle': '0 0 30px -10px rgba(255, 255, 255, 0.08)',
+        'glass-inset': 'inset 0 1px 1px rgba(255, 255, 255, 0.08)',
+        'glass-strong': '4px 4px 20px rgba(0, 0, 0, 0.08), inset 0 1px 1px rgba(255, 255, 255, 0.12)',
         'apple-card': '0 10px 30px -10px rgba(0, 0, 0, 0.5), inset 0 1px 0 0 rgba(255, 255, 255, 0.1)',
         'linear-modal': '0 25px 50px -12px rgba(0, 0, 0, 0.7), inset 0 1px 1px 0 rgba(255, 255, 255, 0.15)'
       },

@@ -1,23 +1,25 @@
 import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import {
-  LayoutDashboard, FileUp, CheckSquare, Calendar, Bot, Settings, ChevronLeft, ChevronRight, Zap, BarChart3
+  LayoutDashboard, FileUp, CheckSquare, Calendar, Bot, Settings, ChevronLeft, ChevronRight, Zap, BarChart3, Sparkles
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { clsx } from 'clsx';
+import { useCopilot } from '../context/CopilotContext';
 
 const links = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard, exact: true },
+  { to: '/copilot', label: 'AI Copilot', icon: Bot, exact: false, isAi: true },
   { to: '/ingest', label: 'Upload & Ingest', icon: FileUp, exact: false },
   { to: '/tasks', label: 'Task Manager', icon: CheckSquare, exact: false },
   { to: '/planner', label: 'Study Planner', icon: Calendar, exact: false },
   { to: '/analytics', label: 'Analytics', icon: BarChart3, exact: false },
-  { to: '/copilot', label: 'IMvision', icon: Bot, exact: false },
   { to: '/settings', label: 'Settings', icon: Settings, exact: false }
 ];
 
 export const Sidebar: React.FC = () => {
   const [collapsed, setCollapsed] = useState(false);
+  const { openCopilot, isOpen } = useCopilot();
 
   return (
     <motion.aside
@@ -136,7 +138,7 @@ export const Sidebar: React.FC = () => {
           >
             <div className="px-3 py-2.5 rounded-xl bg-brand-50/50 dark:bg-slate-950/60 border border-brand-200 dark:border-brand-500/20">
               <p className="text-xs font-extrabold bg-gradient-to-r from-brand-600 to-amber-600 dark:from-brand-400 dark:to-amber-400 bg-clip-text text-transparent">FLOW</p>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 font-medium">Powered by IMV</p>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 font-medium">Academic Execution Engine</p>
             </div>
           </motion.div>
         )}

@@ -5,6 +5,8 @@ import { Footer } from './Footer';
 import { MobileBottomNav } from './MobileBottomNav';
 import { motion } from 'framer-motion';
 import { useLocation } from 'react-router-dom';
+import { CopilotFloatingTrigger } from './copilot/CopilotFloatingTrigger';
+import { CopilotDrawer } from './copilot/CopilotDrawer';
 
 export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const location = useLocation();
@@ -35,6 +37,10 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
 
       {/* 3. Mobile Bottom Navigation */}
       <MobileBottomNav />
+
+      {/* 4. AI Copilot Global Components */}
+      <CopilotFloatingTrigger />
+      <CopilotDrawer />
     </div>
   );
 };

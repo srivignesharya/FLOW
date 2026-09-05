@@ -123,7 +123,7 @@ export const MobileIngestStudio: React.FC<MobileIngestStudioProps> = ({
             {loading ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
-                <span>IMvision is analysing...</span>
+                <span>Analyzing document...</span>
               </>
             ) : (
               <>
@@ -154,7 +154,7 @@ export const MobileIngestStudio: React.FC<MobileIngestStudioProps> = ({
             {loading ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
-                <span>IMvision is analysing...</span>
+                <span>Analyzing document...</span>
               </>
             ) : (
               <>
