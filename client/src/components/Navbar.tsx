@@ -1,9 +1,10 @@
 import React from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
-import { Sun, Moon, LogOut, Sparkles, Bot } from 'lucide-react';
+import { LogOut, Sparkles, Bot } from 'lucide-react';
 import { NotificationCenter } from './NotificationCenter';
 import { useCopilot } from '../context/CopilotContext';
+import { SwitchMode } from './SwitchMode';
 
 export const Navbar: React.FC = () => {
   const { user, signOut } = useAuth();
@@ -49,18 +50,8 @@ export const Navbar: React.FC = () => {
         {/* Notification Center */}
         <NotificationCenter />
 
-        {/* Theme Toggle */}
-        <button
-          id="theme-toggle-btn"
-          onClick={toggleTheme}
-          className="p-2 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-slate-200 transition-colors"
-          aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
-        >
-          {isDark
-            ? <Sun className="h-5 w-5 text-amber-400" />
-            : <Moon className="h-5 w-5 text-slate-600" />
-          }
-        </button>
+        {/* Animated Theme Switcher */}
+        <SwitchMode width={58} height={28} />
 
         {/* Divider */}
         <div className="h-6 w-px bg-slate-200 dark:bg-slate-800 mx-1" />

@@ -9,6 +9,7 @@ import { User, Building, Clock, Sun, Moon, Save, CheckCircle2, AlertCircle, Mail
 import { SkeletonCard } from '../components/SkeletonLoaders';
 import { MobileSettings } from '../components/mobile/MobileSettings';
 import { TimedUndoAction } from '../components/TimedUndoAction';
+import { SwitchMode } from '../components/SwitchMode';
 
 export const Settings: React.FC = () => {
   const { user, signOut } = useAuth();
@@ -268,26 +269,7 @@ export const Settings: React.FC = () => {
             <p className="text-xs text-slate-400">Switch between dark mode and light mode appearance.</p>
           </div>
 
-          <button
-            type="button"
-            onClick={() => {
-              toggleTheme();
-              showToast(`Theme switched to ${isDark ? 'light' : 'dark'} mode`, 'info');
-            }}
-            className="btn-secondary flex items-center justify-center gap-2 w-full sm:w-auto min-h-[44px]"
-          >
-            {isDark ? (
-              <>
-                <Sun className="h-4 w-4 text-amber-400" />
-                <span>Light Mode</span>
-              </>
-            ) : (
-              <>
-                <Moon className="h-4 w-4 text-slate-600" />
-                <span>Dark Mode</span>
-              </>
-            )}
-          </button>
+          <SwitchMode width={72} height={36} />
         </div>
 
         {/* Submit */}
