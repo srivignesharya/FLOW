@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { 
   Plus, 
   Search, 
@@ -10,9 +10,15 @@ import {
   Edit3, 
   Trash2, 
   X,
-  Filter
+  Filter,
+  ArrowUpDown,
+  BookOpen,
+  AlertCircle,
+  FileText,
+  Bell
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import confetti from 'canvas-confetti';
 
 interface Task {
   id: string;
@@ -23,6 +29,7 @@ interface Task {
   status: string;
   description?: string;
   estimated_minutes?: number;
+  taskType?: 'assignment' | 'exam' | 'announcement' | 'reading';
 }
 
 interface MobileTaskManagerProps {
@@ -46,20 +53,53 @@ export const MobileTaskManager: React.FC<MobileTaskManagerProps> = ({
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFilter, setSelectedFilter] = useState<'all' | 'pending' | 'urgent' | 'completed'>('all');
+  const [sortBy, setSortBy] = useState<'deadline' | 'priority' | 'title'>('deadline');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [activeActionSheetTask, setActiveActionSheetTask] = useState<Task | null>(null);
+  const [showSortMenu, setShowSortMenu] = useState(false);
 
-  // Filter tasks
-  const filteredTasks = tasks.filter(task => {
-    const matchesSearch = task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (task.subject && task.subject.toLowerCase().includes(searchQuery.toLowerCase()));
+  // Filter & Sort tasks
+  const processedTasks = useMemo(() => {
+    return tasks
+      .filter(task => {
+        const matchesSearch = task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (task.subject && task.subject.toLowerCase().includes(searchQuery.toLowerCase()));
 
-    if (!matchesSearch) return false;
+        if (!matchesSearch) return false;
 
-    if (selectedFilter === 'pending') return task.status !== 'completed';
-    if (selectedFilter === 'completed') return task.status === 'completed';
-    if (selectedFilter === 'urgent') return (task.priority === 'urgent' || task.priority === 'high') && task.status !== 'completed';
-    return true;
-  });
+        if (selectedFilter === 'pending') return task.status !== 'completed';
+        if (selectedFilter === 'completed') return task.status === 'completed';
+        if (selectedFilter === 'urgent') return (task.priority === 'urgent' || task.priority === 'high') && task.status !== 'completed';
+        return true;
+      })
+      .sort((a, b) => {
+        let comp = 0;
+        if (sortBy === 'deadline') {
+          comp = new Date(a.deadline).getTime() - new Date(b.deadline).getTime();
+        } else if (sortBy === 'priority') {
+          const rank: Record<string, number> = { urgent: 4, high: 3, medium: 2, low: 1 };
+          comp = (rank[b.priority] || 0) - (rank[a.priority] || 0);
+        } else if (sortBy === 'title') {
+          comp = a.title.localeCompare(b.title);
+        }
+        return sortOrder === 'asc' ? comp : -comp;
+      });
+  }, [tasks, searchQuery, selectedFilter, sortBy, sortOrder]);
+
+  const handleToggle = (id: string, currentStatus: string) => {
+    if (currentStatus !== 'completed') {
+      try {
+        confetti({
+          particleCount: 30,
+          spread: 60,
+          origin: { y: 0.7 }
+        });
+      } catch (e) {
+        // Fallback gracefully
+      }
+    }
+    onToggleTask(id, currentStatus);
+  };
 
   const formatDeadline = (deadlineStr: string) => {
     const d = new Date(deadlineStr);
@@ -76,8 +116,41 @@ export const MobileTaskManager: React.FC<MobileTaskManagerProps> = ({
     return `${d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}, ${timeStr}`;
   };
 
+  const getTaskTypeBadge = (taskType?: string) => {
+    switch (taskType) {
+      case 'exam':
+        return (
+          <span className="flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20">
+            <AlertCircle className="h-3 w-3" />
+            <span>Exam</span>
+          </span>
+        );
+      case 'reading':
+        return (
+          <span className="flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+            <BookOpen className="h-3 w-3" />
+            <span>Reading</span>
+          </span>
+        );
+      case 'announcement':
+        return (
+          <span className="flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">
+            <Bell className="h-3 w-3" />
+            <span>Notice</span>
+          </span>
+        );
+      default:
+        return (
+          <span className="flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
+            <FileText className="h-3 w-3" />
+            <span>Assignment</span>
+          </span>
+        );
+    }
+  };
+
   return (
-    <div className="space-y-4 pb-6">
+    <div className="space-y-4 pb-8">
       {/* 1. Top Header & Search */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
@@ -99,20 +172,77 @@ export const MobileTaskManager: React.FC<MobileTaskManagerProps> = ({
           </button>
         </div>
 
-        {/* Search Bar */}
-        <div className="relative">
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search by title or course subject..."
-            className="w-full pl-9 pr-4 py-2.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-orange-500 shadow-xs"
-          />
-          <Search className="h-4 w-4 text-slate-400 absolute left-3 top-3" />
+        {/* Search Bar & Sort Trigger */}
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search by title or subject..."
+              className="w-full pl-9 pr-4 py-2.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-orange-500 shadow-xs"
+            />
+            <Search className="h-4 w-4 text-slate-400 absolute left-3 top-3" />
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setShowSortMenu(!showSortMenu)}
+            className={`p-2.5 rounded-2xl border transition-all flex items-center justify-center shrink-0 min-h-[42px] min-w-[42px] ${
+              showSortMenu
+                ? 'bg-orange-500 text-white border-orange-500'
+                : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300'
+            }`}
+            title="Sort Tasks"
+          >
+            <ArrowUpDown className="h-4 w-4" />
+          </button>
         </div>
 
+        {/* Sort Menu Dropdown Drawer */}
+        <AnimatePresence>
+          {showSortMenu && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-2 text-xs"
+            >
+              <div className="flex items-center justify-between text-slate-400 font-bold uppercase text-[10px] px-1">
+                <span>Sort By</span>
+                <button
+                  onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
+                  className="text-orange-500 lowercase flex items-center gap-1 font-semibold"
+                >
+                  Order: {sortOrder === 'asc' ? 'ascending ↑' : 'descending ↓'}
+                </button>
+              </div>
+
+              <div className="grid grid-cols-3 gap-1.5">
+                {(['deadline', 'priority', 'title'] as const).map(option => (
+                  <button
+                    key={option}
+                    type="button"
+                    onClick={() => {
+                      setSortBy(option);
+                      setShowSortMenu(false);
+                    }}
+                    className={`py-1.5 px-2 rounded-xl font-bold capitalize text-center transition-all ${
+                      sortBy === option
+                        ? 'bg-orange-500 text-white shadow-xs'
+                        : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
+                    }`}
+                  >
+                    {option}
+                  </button>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* Filter Pills */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar text-xs">
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar text-xs">
           {(['all', 'pending', 'urgent', 'completed'] as const).map((filter) => (
             <button
               key={filter}
@@ -131,7 +261,7 @@ export const MobileTaskManager: React.FC<MobileTaskManagerProps> = ({
 
       {/* 2. Tasks Card List */}
       <div className="space-y-3">
-        {filteredTasks.map((task) => {
+        {processedTasks.map((task) => {
           const isCompleted = task.status === 'completed';
 
           return (
@@ -150,8 +280,8 @@ export const MobileTaskManager: React.FC<MobileTaskManagerProps> = ({
                 {/* 44px Checkbox + Task Info */}
                 <div className="flex items-start gap-3 min-w-0 flex-1">
                   <button
-                    onClick={() => onToggleTask(task.id, task.status)}
-                    className={`p-2 rounded-xl border flex items-center justify-center transition-all shrink-0 min-h-[40px] min-w-[40px] mt-0.5 ${
+                    onClick={() => handleToggle(task.id, task.status)}
+                    className={`p-2 rounded-xl border flex items-center justify-center transition-all shrink-0 min-h-[40px] min-w-[40px] mt-0.5 active:scale-95 ${
                       isCompleted
                         ? 'bg-emerald-500 border-emerald-500 text-white shadow-sm'
                         : 'border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-transparent hover:border-orange-500'
@@ -163,10 +293,11 @@ export const MobileTaskManager: React.FC<MobileTaskManagerProps> = ({
                   </button>
 
                   <div className="min-w-0 space-y-1">
-                    <div className="flex items-center gap-2 flex-wrap">
+                    <div className="flex items-center gap-1.5 flex-wrap">
                       <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-brand-500/10 text-brand-600 dark:text-brand-400">
                         {task.subject || 'General'}
                       </span>
+                      {getTaskTypeBadge(task.taskType)}
                       <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md uppercase ${
                         task.priority === 'urgent'
                           ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20'
@@ -204,14 +335,14 @@ export const MobileTaskManager: React.FC<MobileTaskManagerProps> = ({
           );
         })}
 
-        {filteredTasks.length === 0 && (
+        {processedTasks.length === 0 && (
           <div className="p-8 text-center space-y-3 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
             <div className="w-12 h-12 rounded-2xl bg-orange-500/10 text-orange-500 flex items-center justify-center mx-auto">
               <CheckCircle2 className="h-6 w-6" />
             </div>
             <div className="space-y-1">
               <h3 className="text-sm font-bold text-slate-900 dark:text-white">No tasks found</h3>
-              <p className="text-xs text-slate-400">Try changing your filters or add a new commitment.</p>
+              <p className="text-xs text-slate-400">Try adjusting your filters or add a new commitment.</p>
             </div>
           </div>
         )}
@@ -234,9 +365,9 @@ export const MobileTaskManager: React.FC<MobileTaskManagerProps> = ({
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
               transition={{ type: 'spring', damping: 28, stiffness: 320 }}
-              className="relative z-10 bg-white dark:bg-slate-900 rounded-t-3xl border-t border-slate-200 dark:border-slate-800 p-5 pb-8 space-y-4 shadow-2xl"
+              className="relative z-10 bg-white dark:bg-slate-900 rounded-t-3xl border-t border-slate-200 dark:border-slate-800 p-5 pb-[calc(env(safe-area-inset-bottom,0px)+20px)] space-y-4 shadow-2xl"
             >
-              <div className="w-12 h-1 bg-slate-300 dark:bg-slate-700 rounded-full mx-auto mb-2" />
+              <div className="w-12 h-1.5 bg-slate-300 dark:bg-slate-700 rounded-full mx-auto mb-2" />
 
               <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
                 <div className="min-w-0 pr-3">

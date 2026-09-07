@@ -133,15 +133,20 @@ export const CopilotDrawer: React.FC = () => {
           className={`pointer-events-auto flex flex-col bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-2xl shadow-black/30 overflow-hidden ${
             isExpanded
               ? 'w-full max-w-5xl h-full max-h-[92vh] rounded-3xl'
-              : 'w-full sm:w-[500px] lg:w-[560px] h-full sm:rounded-l-3xl border-r-0'
+              : 'w-full sm:w-[500px] lg:w-[560px] h-full rounded-t-3xl sm:rounded-t-none sm:rounded-l-3xl border-r-0'
           }`}
         >
+          {/* Mobile Sheet Pull Bar Indicator */}
+          <div className="sm:hidden flex justify-center pt-2.5 pb-1 shrink-0 bg-white/60 dark:bg-slate-900/60">
+            <div className="w-12 h-1.5 rounded-full bg-slate-300 dark:bg-slate-700 active:bg-orange-500 transition-colors" />
+          </div>
+
           {/* Header */}
-          <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200/80 dark:border-slate-800/80 bg-white/50 dark:bg-slate-900/50 backdrop-blur-lg shrink-0">
+          <div className="flex items-center justify-between px-4 sm:px-5 py-3 sm:py-4 border-b border-slate-200/80 dark:border-slate-800/80 bg-white/50 dark:bg-slate-900/50 backdrop-blur-lg shrink-0">
             {/* Title & Live Status */}
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-brand-500 via-orange-500 to-amber-500 flex items-center justify-center text-white shadow-md shadow-brand-500/25 border border-brand-400/20 shrink-0">
-                <Sparkles className="h-5 w-5 fill-current" />
+            <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+              <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-xl bg-gradient-to-br from-brand-500 via-orange-500 to-amber-500 flex items-center justify-center text-white shadow-md shadow-brand-500/25 border border-brand-400/20 shrink-0">
+                <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 fill-current" />
               </div>
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
@@ -387,7 +392,25 @@ export const CopilotDrawer: React.FC = () => {
           </div>
 
           {/* Footer Input Area */}
-          <div className="p-4 border-t border-slate-200/80 dark:border-slate-800/80 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl shrink-0">
+          <div className="p-3 sm:p-4 pb-[calc(env(safe-area-inset-bottom,0px)+12px)] sm:pb-4 border-t border-slate-200/80 dark:border-slate-800/80 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shrink-0">
+            {/* Quick Action Prompt Chips (Horizontal scroll on mobile) */}
+            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-2 pt-0.5">
+              {SUGGESTED_PROMPTS.map((item, idx) => {
+                const Icon = item.icon;
+                return (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => handlePromptClick(item.prompt)}
+                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-slate-100 dark:bg-slate-800/70 hover:bg-orange-500/10 hover:text-orange-600 dark:hover:text-orange-400 text-slate-600 dark:text-slate-300 text-[11px] font-semibold whitespace-nowrap transition-colors shrink-0 border border-slate-200/60 dark:border-slate-700/60"
+                  >
+                    <Icon className="h-3 w-3 text-orange-500 shrink-0" />
+                    <span>{item.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+
             {/* Active Document Badge (if attached) */}
             {selectedDoc && (
               <div className="flex items-center justify-between mb-2.5 px-3 py-1.5 rounded-xl bg-brand-50 dark:bg-brand-500/10 border border-brand-200 dark:border-brand-500/20 text-xs">
@@ -420,10 +443,10 @@ export const CopilotDrawer: React.FC = () => {
                   placeholder={
                     selectedDoc
                       ? `Ask Copilot about "${selectedDoc.file_name}"...`
-                      : 'Ask anything about deadlines, syllabi, or coursework...'
+                      : 'Ask anything about deadlines, coursework, or exams...'
                   }
-                  className="w-full px-3.5 py-3 bg-transparent text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none resize-none max-h-32 min-h-[44px]"
-                  style={{ height: 'auto', minHeight: '44px' }}
+                  className="w-full px-3.5 py-2.5 sm:py-3 bg-transparent text-xs sm:text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none resize-none max-h-28 sm:max-h-32 min-h-[42px]"
+                  style={{ height: 'auto', minHeight: '42px' }}
                 />
               </div>
 
@@ -434,15 +457,16 @@ export const CopilotDrawer: React.FC = () => {
                 type="submit"
                 disabled={!inputText.trim() || loading}
                 className="h-11 w-11 rounded-2xl bg-gradient-to-tr from-brand-500 via-orange-500 to-amber-500 hover:from-brand-600 hover:to-orange-600 text-white flex items-center justify-center shadow-md shadow-brand-500/30 transition-all disabled:opacity-40 disabled:pointer-events-none shrink-0"
-                title="Send message (Enter)"
+                title="Send message"
               >
                 <Send className="h-4 w-4" />
               </motion.button>
             </form>
 
             <div className="flex items-center justify-between mt-2 text-[10px] text-slate-400 px-1">
-              <span>Press <kbd className="px-1 py-0.5 rounded bg-slate-200 dark:bg-slate-800 font-mono text-[9px]">Enter ↵</kbd> to send</span>
-              <span><kbd className="px-1 py-0.5 rounded bg-slate-200 dark:bg-slate-800 font-mono text-[9px]">Ctrl+J</kbd> toggles Copilot</span>
+              <span className="hidden sm:inline">Press <kbd className="px-1 py-0.5 rounded bg-slate-200 dark:bg-slate-800 font-mono text-[9px]">Enter ↵</kbd> to send</span>
+              <span className="sm:hidden text-[10px] text-slate-400 font-medium">Flow AI • Powered by Google Gemini</span>
+              <span className="hidden sm:inline"><kbd className="px-1 py-0.5 rounded bg-slate-200 dark:bg-slate-800 font-mono text-[9px]">Ctrl+J</kbd> toggles Copilot</span>
             </div>
           </div>
         </motion.div>

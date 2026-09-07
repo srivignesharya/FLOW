@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { TimedUndoAction } from '../TimedUndoAction';
+import { SwitchMode } from '../SwitchMode';
 
 interface MobileSettingsProps {
   user: any;
@@ -156,20 +157,21 @@ export const MobileSettings: React.FC<MobileSettingsProps> = ({
           </span>
 
           <div className="rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 divide-y divide-slate-100 dark:divide-slate-800 shadow-xs overflow-hidden">
-            {/* Theme Toggle */}
-            <button
-              type="button"
-              onClick={onToggleTheme}
-              className="w-full flex items-center justify-between p-3.5 text-left text-xs font-bold text-slate-900 dark:text-white hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors min-h-[48px]"
-            >
+            {/* Animated Theme Toggle */}
+            <div className="w-full flex items-center justify-between p-3.5 text-xs font-bold text-slate-900 dark:text-white min-h-[52px]">
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-xl bg-amber-500/10 text-amber-500">
                   {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
                 </div>
-                <span>Interface Theme</span>
+                <div>
+                  <div>Interface Theme</div>
+                  <div className="text-[10px] text-slate-400 font-normal">
+                    {isDark ? 'Dark Theme (OLED)' : 'Light Theme (Clean)'}
+                  </div>
+                </div>
               </div>
-              <span className="text-[11px] font-semibold text-slate-400">{isDark ? 'Dark Mode' : 'Light Mode'}</span>
-            </button>
+              <SwitchMode width={58} height={28} />
+            </div>
 
             {/* Email Reminder Test */}
             <button

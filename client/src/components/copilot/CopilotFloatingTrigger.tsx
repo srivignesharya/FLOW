@@ -11,7 +11,7 @@ export const CopilotFloatingTrigger: React.FC = () => {
   if (isOpen) return null;
 
   return (
-    <div className="fixed bottom-20 md:bottom-7 right-5 md:right-7 z-40 flex items-center gap-2 pointer-events-auto select-none">
+    <div className="hidden md:flex fixed bottom-7 right-7 z-40 items-center gap-2 pointer-events-auto select-none">
       {/* Tooltip badge */}
       <AnimatePresence>
         {hovered && (
