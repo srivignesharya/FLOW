@@ -8,6 +8,115 @@ import { Sparkles, Calendar, Clock, CheckCircle2, AlertCircle, RefreshCw, Layers
 import { Link } from 'react-router-dom';
 import { MobileStudyPlanner } from '../components/mobile/MobileStudyPlanner';
 
+// Helper to normalize any incoming schedule structure (e.g. studyPlan, focusGoals, days) into the standard UI schema
+const normalizeClientPlan = (rawPlan: any) => {
+  if (!rawPlan || typeof rawPlan !== 'object') return null;
+
+  let rawDays: any[] = [];
+  if (Array.isArray(rawPlan)) {
+    rawDays = rawPlan;
+  } else if (Array.isArray(rawPlan.dailyPlans)) {
+    rawDays = rawPlan.dailyPlans;
+  } else if (Array.isArray(rawPlan.studyPlan)) {
+    rawDays = rawPlan.studyPlan;
+  } else if (Array.isArray(rawPlan.schedule)) {
+    rawDays = rawPlan.schedule;
+  } else if (Array.isArray(rawPlan.days)) {
+    rawDays = rawPlan.days;
+  } else if (Array.isArray(rawPlan.plan)) {
+    rawDays = rawPlan.plan;
+  } else {
+    const found = Object.values(rawPlan).find(v => Array.isArray(v));
+    if (found) rawDays = found as any[];
+  }
+
+  if (!rawDays || rawDays.length === 0) return null;
+
+  const scheduleSummary = rawPlan.scheduleSummary || rawPlan.summary || rawPlan.overview || 'AI-Optimized 7-Day Academic Study Breakdown tailored to your task priorities and daily capacity.';
+
+  const dailyPlans = rawDays.map((dayItem: any, dayIdx: number) => {
+    let dayLabel = dayItem.day || dayItem.date || dayItem.dayName;
+    if (!dayLabel) {
+      const d = new Date(Date.now() + dayIdx * 24 * 3600 * 1000);
+      dayLabel = d.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+    } else {
+      const parsed = Date.parse(dayLabel);
+      if (!isNaN(parsed) && String(dayLabel).includes('-')) {
+        const d = new Date(dayLabel);
+        dayLabel = d.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+      }
+    }
+
+    let rawBlocks: any[] = [];
+    if (Array.isArray(dayItem.blocks)) {
+      rawBlocks = dayItem.blocks;
+    } else if (Array.isArray(dayItem.focusGoals)) {
+      rawBlocks = dayItem.focusGoals;
+    } else if (Array.isArray(dayItem.tasks)) {
+      rawBlocks = dayItem.tasks;
+    } else if (Array.isArray(dayItem.sessions)) {
+      rawBlocks = dayItem.sessions;
+    } else if (Array.isArray(dayItem.items)) {
+      rawBlocks = dayItem.items;
+    }
+
+    let runningMinuteOffset = 9 * 60; // 09:00 AM
+
+    const blocks = rawBlocks.map((b: any, bIdx: number) => {
+      const duration = Number(b.durationMinutes || b.estimated_minutes || b.minutes || b.duration || 60) || 60;
+      
+      const startH = Math.floor(runningMinuteOffset / 60);
+      const startM = runningMinuteOffset % 60;
+      const endOffset = runningMinuteOffset + duration;
+      const endH = Math.floor(endOffset / 60);
+      const endM = endOffset % 60;
+
+      const formatTime = (h: number, m: number) => {
+        const ampm = h >= 12 ? 'PM' : 'AM';
+        const displayH = h % 12 || 12;
+        const displayM = m < 10 ? `0${m}` : m;
+        return `${displayH < 10 ? '0' + displayH : displayH}:${displayM} ${ampm}`;
+      };
+
+      const startTime = b.startTime || formatTime(startH, startM);
+      const endTime = b.endTime || formatTime(endH, endM);
+      runningMinuteOffset = endOffset + 15;
+
+      const title = (b.taskTitle || b.title || b.name || b.task || 'Study Session').toString().trim();
+      const subject = (b.subject || b.course || 'General').toString().trim();
+      const focusGoal = (b.focusGoal || b.note || b.description || b.goal || `Focus on ${title}`).toString().trim();
+      let priority = (b.priority || 'medium').toString().toLowerCase();
+      if (!['high', 'medium', 'low'].includes(priority)) priority = 'medium';
+
+      return {
+        id: b.id || b.taskId || `block-${dayIdx}-${bIdx}`,
+        taskId: b.taskId || b.id || null,
+        taskTitle: title,
+        subject,
+        startTime,
+        endTime,
+        durationMinutes: duration,
+        priority,
+        focusGoal,
+        completed: Boolean(b.completed)
+      };
+    });
+
+    const totalAllocatedMinutes = Number(dayItem.totalAllocatedMinutes) || blocks.reduce((acc: number, blk: any) => acc + blk.durationMinutes, 0);
+
+    return {
+      day: String(dayLabel),
+      totalAllocatedMinutes,
+      blocks
+    };
+  });
+
+  return {
+    scheduleSummary,
+    dailyPlans
+  };
+};
+
 export const StudyPlanner: React.FC = () => {
   const [schedule, setSchedule] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -53,11 +162,12 @@ export const StudyPlanner: React.FC = () => {
 
     // Optimistic UI update
     setSchedule((prev: any) => {
-      if (!prev?.generated_plan?.dailyPlans) return prev;
-      const updatedPlans = [...prev.generated_plan.dailyPlans];
+      const currentPlan = normalizeClientPlan(prev?.generated_plan);
+      if (!currentPlan?.dailyPlans) return prev;
+      const updatedPlans = [...currentPlan.dailyPlans];
       if (updatedPlans[dayIndex]) {
         const blocks = [...updatedPlans[dayIndex].blocks];
-        const blockIdx = blocks.findIndex(b => b.id === blockId);
+        const blockIdx = blocks.findIndex(b => b.id === blockId || b.taskId === blockId);
         if (blockIdx !== -1) {
           blocks[blockIdx] = { ...blocks[blockIdx], completed: nextCompleted };
         }
@@ -65,7 +175,7 @@ export const StudyPlanner: React.FC = () => {
       }
       return {
         ...prev,
-        generated_plan: { ...prev.generated_plan, dailyPlans: updatedPlans }
+        generated_plan: { ...currentPlan, dailyPlans: updatedPlans }
       };
     });
 
@@ -83,7 +193,7 @@ export const StudyPlanner: React.FC = () => {
     }
   };
 
-  const plan = schedule?.generated_plan;
+  const plan = normalizeClientPlan(schedule?.generated_plan);
 
   return (
     <div className="animate-in max-w-5xl mx-auto">
