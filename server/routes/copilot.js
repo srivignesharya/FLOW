@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { requireAuth } from '../middleware/authMiddleware.js';
 import { validateBody, copilotQuerySchema } from '../middleware/validation.js';
-import { ai, PRO_MODEL, FALLBACK_MODEL, getAiInstance, rotateAiKey } from '../services/gemini.js';
+import { ai, PRO_MODEL, FALLBACK_MODEL, getAiInstance, rotateAiKey, hasGemini, getGeminiClient, GEMINI_FLASH_MODEL } from '../services/gemini.js';
 import { supabaseAdmin } from '../services/supabase.js';
 
 const router = Router();
@@ -140,7 +140,26 @@ Key Instructions:
     }
 
     if (lastError && !reply) {
-      console.error(`[IMVISION FATAL]: All Groq attempts failed. Last error:`, lastError.message);
+      if (hasGemini()) {
+        console.log(`🔄 [IMVISION]: Groq attempts failed. Failing over to Gemini 2.5 Flash...`);
+        try {
+          const gemini = getGeminiClient();
+          const geminiPrompt = groqMessages.map(m => `${m.role.toUpperCase()}: ${m.content}`).join('\n\n');
+          const completion = await gemini.models.generateContent({
+            model: GEMINI_FLASH_MODEL,
+            contents: geminiPrompt,
+            config: { temperature: 0.4 }
+          });
+          reply = completion.text || '';
+          lastError = null;
+        } catch (geminiErr) {
+          console.error(`[IMVISION GEMINI FAILOVER ERROR]:`, geminiErr.message);
+        }
+      }
+    }
+
+    if (lastError && !reply) {
+      console.error(`[IMVISION FATAL]: All AI attempts failed. Last error:`, lastError.message);
       return res.status(503).json({
         error: 'IMvision is temporarily unavailable. Please try again.',
         details: lastError.message

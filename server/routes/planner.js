@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { requireAuth } from '../middleware/authMiddleware.js';
 import { aiServiceLimiter } from '../middleware/rateLimiter.js';
-import { ai, PRO_MODEL, FALLBACK_MODEL, studyPlanSchema, getAiInstance, rotateAiKey } from '../services/gemini.js';
+import { callAiCompletion, studyPlanSchema } from '../services/gemini.js';
 import { supabaseAdmin } from '../services/supabase.js';
 
 const router = Router();
@@ -59,35 +59,13 @@ Instructions:
 6. Include today and the next 6 days with real calendar dates in the "day" field.
 `;
 
-    let aiResponseText = '';
-    let lastError;
-
-    for (let attempt = 0; attempt < 3; attempt++) {
-      try {
-        const activeAi = getAiInstance();
-        const targetModel = attempt === 0 ? PRO_MODEL : FALLBACK_MODEL;
-        const completion = await activeAi.chat.completions.create({
-          model: targetModel,
-          messages: [
-            { role: 'system', content: 'You are an expert academic study planner. Output ONLY raw valid JSON conforming to the requested 7-day study plan structure.' },
-            { role: 'user', content: prompt }
-          ],
-          response_format: { type: 'json_object' },
-          temperature: 0.2
-        });
-        aiResponseText = completion.choices[0]?.message?.content || '{}';
-        lastError = null;
-        break;
-      } catch (err) {
-        lastError = err;
-        console.warn(`⚠️ [PLANNER ATTEMPT ${attempt + 1} FAILED]: ${err.message}. Rotating key...`);
-        rotateAiKey();
-      }
-    }
-
-    if (lastError && !aiResponseText) {
-      throw lastError;
-    }
+    const systemPrompt = 'You are an expert academic study planner. Output ONLY raw valid JSON conforming to the requested 7-day study plan structure.';
+    const aiResponseText = await callAiCompletion({
+      prompt,
+      systemPrompt,
+      jsonMode: true,
+      temperature: 0.2
+    });
 
     let planData = {};
     try {

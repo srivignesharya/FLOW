@@ -56,16 +56,21 @@ export const Sidebar: React.FC = () => {
 
           <AnimatePresence>
             {!collapsed && (
-              <motion.span
+              <motion.div
                 initial={{ opacity: 0, x: -10, filter: 'blur(4px)' }}
                 animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
                 exit={{ opacity: 0, x: -10, filter: 'blur(4px)' }}
                 transition={{ duration: 0.2 }}
                 onClick={() => navigate('/')}
-                className="text-lg font-black tracking-tight bg-gradient-to-r from-brand-400 via-amber-300 to-orange-400 bg-clip-text text-transparent whitespace-nowrap cursor-pointer select-none"
+                className="flex items-center gap-1.5 whitespace-nowrap cursor-pointer select-none"
               >
-                FLOW
-              </motion.span>
+                <span className="text-lg font-black tracking-tight bg-gradient-to-r from-brand-400 via-amber-300 to-orange-400 bg-clip-text text-transparent">
+                  FLOW
+                </span>
+                <span className="text-[10px] font-bold tracking-wide px-1.5 py-0.5 rounded bg-brand-500/10 text-brand-600 dark:text-brand-400 border border-brand-500/20">
+                  by IMV
+                </span>
+              </motion.div>
             )}
           </AnimatePresence>
         </div>
@@ -212,9 +217,14 @@ export const Sidebar: React.FC = () => {
             className="p-4 border-t border-slate-200 dark:border-slate-800 shrink-0"
           >
             <div className="px-3 py-2.5 rounded-xl bg-brand-50/50 dark:bg-slate-950/60 border border-brand-200 dark:border-brand-500/20">
-              <p className="text-xs font-extrabold bg-gradient-to-r from-brand-600 to-amber-600 dark:from-brand-400 dark:to-amber-400 bg-clip-text text-transparent">
-                FLOW
-              </p>
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-extrabold bg-gradient-to-r from-brand-600 to-amber-600 dark:from-brand-400 dark:to-amber-400 bg-clip-text text-transparent">
+                  FLOW
+                </p>
+                <span className="text-[10px] font-semibold text-brand-600 dark:text-brand-400 bg-brand-500/10 px-1.5 py-0.5 rounded">
+                  by IMV
+                </span>
+              </div>
               <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 font-medium">
                 Academic Execution Engine
               </p>

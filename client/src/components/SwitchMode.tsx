@@ -63,17 +63,17 @@ export const SwitchMode: FC<SwitchModeProps> = ({
 
       {/* SLIDING KNOB */}
       <motion.div
-        layout
-        layoutId="switch-knob"
-        transition={{ type: 'spring', stiffness: 260, damping: 20 }}
-        className="absolute rounded-full border-2 z-20 shadow-sm"
-        style={{
-          width: height - 4,
-          height: height - 4,
-          right: isDark ? 0 : undefined,
-          left: isDark ? undefined : 0,
+        animate={{
+          x: isDark ? width - height : 0,
           backgroundColor: isDark ? knobDarkColor : knobLightColor,
           borderColor: isDark ? borderDarkColor : borderLightColor
+        }}
+        initial={false}
+        transition={{ type: 'spring', stiffness: 320, damping: 24 }}
+        className="absolute left-0 top-0 bottom-0 m-auto rounded-full border-2 z-20 shadow-sm"
+        style={{
+          width: height - 4,
+          height: height - 4
         }}
       />
 

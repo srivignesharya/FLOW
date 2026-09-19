@@ -258,6 +258,9 @@ export const MobileAuth: React.FC<MobileAuthProps> = ({
             {isSignUp ? 'Already have an account? Sign In' : "Don't have an account? Sign Up"}
           </button>
         )}
+        <p className="text-[11px] text-slate-500 pt-3">
+          © 2026 FLOW • Built by IMV
+        </p>
       </div>
     </div>
   );

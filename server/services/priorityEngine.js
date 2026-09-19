@@ -43,8 +43,8 @@ export const calculateSmartPriority = ({
   let priority = 'medium';
   let levelName = 'Medium';
   if (totalScore >= 70 || diffHours <= 24 || (taskType === 'exam' && diffHours <= 72)) {
-    priority = 'critical';
-    levelName = 'Critical';
+    priority = 'high';
+    levelName = 'Critical (High)';
   } else if (totalScore >= 50 || diffHours <= 48 || weightage >= 15) {
     priority = 'high';
     levelName = 'High';

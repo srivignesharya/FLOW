@@ -18,6 +18,30 @@ export const IngestStudio: React.FC = () => {
 
   const navigate = useNavigate();
 
+  const parseUserFacingError = (rawErr: any, defaultMsg: string): string => {
+    const errMsg = rawErr?.response?.data?.error || rawErr?.message || defaultMsg;
+    if (typeof errMsg === 'string') {
+      const jsonMatch = errMsg.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        try {
+          const parsed = JSON.parse(jsonMatch[0]);
+          if (parsed?.error?.message) {
+            const inner = parsed.error.message;
+            if (inner.includes('tokens per minute') || inner.includes('TPM') || inner.includes('Request too large')) {
+              return 'Document is too large for a single AI pass. Please upload a smaller section or syllabus excerpt.';
+            }
+            return inner;
+          }
+        } catch (_) {}
+      }
+      if (errMsg.includes('tokens per minute') || errMsg.includes('TPM') || errMsg.includes('Request too large')) {
+        return 'Document is too large for a single AI pass. Please upload a smaller section or syllabus excerpt.';
+      }
+      return errMsg;
+    }
+    return defaultMsg;
+  };
+
   const handleFileUpload = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!file) return;
@@ -41,7 +65,7 @@ export const IngestStudio: React.FC = () => {
       });
       setResult(res.data);
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to ingest file document.');
+      setError(parseUserFacingError(err, 'Failed to ingest file document.'));
     } finally {
       setLoading(false);
     }
@@ -59,7 +83,7 @@ export const IngestStudio: React.FC = () => {
       const res = await api.post('/ingest/text', { textContent: text });
       setResult(res.data);
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to extract tasks from text.');
+      setError(parseUserFacingError(err, 'Failed to extract tasks from text.'));
     } finally {
       setLoading(false);
     }
@@ -241,51 +265,82 @@ export const IngestStudio: React.FC = () => {
           animate={{ opacity: 1, y: 0 }}
           className="card p-4 sm:p-6 space-y-4 sm:space-y-6 bg-white dark:bg-slate-900/80 border-slate-200 dark:border-slate-800"
         >
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-800 pb-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-500 dark:text-emerald-400 shrink-0">
-                <CheckCircle2 className="h-5 sm:h-6 w-5 sm:w-6" />
+          {result.tasks.length === 0 ? (
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-2">
+              <div className="flex items-start sm:items-center gap-3.5">
+                <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-500 dark:text-amber-400 shrink-0">
+                  <AlertCircle className="h-5 sm:h-6 w-5 sm:w-6" />
+                </div>
+                <div className="space-y-1">
+                  <h3 className="font-bold text-sm sm:text-base text-slate-900 dark:text-white">
+                    0 Explicit Commitments Found
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Document: <span className="font-semibold text-slate-700 dark:text-slate-300">{result.document?.file_name || 'Extracted Text Excerpt'}</span>
+                  </p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    This file appears to contain theory, formulas, or general notes without explicit assignment deadlines or exam dates. You can create custom tasks in Task Manager.
+                  </p>
+                </div>
               </div>
-              <div className="min-w-0">
-                <h3 className="font-bold text-sm sm:text-base text-slate-900 dark:text-white">
-                  Extracted {result.tasks.length} Commitments
-                </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
-                  Document: {result.document?.file_name || 'Extracted Text Excerpt'}
-                </p>
-              </div>
+              <MotionButton
+                onClick={() => navigate('/tasks')}
+                variant="secondary"
+                icon={<ArrowRight className="h-4 w-4" />}
+                className="w-full sm:w-auto justify-center shrink-0"
+              >
+                Go to Task Manager
+              </MotionButton>
             </div>
-            <MotionButton
-              onClick={() => navigate('/tasks')}
-              variant="secondary"
-              icon={<ArrowRight className="h-4 w-4" />}
-              className="w-full sm:w-auto justify-center"
-            >
-              View in Task Manager
-            </MotionButton>
-          </div>
-
-          <div className="divide-y divide-slate-100 dark:divide-slate-800 space-y-3">
-            {result.tasks.map((t, idx) => (
-              <div key={idx} className="pt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-4">
-                <div className="space-y-1 min-w-0">
-                  <div className="font-bold text-sm text-slate-900 dark:text-white break-words">{t.title}</div>
-                  <div className="text-xs text-slate-500 dark:text-slate-400 flex flex-wrap items-center gap-2">
-                    <span className="font-semibold text-brand-600 dark:text-brand-400">{t.subject}</span>
-                    <span>•</span>
-                    <span>Deadline: {new Date(t.deadline).toLocaleDateString()}</span>
+          ) : (
+            <>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-800 pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-500 dark:text-emerald-400 shrink-0">
+                    <CheckCircle2 className="h-5 sm:h-6 w-5 sm:w-6" />
                   </div>
-                  {t.reasoning && (
-                    <p className="text-[11px] text-slate-400 italic">"{t.reasoning}"</p>
-                  )}
+                  <div className="min-w-0">
+                    <h3 className="font-bold text-sm sm:text-base text-slate-900 dark:text-white">
+                      Extracted {result.tasks.length} Commitment{result.tasks.length === 1 ? '' : 's'}
+                    </h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                      Document: {result.document?.file_name || 'Extracted Text Excerpt'}
+                    </p>
+                  </div>
                 </div>
-                <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 self-start sm:self-auto">
-                  <StatusBadge type="priority" value={t.priority} />
-                  <StatusBadge type="taskType" value={t.task_type || 'assignment'} />
-                </div>
+                <MotionButton
+                  onClick={() => navigate('/tasks')}
+                  variant="secondary"
+                  icon={<ArrowRight className="h-4 w-4" />}
+                  className="w-full sm:w-auto justify-center"
+                >
+                  View in Task Manager
+                </MotionButton>
               </div>
-            ))}
-          </div>
+
+              <div className="divide-y divide-slate-100 dark:divide-slate-800 space-y-3">
+                {result.tasks.map((t, idx) => (
+                  <div key={idx} className="pt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-4">
+                    <div className="space-y-1 min-w-0">
+                      <div className="font-bold text-sm text-slate-900 dark:text-white break-words">{t.title}</div>
+                      <div className="text-xs text-slate-500 dark:text-slate-400 flex flex-wrap items-center gap-2">
+                        <span className="font-semibold text-brand-600 dark:text-brand-400">{t.subject}</span>
+                        <span>•</span>
+                        <span>Deadline: {new Date(t.deadline).toLocaleDateString()}</span>
+                      </div>
+                      {t.reasoning && (
+                        <p className="text-[11px] text-slate-400 italic">"{t.reasoning}"</p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 self-start sm:self-auto">
+                      <StatusBadge type="priority" value={t.priority} />
+                      <StatusBadge type="taskType" value={t.task_type || 'assignment'} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
         </motion.div>
       )}
       </div>

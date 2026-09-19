@@ -5,7 +5,7 @@ import { showToast, triggerCelebration } from '../components/ToastContainer';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useToast } from '../context/ToastContext';
-import { User, Building, Clock, Sun, Moon, Save, CheckCircle2, AlertCircle, Mail, Send, Loader2, Trash2, ShieldAlert } from 'lucide-react';
+import { User, Building, Clock, Sun, Moon, Save, CheckCircle2, AlertCircle, Mail, Send, Loader2, Trash2, ShieldAlert, Sparkles } from 'lucide-react';
 import { SkeletonCard } from '../components/SkeletonLoaders';
 import { MobileSettings } from '../components/mobile/MobileSettings';
 import { TimedUndoAction } from '../components/TimedUndoAction';
@@ -284,6 +284,22 @@ export const Settings: React.FC = () => {
           </button>
         </div>
       </form>
+
+      {/* About Application: Built by IMV */}
+      <div className="card p-4 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40">
+        <div className="space-y-1">
+          <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <Sparkles className="h-5 w-5 text-brand-500" />
+            <span>FLOW • Academic Execution Engine</span>
+          </h2>
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            Designed & Built by <strong className="text-slate-800 dark:text-slate-200">IMV</strong>. Powered by advanced AI models.
+          </p>
+        </div>
+        <div className="text-xs font-bold px-3 py-1.5 rounded-lg bg-brand-500/10 text-brand-600 dark:text-brand-400 border border-brand-500/20 w-fit">
+          Built by IMV
+        </div>
+      </div>
 
       {/* Danger Zone: Account Deletion */}
       <div className="card p-4 sm:p-6 border-red-500/30 dark:border-red-900/50 bg-red-500/5 dark:bg-red-950/10 space-y-4">

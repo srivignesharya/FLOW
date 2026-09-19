@@ -173,49 +173,79 @@ export const MobileIngestStudio: React.FC<MobileIngestStudioProps> = ({
           animate={{ opacity: 1, y: 0 }}
           className="p-4 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-4 shadow-xs"
         >
-          <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
-            <div className="flex items-center gap-2.5">
-              <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-500">
-                <CheckCircle2 className="h-5 w-5" />
-              </div>
-              <div>
-                <h3 className="font-bold text-xs text-slate-900 dark:text-white">
-                  Extracted {result.tasks.length} Tasks
-                </h3>
-                <p className="text-[10px] text-slate-400 truncate max-w-[170px]">
-                  {result.document?.file_name || 'Extracted Text'}
-                </p>
-              </div>
-            </div>
-
-            <button
-              onClick={onNavigateTasks}
-              className="flex items-center gap-1 text-xs font-bold text-orange-500 hover:underline"
-            >
-              <span>View Tasks</span>
-              <ArrowRight className="h-3 w-3" />
-            </button>
-          </div>
-
-          <div className="space-y-2">
-            {result.tasks.map((t, idx) => (
-              <div
-                key={idx}
-                className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 space-y-1"
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-[10px] font-bold text-brand-600 dark:text-brand-400 uppercase">
-                    {t.subject || 'General'}
-                  </span>
-                  <span className="text-[10px] font-bold px-1.5 py-0.2 rounded-md bg-orange-500/10 text-orange-600 dark:text-orange-400">
-                    {t.priority}
-                  </span>
+          {result.tasks.length === 0 ? (
+            <div className="space-y-3">
+              <div className="flex items-start gap-2.5">
+                <div className="p-2 rounded-xl bg-amber-500/10 text-amber-500 shrink-0">
+                  <AlertCircle className="h-5 w-5" />
                 </div>
-                <h4 className="text-xs font-bold text-slate-900 dark:text-white break-words">{t.title}</h4>
-                <p className="text-[10px] text-slate-400">Deadline: {new Date(t.deadline).toLocaleDateString()}</p>
+                <div>
+                  <h3 className="font-bold text-xs text-slate-900 dark:text-white">
+                    0 Explicit Commitments Found
+                  </h3>
+                  <p className="text-[10px] text-slate-400 mt-0.5">
+                    {result.document?.file_name || 'Extracted Text'}
+                  </p>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
+                    This file contains general formulas or notes without explicit deadlines. You can add tasks manually in Task Manager.
+                  </p>
+                </div>
               </div>
-            ))}
-          </div>
+              <button
+                onClick={onNavigateTasks}
+                className="w-full py-2 px-3 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-200 flex items-center justify-center gap-1.5"
+              >
+                <span>Go to Task Manager</span>
+                <ArrowRight className="h-3 w-3" />
+              </button>
+            </div>
+          ) : (
+            <>
+              <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-500">
+                    <CheckCircle2 className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-xs text-slate-900 dark:text-white">
+                      Extracted {result.tasks.length} Task{result.tasks.length === 1 ? '' : 's'}
+                    </h3>
+                    <p className="text-[10px] text-slate-400 truncate max-w-[170px]">
+                      {result.document?.file_name || 'Extracted Text'}
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  onClick={onNavigateTasks}
+                  className="flex items-center gap-1 text-xs font-bold text-orange-500 hover:underline"
+                >
+                  <span>View Tasks</span>
+                  <ArrowRight className="h-3 w-3" />
+                </button>
+              </div>
+
+              <div className="space-y-2">
+                {result.tasks.map((t, idx) => (
+                  <div
+                    key={idx}
+                    className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 space-y-1"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-[10px] font-bold text-brand-600 dark:text-brand-400 uppercase">
+                        {t.subject || 'General'}
+                      </span>
+                      <span className="text-[10px] font-bold px-1.5 py-0.2 rounded-md bg-orange-500/10 text-orange-600 dark:text-orange-400">
+                        {t.priority}
+                      </span>
+                    </div>
+                    <h4 className="text-xs font-bold text-slate-900 dark:text-white break-words">{t.title}</h4>
+                    <p className="text-[10px] text-slate-400">Deadline: {new Date(t.deadline).toLocaleDateString()}</p>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
         </motion.div>
       )}
     </div>

@@ -40,9 +40,10 @@ export const sanitizeAndValidateTask = (rawTask, index = 0, defaultSubject = 'Ge
     deadline = new Date(rawDate).toISOString();
   }
 
-  // 3. Priority Normalization & Validation
-  const validPriorities = ['critical', 'high', 'medium', 'low'];
+  // 3. Priority Normalization & Validation (DB requires 'high', 'medium', or 'low')
+  const validPriorities = ['high', 'medium', 'low'];
   let priority = (rawTask.priority || 'medium').toString().toLowerCase().trim();
+  if (priority === 'critical') priority = 'high';
   if (!validPriorities.includes(priority)) {
     priority = 'medium';
   }

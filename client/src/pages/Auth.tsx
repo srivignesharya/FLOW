@@ -202,7 +202,7 @@ export const Auth: React.FC = () => {
         </div>
 
         <div className="relative z-10 text-xs text-slate-500">
-          © 2026 FLOW • All rights reserved
+          © 2026 FLOW • Built by IMV • All rights reserved
         </div>
       </div>
 
@@ -211,12 +211,17 @@ export const Auth: React.FC = () => {
         <div className="my-auto flex items-center justify-center p-6 sm:p-12 w-full">
           <div className="w-full max-w-md space-y-8">
             {/* Mobile Brand Logo */}
-            <div className="flex items-center justify-center gap-2.5 lg:hidden mb-6">
-              <div className="h-9 w-9 rounded-xl bg-gradient-to-tr from-brand-600 to-indigo-500 flex items-center justify-center text-white shadow-lg shadow-brand-500/30">
-                <Sparkles className="h-5 w-5" />
+            <div className="flex flex-col items-center justify-center gap-1.5 lg:hidden mb-6">
+              <div className="flex items-center gap-2.5">
+                <div className="h-9 w-9 rounded-xl bg-gradient-to-tr from-brand-600 to-indigo-500 flex items-center justify-center text-white shadow-lg shadow-brand-500/30">
+                  <Sparkles className="h-5 w-5" />
+                </div>
+                <span className="text-2xl font-black tracking-tight bg-gradient-to-r from-brand-400 to-indigo-300 bg-clip-text text-transparent">
+                  FLOW
+                </span>
               </div>
-              <span className="text-2xl font-black tracking-tight bg-gradient-to-r from-brand-400 to-indigo-300 bg-clip-text text-transparent">
-                FLOW
+              <span className="text-[11px] font-medium text-slate-400">
+                Academic Workflow • Built by IMV
               </span>
             </div>
 

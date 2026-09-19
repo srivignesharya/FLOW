@@ -4,7 +4,11 @@ import PDFParser from 'pdf2json';
 import { requireAuth } from '../middleware/authMiddleware.js';
 import { validateBody, textIngestSchema } from '../middleware/validation.js';
 import { aiServiceLimiter } from '../middleware/rateLimiter.js';
-import { getAiInstance, rotateAiKey, FLASH_MODEL, FALLBACK_MODEL, SYSTEM_INSTRUCTION, taskExtractionSchema } from '../services/gemini.js';
+import {
+  callAiCompletion,
+  hasGemini,
+  SYSTEM_INSTRUCTION
+} from '../services/gemini.js';
 import { supabaseAdmin } from '../services/supabase.js';
 import { calculateSmartPriority } from '../services/priorityEngine.js';
 import { performVisionOcr } from '../services/ocrService.js';
@@ -54,9 +58,127 @@ const extractTasksFromAiResponse = (aiResponseText) => {
   return rawList;
 };
 
+// Chunk text into slices of maxChars with overlap to stay under strict Groq TPM limits
+const chunkDocumentText = (text, maxChars = 10000, overlap = 800) => {
+  if (text.length <= maxChars) return [text];
+  const chunks = [];
+  let startIndex = 0;
+  while (startIndex < text.length) {
+    const endIndex = Math.min(startIndex + maxChars, text.length);
+    chunks.push(text.slice(startIndex, endIndex));
+    if (endIndex >= text.length) break;
+    startIndex += (maxChars - overlap);
+  }
+  return chunks;
+};
+
+// Unified task extractor supporting high-capacity Gemini or safe Groq chunking
+const extractTasksFromContent = async (text, dateStr, isFile = true) => {
+  // 1. If Gemini is available, Gemini 2.5 Flash has a 1,000,000-token context window
+  // and handles entire multi-page documents in a single shot with full semantic context
+  if (hasGemini()) {
+    try {
+      console.log(`[INGEST] Processing ${text.length} characters using Gemini 2.5 Flash (1M token context window)`);
+      const prompt = `Today's date is ${dateStr}. Analyze this academic document thoroughly and extract ALL tasks, assignments, exams, announcements, and deadlines.
+If the document contains lecture notes, formula sheets, or practice question sets without explicit submission dates, extract key study units, practice problem sets, or revision topics as actionable study commitments (taskType: "reading" or "assignment").
+Return a JSON object in this exact format:
+{
+  "tasks": [
+    {
+      "title": "Task or study topic title",
+      "subject": "Subject name",
+      "deadline": "ISO 8601 string or date within next 7 days",
+      "priority": "high" | "medium" | "low",
+      "estimatedMinutes": 60,
+      "description": "Details of task or revision topics",
+      "taskType": "assignment" | "exam" | "reading" | "announcement"
+    }
+  ]
+}
+
+Document Text:
+${text}`;
+
+      const aiResponseText = await callAiCompletion({
+        prompt,
+        systemPrompt: SYSTEM_INSTRUCTION,
+        preferGemini: true,
+        jsonMode: true,
+        temperature: 0.1
+      });
+
+      const rawTaskList = extractTasksFromAiResponse(aiResponseText);
+      const valid = sanitizeTaskBatch(rawTaskList, isFile ? 'Academic Document' : 'Text Syllabus');
+      if (valid && valid.length > 0) {
+        return valid;
+      }
+    } catch (geminiErr) {
+      console.warn(`⚠️ [INGEST GEMINI FAILED]: ${geminiErr.message}. Gracefully falling back to chunked Groq extraction...`);
+    }
+  }
+
+  // 2. If only Groq is available (free-tier 8,000 TPM limit):
+  // Partition into safe chunks under 10,000 characters (~2,500 tokens)
+  const chunks = chunkDocumentText(text, 10000, 800);
+  console.log(`[INGEST] Processing ${text.length} characters across ${chunks.length} chunks via Groq`);
+
+  const allRawTasks = [];
+  for (let i = 0; i < chunks.length; i++) {
+    const chunk = chunks[i];
+    console.log(`[INGEST] Processing chunk ${i + 1}/${chunks.length} (${chunk.length} chars)`);
+    const prompt = `Today's date is ${dateStr}. Analyze part ${i + 1} of ${chunks.length} of this academic document and extract any tasks, assignments, exams, announcements, or deadlines found in this section.
+If this excerpt contains practice questions, study units, or revision topics without explicit dates, extract them as actionable study commitments (taskType: "reading" or "assignment").
+Return a JSON object in this exact format:
+{
+  "tasks": [
+    {
+      "title": "Task or study topic title",
+      "subject": "Subject name",
+      "deadline": "ISO 8601 string or date within next 7 days",
+      "priority": "high" | "medium" | "low",
+      "estimatedMinutes": 60,
+      "description": "Details of task or revision topics",
+      "taskType": "assignment" | "exam" | "reading" | "announcement"
+    }
+  ]
+}
+
+Document Excerpt:
+${chunk}`;
+
+    try {
+      const chunkResponse = await callAiCompletion({
+        prompt,
+        systemPrompt: SYSTEM_INSTRUCTION,
+        jsonMode: true,
+        temperature: 0.1
+      });
+      const parsedChunkTasks = extractTasksFromAiResponse(chunkResponse);
+      if (Array.isArray(parsedChunkTasks)) {
+        allRawTasks.push(...parsedChunkTasks);
+      }
+    } catch (chunkErr) {
+      console.warn(`⚠️ [INGEST CHUNK ${i + 1} ERROR]:`, chunkErr.message);
+    }
+  }
+
+  // Deduplicate tasks from multiple chunks by title and deadline
+  const seenKeys = new Set();
+  const dedupedRawTasks = [];
+  for (const t of allRawTasks) {
+    const key = `${(t.title || '').trim().toLowerCase()}_${t.deadline || ''}`;
+    if (!seenKeys.has(key)) {
+      seenKeys.add(key);
+      dedupedRawTasks.push(t);
+    }
+  }
+
+  return sanitizeTaskBatch(dedupedRawTasks, isFile ? 'Academic Document' : 'Text Syllabus');
+};
+
 // ============================================================
 // POST /api/v1/ingest/file
-// Upload a PDF or image → Vision OCR Preprocessing → Groq → Smart Priority Engine
+// Upload a PDF or image → OCR/Parser → Resilient AI → Smart Priority Engine
 // ============================================================
 router.post('/file', requireAuth, aiServiceLimiter, upload.single('file'), async (req, res, next) => {
   try {
@@ -73,7 +195,7 @@ router.post('/file', requireAuth, aiServiceLimiter, upload.single('file'), async
     console.log(`[PDF] Text extraction started`);
 
     let extractedText = '';
-    
+
     if (req.file.mimetype === 'application/pdf') {
       try {
         extractedText = await new Promise((resolve, reject) => {
@@ -94,55 +216,24 @@ router.post('/file', requireAuth, aiServiceLimiter, upload.single('file'), async
       extractedText = await performVisionOcr(req.file.buffer, req.file.mimetype);
     }
 
-    // Clean up excessive newlines and page break marks from pdf2json
-    extractedText = extractedText.replace(/----------------Page \(\d+\) Break----------------/g, '\n\n').trim();
+    // Clean up excessive newlines, tab spaces, and page break marks
+    extractedText = (extractedText || '')
+      .replace(/----------------Page \(\d+\) Break----------------/g, '\n\n')
+      .replace(/\r\n/g, '\n')
+      .replace(/[ \t]+/g, ' ')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
 
     console.log(`[PDF] Extracted text length: ${extractedText.length} characters`);
 
-    if (extractedText.trim().length === 0) {
-      return res.status(200).json({ document: null, tasks: [], message: 'Could not extract readable text from this PDF.' });
+    if (extractedText.length === 0) {
+      return res.status(200).json({ document: null, tasks: [], message: 'Could not extract readable text from this file.' });
     }
 
-    console.log(`[EXTRACTION] Sending ${extractedText.length} characters to AI`);
+    // Extract tasks with resilient AI (Gemini 2.5 Flash 1M context or chunked Groq)
+    const validTasks = await extractTasksFromContent(extractedText, dateStr, true);
 
-    const prompt = `Today's date is ${dateStr}. Analyze this academic document thoroughly and extract ALL tasks, assignments, exams, announcements, and deadlines.
-Return a JSON array of tasks with fields: title, subject, deadline (ISO 8601), priority (critical/high/medium/low), estimatedMinutes (number), description, taskType (assignment/exam/reading/announcement).\nDocument Text:\n${extractedText}`;
-
-    let aiResponseText = '';
-    let lastError;
-
-    for (let attempt = 0; attempt < 3; attempt++) {
-      try {
-        const activeAi = getAiInstance();
-        const targetModel = attempt === 0 ? FLASH_MODEL : FALLBACK_MODEL;
-        const completion = await activeAi.chat.completions.create({
-          model: targetModel,
-          messages: [
-            { role: 'system', content: SYSTEM_INSTRUCTION },
-            { role: 'user', content: prompt }
-          ],
-          temperature: 0.1
-        });
-        aiResponseText = completion.choices[0]?.message?.content || '{}';
-        lastError = null;
-        break;
-      } catch (err) {
-        lastError = err;
-        console.warn(`⚠️ [INGEST FILE ATTEMPT ${attempt + 1} FAILED]: ${err.message}. Rotating key...`);
-        rotateAiKey();
-      }
-    }
-
-    if (lastError && !aiResponseText) {
-      throw lastError;
-    }
-
-    console.log(`[EXTRACTION] AI response received`);
-    const rawTaskList = extractTasksFromAiResponse(aiResponseText);
-    console.log(`[EXTRACTION] Parsed commitments: ${rawTaskList.length}`);
-    const validTasks = sanitizeTaskBatch(rawTaskList, 'Academic Document');
-
-    console.log(`[EXTRACTION] File "${req.file.originalname}": ${rawTaskList.length} raw parsed, ${validTasks.length} valid`);
+    console.log(`[EXTRACTION] File "${req.file.originalname}": ${validTasks.length} valid tasks extracted`);
 
     // Save document record
     const { data: doc, error: docErr } = await supabaseAdmin
@@ -174,6 +265,11 @@ Return a JSON array of tasks with fields: title, subject, deadline (ISO 8601), p
 
       console.log(`[EXTRACTION] Inserting task: "${t.title}" (${t.subject}) - Priority: ${smartPriority.priority}`);
 
+      // Ensure priority strictly adheres to DB constraint ('high', 'medium', 'low')
+      let dbPriority = (smartPriority.priority || 'medium').toLowerCase();
+      if (dbPriority === 'critical') dbPriority = 'high';
+      if (!['high', 'medium', 'low'].includes(dbPriority)) dbPriority = 'medium';
+
       return {
         user_id: userId,
         document_id: doc.id,
@@ -181,7 +277,7 @@ Return a JSON array of tasks with fields: title, subject, deadline (ISO 8601), p
         subject: t.subject || 'General',
         deadline: t.deadline,
         weightage: t.weightage || 0,
-        priority: smartPriority.priority,
+        priority: dbPriority,
         estimated_minutes: t.estimatedMinutes || 60,
         description: `${t.description || ''}\n\n💡 AI Priority Analysis: ${smartPriority.reasoning}`.trim(),
         task_type: t.taskType || 'assignment',
@@ -205,7 +301,7 @@ Return a JSON array of tasks with fields: title, subject, deadline (ISO 8601), p
 
 // ============================================================
 // POST /api/v1/ingest/text
-// Paste text → Groq extracts tasks → saves to DB
+// Paste text → Resilient AI extracts tasks → saves to DB
 // ============================================================
 router.post('/text', requireAuth, aiServiceLimiter, validateBody(textIngestSchema), async (req, res, next) => {
   try {
@@ -213,42 +309,16 @@ router.post('/text', requireAuth, aiServiceLimiter, validateBody(textIngestSchem
     const { textContent } = req.body;
     const dateStr = new Date().toISOString();
 
-    const prompt = `Today's date is ${dateStr}. Extract all academic tasks, assignments, exams, and deadlines from the following announcement/syllabus text:\n\n${textContent}\n\nReturn a JSON array of task objects with fields: title, subject, deadline (ISO 8601), priority (critical/high/medium/low), estimatedMinutes (number), description, taskType (assignment/exam/reading/announcement).`;
+    const cleanedText = (textContent || '')
+      .replace(/\r\n/g, '\n')
+      .replace(/[ \t]+/g, ' ')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
 
-    let aiResponseText = '';
-    let lastError;
+    // Extract tasks with resilient AI
+    const validTasks = await extractTasksFromContent(cleanedText, dateStr, false);
 
-    for (let attempt = 0; attempt < 3; attempt++) {
-      try {
-        const activeAi = getAiInstance();
-        const targetModel = attempt === 0 ? FLASH_MODEL : FALLBACK_MODEL;
-        const completion = await activeAi.chat.completions.create({
-          model: targetModel,
-          messages: [
-            { role: 'system', content: SYSTEM_INSTRUCTION },
-            { role: 'user', content: prompt }
-          ],
-          temperature: 0.1
-        });
-        aiResponseText = completion.choices[0]?.message?.content || '{}';
-        lastError = null;
-        break;
-      } catch (err) {
-        lastError = err;
-        console.warn(`⚠️ [INGEST TEXT ATTEMPT ${attempt + 1} FAILED]: ${err.message}. Rotating key...`);
-        rotateAiKey();
-      }
-    }
-
-    if (lastError && !aiResponseText) {
-      console.error(`[INGEST TEXT FATAL ERROR]: AI request failed:`, lastError.message);
-      return res.status(503).json({ error: 'Unable to analyse this content. Please try again.' });
-    }
-
-    const rawTaskList = extractTasksFromAiResponse(aiResponseText);
-    const validTasks = sanitizeTaskBatch(rawTaskList, 'Text Syllabus');
-
-    console.log(`[EXTRACTION] Text excerpt: ${rawTaskList.length} raw parsed, ${validTasks.length} valid`);
+    console.log(`[EXTRACTION] Text excerpt: ${validTasks.length} valid tasks extracted`);
 
     // Save document record for text ingestion
     const { data: doc, error: docErr } = await supabaseAdmin
@@ -257,7 +327,7 @@ router.post('/text', requireAuth, aiServiceLimiter, validateBody(textIngestSchem
         user_id: userId,
         file_name: `Text Ingest — ${new Date().toLocaleString()}`,
         file_type: 'text',
-        raw_text_content: textContent
+        raw_text_content: cleanedText
       })
       .select()
       .single();
@@ -270,6 +340,11 @@ router.post('/text', requireAuth, aiServiceLimiter, validateBody(textIngestSchem
 
     const tasksToInsert = validTasks.map(t => {
       console.log(`[EXTRACTION] Inserting task: "${t.title}" (${t.subject})`);
+
+      let dbPriority = (t.priority || 'medium').toLowerCase();
+      if (dbPriority === 'critical') dbPriority = 'high';
+      if (!['high', 'medium', 'low'].includes(dbPriority)) dbPriority = 'medium';
+
       return {
         user_id: userId,
         document_id: doc.id,
@@ -277,7 +352,7 @@ router.post('/text', requireAuth, aiServiceLimiter, validateBody(textIngestSchem
         subject: t.subject || 'General',
         deadline: t.deadline,
         weightage: t.weightage || 0,
-        priority: t.priority,
+        priority: dbPriority,
         estimated_minutes: t.estimatedMinutes || 60,
         description: t.description || '',
         task_type: t.taskType || 'assignment',

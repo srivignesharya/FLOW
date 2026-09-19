@@ -1,6 +1,7 @@
-# Flow ⚡ — AI Academic Workflow Platform
+# FLOW ⚡ — AI Academic Workflow Platform
+### Built & Designed by IMV
 
-> Transform fragmented student workflows into structured academic execution plans using Google Gemini AI and Supabase.
+> Transform fragmented student workflows into structured academic execution plans using FLOW AI. Powered by IMV.
 
 ---
 

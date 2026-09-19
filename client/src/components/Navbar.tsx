@@ -22,15 +22,20 @@ export const Navbar: React.FC = () => {
           <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-brand-500 via-orange-500 to-amber-500 flex items-center justify-center text-white shadow-md shadow-brand-500/25 border border-brand-400/20">
             <span className="font-black text-xs tracking-wider">FL</span>
           </div>
-          <span className="text-lg font-black tracking-tight bg-gradient-to-r from-brand-500 via-amber-400 to-orange-400 bg-clip-text text-transparent">
-            FLOW
-          </span>
+          <div className="flex items-center gap-1.5">
+            <span className="text-lg font-black tracking-tight bg-gradient-to-r from-brand-500 via-amber-400 to-orange-400 bg-clip-text text-transparent">
+              FLOW
+            </span>
+            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-brand-500/10 text-brand-600 dark:text-brand-400 border border-brand-500/20">
+              by IMV
+            </span>
+          </div>
         </div>
 
         {/* Desktop Academic Workspace Badge */}
         <span className="hidden md:inline-flex text-xs font-bold px-3 py-1 rounded-full bg-brand-500/10 text-brand-600 dark:text-brand-300 border border-brand-500/20 items-center gap-1.5 shadow-sm">
           <Sparkles className="h-3.5 w-3.5 text-brand-500 dark:text-brand-400" />
-          <span>Academic Workspace</span>
+          <span>Academic Workspace • Powered by IMV</span>
         </span>
       </div>
 
