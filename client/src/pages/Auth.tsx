@@ -8,6 +8,7 @@ import { validatePassword } from '../utils/passwordValidator';
 import { PasswordStrengthMeter } from '../components/PasswordStrengthMeter';
 import { GoogleIcon } from '../components/GoogleIcon';
 import { MobileAuth } from '../components/mobile/MobileAuth';
+import { ZenithLogo } from '../components/ZenithLogo';
 
 type AuthViewMode = 'signin' | 'signup' | 'forgot_password';
 
@@ -143,86 +144,71 @@ export const Auth: React.FC = () => {
         <div className="absolute -bottom-32 -right-32 w-96 h-96 bg-indigo-600/20 rounded-full blur-3xl pointer-events-none" />
 
         <div className="relative z-10 flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-gradient-to-tr from-brand-600 to-indigo-500 flex items-center justify-center text-white shadow-lg shadow-brand-500/30">
-            <Sparkles className="h-5 w-5" />
-          </div>
-          <span className="text-2xl font-black tracking-tight bg-gradient-to-r from-brand-400 to-indigo-300 bg-clip-text text-transparent">
-            FLOW
-          </span>
+          <ZenithLogo size="lg" showWordmark={true} showTagline={true} />
         </div>
 
         <div className="relative z-10 my-auto max-w-lg space-y-6">
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-4xl font-extrabold tracking-tight leading-tight"
+            className="text-4xl font-extrabold tracking-tight leading-tight text-white"
           >
-            Transform Fragmented Workflows into AI Academic Plans.
+            Reach Higher. Live Brighter.
           </motion.h1>
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="text-slate-400 text-base leading-relaxed"
+            className="text-[#94A3B8] text-base leading-relaxed"
           >
-            Powered by Google Gemini models. Extract deadlines from syllabus PDFs, schedule intelligent 7-day study blocks, and execute structured academic plans.
+            Organize assignments, deadlines, documents, and 7-day study plans with ZENITH by IMV, an AI-powered student productivity platform.
           </motion.p>
 
           <div className="grid grid-cols-1 gap-4 pt-4">
-            <div className="flex items-center gap-3 p-3.5 rounded-xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-sm">
-              <div className="p-2 rounded-lg bg-brand-500/10 text-brand-400">
+            <div className="flex items-center gap-3 p-3.5 rounded-xl bg-[#111827]/80 border border-slate-800/80 backdrop-blur-sm">
+              <div className="p-2 rounded-lg bg-[#2563FF]/15 text-[#00D4FF]">
                 <BookOpen className="h-5 w-5" />
               </div>
               <div>
-                <h4 className="text-sm font-semibold text-slate-200">Instant Syllabus Ingestion</h4>
-                <p className="text-xs text-slate-400">Extract assignments & weightages from PDFs and images automatically.</p>
+                <h4 className="text-sm font-semibold text-[#F8FAFC]">Instant Syllabus Ingestion</h4>
+                <p className="text-xs text-[#94A3B8]">Extract assignments & weightages from course PDFs and images automatically.</p>
               </div>
             </div>
 
-            <div className="flex items-center gap-3 p-3.5 rounded-xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-sm">
-              <div className="p-2 rounded-lg bg-indigo-500/10 text-indigo-400">
+            <div className="flex items-center gap-3 p-3.5 rounded-xl bg-[#111827]/80 border border-slate-800/80 backdrop-blur-sm">
+              <div className="p-2 rounded-lg bg-[#2563FF]/15 text-[#2563FF]">
                 <Calendar className="h-5 w-5" />
               </div>
               <div>
-                <h4 className="text-sm font-semibold text-slate-200">Optimized 7-Day Study Plans</h4>
-                <p className="text-xs text-slate-400">Dynamic daily focus blocks prioritized by urgency and course weightage.</p>
+                <h4 className="text-sm font-semibold text-[#F8FAFC]">Optimized 7-Day Study Plans</h4>
+                <p className="text-xs text-[#94A3B8]">Dynamic daily focus blocks prioritized by urgency and course weightage.</p>
               </div>
             </div>
 
-            <div className="flex items-center gap-3 p-3.5 rounded-xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-sm">
-              <div className="p-2 rounded-lg bg-purple-500/10 text-purple-400">
+            <div className="flex items-center gap-3 p-3.5 rounded-xl bg-[#111827]/80 border border-slate-800/80 backdrop-blur-sm">
+              <div className="p-2 rounded-lg bg-indigo-500/15 text-indigo-400">
                 <Target className="h-5 w-5" />
               </div>
               <div>
-                <h4 className="text-sm font-semibold text-slate-200">Smart Academic Tracking</h4>
-                <p className="text-xs text-slate-400">Track deadlines, progress metrics, and assignments seamlessly.</p>
+                <h4 className="text-sm font-semibold text-[#F8FAFC]">Smart Academic Tracking</h4>
+                <p className="text-xs text-[#94A3B8]">Track deadlines, progress metrics, and assignments seamlessly.</p>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="relative z-10 text-xs text-slate-500">
-          © 2026 FLOW • Built by IMV • All rights reserved
+        <div className="relative z-10 text-xs text-[#94A3B8]">
+          © 2026 ZENITH v1.1 • by IMV • All rights reserved
         </div>
       </div>
 
       {/* Right Form Panel */}
-      <div className="flex-1 flex flex-col justify-between bg-slate-950">
+      <div className="flex-1 flex flex-col justify-between bg-[#0B1020]">
         <div className="my-auto flex items-center justify-center p-6 sm:p-12 w-full">
           <div className="w-full max-w-md space-y-8">
             {/* Mobile Brand Logo */}
             <div className="flex flex-col items-center justify-center gap-1.5 lg:hidden mb-6">
-              <div className="flex items-center gap-2.5">
-                <div className="h-9 w-9 rounded-xl bg-gradient-to-tr from-brand-600 to-indigo-500 flex items-center justify-center text-white shadow-lg shadow-brand-500/30">
-                  <Sparkles className="h-5 w-5" />
-                </div>
-                <span className="text-2xl font-black tracking-tight bg-gradient-to-r from-brand-400 to-indigo-300 bg-clip-text text-transparent">
-                  FLOW
-                </span>
-              </div>
-              <span className="text-[11px] font-medium text-slate-400">
-                Academic Workflow • Built by IMV
-              </span>
+              <ZenithLogo size="md" showWordmark={true} showTagline={true} />
             </div>
 
             <div className="text-center lg:text-left">

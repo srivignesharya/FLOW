@@ -1,0 +1,17 @@
+User-agent: *
+Allow: /
+Allow: /auth
+Allow: /assets/
+Allow: /favicon.svg
+Disallow: /api/
+Disallow: /dashboard
+Disallow: /tasks
+Disallow: /planner
+Disallow: /ingest
+Disallow: /copilot
+Disallow: /analytics
+Disallow: /settings
+Disallow: /auth/callback
+Disallow: /reset-password
+
+Sitemap: https://flow-client-five.vercel.app/sitemap.xml

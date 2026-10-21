@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { GoogleIcon } from '../GoogleIcon';
 import { PasswordStrengthMeter } from '../PasswordStrengthMeter';
+import { ZenithLogo } from '../ZenithLogo';
 
 interface MobileAuthProps {
   viewMode: 'signin' | 'signup' | 'forgot_password';
@@ -59,14 +60,8 @@ export const MobileAuth: React.FC<MobileAuthProps> = ({
   return (
     <div className="min-h-[100dvh] flex flex-col justify-between bg-slate-950 text-slate-100 p-5 pt-8 pb-8 max-w-md mx-auto">
       {/* 1. Brand Logo Header */}
-      <div className="text-center space-y-2">
-        <div className="inline-flex items-center justify-center h-12 w-12 rounded-2xl bg-gradient-to-tr from-orange-500 via-amber-500 to-orange-600 text-white shadow-lg shadow-orange-500/30 mb-1">
-          <Sparkles className="h-6 w-6" />
-        </div>
-        <div>
-          <h1 className="text-2xl font-black tracking-tight text-white">FLOW</h1>
-          <span className="text-[11px] font-semibold text-slate-400">Academic Workspace</span>
-        </div>
+      <div className="text-center space-y-1 flex flex-col items-center">
+        <ZenithLogo size="md" showWordmark={true} showBadge={true} showTagline={true} />
       </div>
 
       {/* 2. Main Auth Form */}
@@ -253,13 +248,13 @@ export const MobileAuth: React.FC<MobileAuthProps> = ({
           <button
             type="button"
             onClick={() => setViewMode(isSignUp ? 'signin' : 'signup')}
-            className="text-xs font-bold text-orange-400 hover:text-orange-300"
+            className="text-xs font-bold text-[#00D4FF] hover:text-white"
           >
             {isSignUp ? 'Already have an account? Sign In' : "Don't have an account? Sign Up"}
           </button>
         )}
         <p className="text-[11px] text-slate-500 pt-3">
-          © 2026 FLOW • Built by IMV
+          © 2026 ZENITH v1.1 • by IMV • Reach Higher. Live Brighter.
         </p>
       </div>
     </div>

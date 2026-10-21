@@ -1,0 +1,16 @@
+{
+  "short_name": "ZENITH",
+  "name": "ZENITH by IMV — AI Student Productivity Platform",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#0B1020",
+  "theme_color": "#0B1020",
+  "display": "standalone",
+  "description": "Organize assignments, deadlines, documents and study plans with ZENITH by IMV, an AI-powered student productivity platform."
+}

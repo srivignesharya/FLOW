@@ -30,9 +30,9 @@ export const MotionButton: React.FC<MotionButtonProps> = ({
   const getVariantStyles = () => {
     switch (variant) {
       case 'primary':
-        return 'bg-gradient-to-r from-brand-600 via-brand-500 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 text-white shadow-lg shadow-brand-500/25 hover:shadow-brand-500/40 border border-brand-400/20';
+        return 'bg-gradient-to-r from-[#2563FF] via-[#1D4ED8] to-[#00D4FF] hover:opacity-95 text-white shadow-lg shadow-[#2563FF]/25 hover:shadow-[#2563FF]/40 border border-[#00D4FF]/30';
       case 'secondary':
-        return 'bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-700/80 hover:border-slate-600 shadow-sm';
+        return 'bg-[#111827] hover:bg-[#1E293B] text-[#F8FAFC] border border-slate-700/80 hover:border-[#2563FF]/40 shadow-sm';
       case 'ghost':
         return 'bg-transparent hover:bg-slate-800/60 text-slate-400 hover:text-slate-100';
       case 'danger':

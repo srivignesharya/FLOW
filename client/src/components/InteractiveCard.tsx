@@ -12,7 +12,7 @@ interface InteractiveCardProps {
 export const InteractiveCard: React.FC<InteractiveCardProps> = ({
   children,
   className = '',
-  glowColor = 'rgba(99, 102, 241, 0.15)',
+  glowColor = 'rgba(37, 99, 255, 0.2)',
   onClick,
   tiltEffect = true
 }) => {

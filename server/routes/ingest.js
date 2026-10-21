@@ -253,8 +253,16 @@ router.post('/file', requireAuth, aiServiceLimiter, upload.single('file'), async
       return res.status(200).json({ document: doc, tasks: [], message: 'No academic commitments detected in this file.' });
     }
 
-    // Map and process tasks through Smart Priority Engine
-    const tasksToInsert = validTasks.map(t => {
+    // Fetch existing tasks to detect likely duplicate commitments
+    const { data: existingTasks } = await supabaseAdmin
+      .from('tasks')
+      .select('id, title, deadline, subject')
+      .eq('user_id', userId);
+
+    const existingList = existingTasks || [];
+
+    // Map and process tasks through Smart Priority Engine with Duplicate Detection
+    const tasksToProcess = validTasks.map(t => {
       const smartPriority = calculateSmartPriority({
         deadline: t.deadline,
         weightage: t.weightage || 0,
@@ -263,12 +271,20 @@ router.post('/file', requireAuth, aiServiceLimiter, upload.single('file'), async
         remainingTasksCount: validTasks.length
       });
 
-      console.log(`[EXTRACTION] Inserting task: "${t.title}" (${t.subject}) - Priority: ${smartPriority.priority}`);
-
-      // Ensure priority strictly adheres to DB constraint ('high', 'medium', 'low')
+      // Strict DB constraint check ('high', 'medium', 'low')
       let dbPriority = (smartPriority.priority || 'medium').toLowerCase();
       if (dbPriority === 'critical') dbPriority = 'high';
       if (!['high', 'medium', 'low'].includes(dbPriority)) dbPriority = 'medium';
+
+      // Duplicate detection against existing user records
+      const cleanNewTitle = (t.title || '').trim().toLowerCase();
+      const duplicateMatch = existingList.find(et => {
+        const cleanExisting = (et.title || '').trim().toLowerCase();
+        if (cleanExisting === cleanNewTitle) return true;
+        // Same date and high title substring match
+        const sameDate = new Date(et.deadline).toDateString() === new Date(t.deadline).toDateString();
+        return sameDate && (cleanExisting.includes(cleanNewTitle) || cleanNewTitle.includes(cleanExisting));
+      });
 
       return {
         user_id: userId,
@@ -281,18 +297,33 @@ router.post('/file', requireAuth, aiServiceLimiter, upload.single('file'), async
         estimated_minutes: t.estimatedMinutes || 60,
         description: `${t.description || ''}\n\n💡 AI Priority Analysis: ${smartPriority.reasoning}`.trim(),
         task_type: t.taskType || 'assignment',
-        notification_sent: false
+        notification_sent: false,
+        is_duplicate: Boolean(duplicateMatch),
+        duplicate_reason: duplicateMatch ? `Likely duplicate of existing task: "${duplicateMatch.title}"` : null
       };
     });
 
+    // If client requested preview / review mode, return without inserting into DB yet
+    const isPreview = req.query.preview === 'true' || req.body.preview === 'true' || req.body.preview === true;
+    if (isPreview) {
+      return res.json({
+        document: doc,
+        tasks: tasksToProcess,
+        requiresReview: true,
+        duplicatesDetected: tasksToProcess.filter(t => t.is_duplicate).length
+      });
+    }
+
+    // Default: Direct insertion (strip transient duplicate flags before DB insert)
+    const dbPayload = tasksToProcess.map(({ is_duplicate, duplicate_reason, ...rest }) => rest);
     const { data: insertedTasks, error: taskErr } = await supabaseAdmin
       .from('tasks')
-      .insert(tasksToInsert)
+      .insert(dbPayload)
       .select();
 
     if (taskErr) throw taskErr;
 
-    res.json({ document: doc, tasks: insertedTasks });
+    res.json({ document: doc, tasks: insertedTasks, requiresReview: false });
   } catch (err) {
     console.error(`[INGEST FILE ERROR]:`, err.message);
     next(err);
@@ -301,12 +332,12 @@ router.post('/file', requireAuth, aiServiceLimiter, upload.single('file'), async
 
 // ============================================================
 // POST /api/v1/ingest/text
-// Paste text → Resilient AI extracts tasks → saves to DB
+// Paste text → Resilient AI extracts tasks → saves to DB or returns for review
 // ============================================================
 router.post('/text', requireAuth, aiServiceLimiter, validateBody(textIngestSchema), async (req, res, next) => {
   try {
     const userId = req.user.id;
-    const { textContent } = req.body;
+    const { textContent, preview } = req.body;
     const dateStr = new Date().toISOString();
 
     const cleanedText = (textContent || '')
@@ -338,12 +369,26 @@ router.post('/text', requireAuth, aiServiceLimiter, validateBody(textIngestSchem
       return res.status(200).json({ document: doc, tasks: [], message: 'No academic commitments detected in the provided text.' });
     }
 
-    const tasksToInsert = validTasks.map(t => {
-      console.log(`[EXTRACTION] Inserting task: "${t.title}" (${t.subject})`);
+    // Fetch existing tasks to detect duplicates
+    const { data: existingTasks } = await supabaseAdmin
+      .from('tasks')
+      .select('id, title, deadline, subject')
+      .eq('user_id', userId);
 
+    const existingList = existingTasks || [];
+
+    const tasksToProcess = validTasks.map(t => {
       let dbPriority = (t.priority || 'medium').toLowerCase();
       if (dbPriority === 'critical') dbPriority = 'high';
       if (!['high', 'medium', 'low'].includes(dbPriority)) dbPriority = 'medium';
+
+      const cleanNewTitle = (t.title || '').trim().toLowerCase();
+      const duplicateMatch = existingList.find(et => {
+        const cleanExisting = (et.title || '').trim().toLowerCase();
+        if (cleanExisting === cleanNewTitle) return true;
+        const sameDate = new Date(et.deadline).toDateString() === new Date(t.deadline).toDateString();
+        return sameDate && (cleanExisting.includes(cleanNewTitle) || cleanNewTitle.includes(cleanExisting));
+      });
 
       return {
         user_id: userId,
@@ -356,21 +401,92 @@ router.post('/text', requireAuth, aiServiceLimiter, validateBody(textIngestSchem
         estimated_minutes: t.estimatedMinutes || 60,
         description: t.description || '',
         task_type: t.taskType || 'assignment',
-        notification_sent: false
+        notification_sent: false,
+        is_duplicate: Boolean(duplicateMatch),
+        duplicate_reason: duplicateMatch ? `Likely duplicate of existing task: "${duplicateMatch.title}"` : null
       };
     });
 
+    const isPreview = preview === true || preview === 'true' || req.query.preview === 'true';
+    if (isPreview) {
+      return res.json({
+        document: doc,
+        tasks: tasksToProcess,
+        requiresReview: true,
+        duplicatesDetected: tasksToProcess.filter(t => t.is_duplicate).length
+      });
+    }
+
+    const dbPayload = tasksToProcess.map(({ is_duplicate, duplicate_reason, ...rest }) => rest);
     const { data: insertedTasks, error: taskErr } = await supabaseAdmin
       .from('tasks')
-      .insert(tasksToInsert)
+      .insert(dbPayload)
       .select();
 
     if (taskErr) throw taskErr;
 
-    res.json({ document: doc, tasks: insertedTasks });
+    res.json({ document: doc, tasks: insertedTasks, requiresReview: false });
   } catch (err) {
     console.error(`[INGEST TEXT UNHANDLED ERROR]:`, err.message);
     next(err);
+  }
+});
+
+// ============================================================
+// POST /api/v1/ingest/confirm
+// Confirm and save reviewed / user-corrected tasks
+// ============================================================
+router.post('/confirm', requireAuth, async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    const { documentId, tasks } = req.body;
+
+    if (!Array.isArray(tasks) || tasks.length === 0) {
+      return res.status(400).json({ error: 'No confirmed tasks provided.' });
+    }
+
+    const tasksToInsert = tasks.map((t, idx) => {
+      const cleanTitle = (t.title || '').trim();
+      if (!cleanTitle) {
+        throw new Error(`Task at index ${idx + 1} is missing a title.`);
+      }
+
+      let priority = (t.priority || 'medium').toLowerCase();
+      if (!['high', 'medium', 'low'].includes(priority)) priority = 'medium';
+
+      let taskType = (t.task_type || t.taskType || 'assignment').toLowerCase();
+      if (!['assignment', 'exam', 'announcement', 'reading'].includes(taskType)) taskType = 'assignment';
+
+      return {
+        user_id: userId,
+        document_id: documentId || null,
+        title: cleanTitle,
+        subject: (t.subject || 'General').trim(),
+        deadline: new Date(t.deadline).toISOString(),
+        weightage: Number(t.weightage) || 0,
+        priority,
+        estimated_minutes: Number(t.estimated_minutes || t.estimatedMinutes) || 60,
+        description: (t.description || '').trim(),
+        task_type: taskType,
+        notification_sent: false
+      };
+    });
+
+    const { data: inserted, error: insertErr } = await supabaseAdmin
+      .from('tasks')
+      .insert(tasksToInsert)
+      .select();
+
+    if (insertErr) throw insertErr;
+
+    res.json({
+      success: true,
+      count: inserted.length,
+      tasks: inserted
+    });
+  } catch (err) {
+    console.error(`[INGEST CONFIRM ERROR]:`, err.message);
+    res.status(400).json({ error: err.message || 'Failed to save confirmed tasks' });
   }
 });
 

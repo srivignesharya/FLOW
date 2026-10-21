@@ -15,9 +15,10 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { clsx } from 'clsx';
 import { useCopilot } from '../context/CopilotContext';
+import { ZenithLogo } from './ZenithLogo';
 
 const links = [
-  { to: '/', label: 'Dashboard', icon: LayoutDashboard, exact: true },
+  { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, exact: false },
   { to: '/copilot', label: 'AI Copilot', icon: Bot, exact: false, isAi: true },
   { to: '/ingest', label: 'Upload & Ingest', icon: FileUp, exact: false },
   { to: '/tasks', label: 'Task Manager', icon: CheckSquare, exact: false },
@@ -46,33 +47,16 @@ export const Sidebar: React.FC = () => {
         )}
       >
         {/* Brand Logo / Monogram */}
-        <div className="flex items-center gap-3 min-w-0">
-          <div
-            onClick={() => navigate('/')}
-            className="h-9 w-9 rounded-xl bg-gradient-to-br from-brand-500 via-orange-500 to-amber-500 flex items-center justify-center text-white shadow-lg shadow-brand-500/30 shrink-0 border border-brand-400/20 cursor-pointer"
-          >
-            <Zap className="h-5 w-5 fill-current" />
-          </div>
-
-          <AnimatePresence>
-            {!collapsed && (
-              <motion.div
-                initial={{ opacity: 0, x: -10, filter: 'blur(4px)' }}
-                animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
-                exit={{ opacity: 0, x: -10, filter: 'blur(4px)' }}
-                transition={{ duration: 0.2 }}
-                onClick={() => navigate('/')}
-                className="flex items-center gap-1.5 whitespace-nowrap cursor-pointer select-none"
-              >
-                <span className="text-lg font-black tracking-tight bg-gradient-to-r from-brand-400 via-amber-300 to-orange-400 bg-clip-text text-transparent">
-                  FLOW
-                </span>
-                <span className="text-[10px] font-bold tracking-wide px-1.5 py-0.5 rounded bg-brand-500/10 text-brand-600 dark:text-brand-400 border border-brand-500/20">
-                  by IMV
-                </span>
-              </motion.div>
-            )}
-          </AnimatePresence>
+        <div
+          onClick={() => navigate('/dashboard')}
+          className="flex items-center gap-2.5 min-w-0 cursor-pointer"
+          title="ZENITH v1.1 by IMV"
+        >
+          <ZenithLogo
+            size="sm"
+            showWordmark={!collapsed}
+            showBadge={!collapsed}
+          />
         </div>
 
         {/* MacOS Header Actions: Plus & PanelLeft Toggle */}
@@ -216,17 +200,17 @@ export const Sidebar: React.FC = () => {
             transition={{ duration: 0.2 }}
             className="p-4 border-t border-slate-200 dark:border-slate-800 shrink-0"
           >
-            <div className="px-3 py-2.5 rounded-xl bg-brand-50/50 dark:bg-slate-950/60 border border-brand-200 dark:border-brand-500/20">
+            <div className="px-3 py-2.5 rounded-xl bg-[#0B1020]/90 border border-[#2563FF]/25 shadow-sm">
               <div className="flex items-center justify-between">
-                <p className="text-xs font-extrabold bg-gradient-to-r from-brand-600 to-amber-600 dark:from-brand-400 dark:to-amber-400 bg-clip-text text-transparent">
-                  FLOW
+                <p className="text-xs font-black tracking-tight text-[#F8FAFC]">
+                  ZENITH <span className="text-[10px] text-[#00D4FF] font-semibold">v1.1</span>
                 </p>
-                <span className="text-[10px] font-semibold text-brand-600 dark:text-brand-400 bg-brand-500/10 px-1.5 py-0.5 rounded">
+                <span className="text-[10px] font-semibold text-[#00D4FF] bg-[#2563FF]/15 border border-[#2563FF]/30 px-1.5 py-0.5 rounded">
                   by IMV
                 </span>
               </div>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 font-medium">
-                Academic Execution Engine
+              <p className="text-[11px] text-[#94A3B8] mt-0.5 font-medium">
+                Reach Higher. Live Brighter.
               </p>
             </div>
           </motion.div>

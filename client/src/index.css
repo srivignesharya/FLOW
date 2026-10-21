@@ -22,17 +22,18 @@ html {
 body {
   @apply bg-slate-50 text-slate-900 antialiased font-sans transition-colors duration-200;
   background-image: 
-    radial-gradient(circle at 50% 0%, rgba(255, 107, 0, 0.05) 0%, transparent 60%),
+    radial-gradient(circle at 50% 0%, rgba(37, 99, 255, 0.05) 0%, transparent 60%),
     radial-gradient(circle at 100% 100%, rgba(241, 245, 249, 0.8) 0%, transparent 80%);
   background-attachment: fixed;
 }
 
-/* Dark Mode Body Canvas */
+/* Dark Mode Body Canvas — ZENITH #0B1020 Background */
 .dark body {
-  @apply bg-slate-950 text-slate-100;
+  @apply text-[#F8FAFC];
+  background-color: #0B1020;
   background-image: 
-    radial-gradient(circle at 50% 0%, rgba(255, 107, 0, 0.08) 0%, transparent 60%),
-    radial-gradient(circle at 100% 100%, rgba(15, 19, 28, 0.8) 0%, transparent 80%);
+    radial-gradient(circle at 50% 0%, rgba(37, 99, 255, 0.12) 0%, transparent 60%),
+    radial-gradient(circle at 100% 100%, rgba(17, 24, 39, 0.85) 0%, transparent 80%);
   background-attachment: fixed;
 }
 
@@ -210,22 +211,22 @@ button, a, input, select, textarea {
     }
   }
 
-  /* Surface Cards */
+  /* Surface Cards — ZENITH Elevated Surface #111827 */
   .card {
-    @apply bg-white dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/90 rounded-2xl;
-    @apply shadow-sm dark:shadow-lg transition-all duration-300 ease-out;
+    @apply bg-white dark:bg-[#111827] border border-slate-200/80 dark:border-slate-800/80 rounded-2xl;
+    @apply shadow-sm dark:shadow-zenith-card transition-all duration-300 ease-out;
   }
 
   .card-interactive {
-    @apply card hover:-translate-y-1 hover:shadow-md dark:hover:shadow-glow-orange hover:border-brand-500/40;
+    @apply card hover:-translate-y-1 hover:shadow-md dark:hover:shadow-glow-blue hover:border-[#2563FF]/40;
   }
 
   /* Input Design System */
   .input {
     @apply w-full px-4 py-2.5 rounded-xl text-sm;
-    @apply bg-white dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800;
-    @apply text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500;
-    @apply focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 focus:bg-white dark:focus:bg-slate-900;
+    @apply bg-white dark:bg-[#0B1020]/90 border border-slate-200 dark:border-slate-800;
+    @apply text-slate-900 dark:text-[#F8FAFC] placeholder-slate-400 dark:placeholder-slate-500;
+    @apply focus:outline-none focus:ring-2 focus:ring-[#2563FF]/30 focus:border-[#2563FF] focus:bg-white dark:focus:bg-[#111827];
     @apply transition-all duration-200 ease-out;
   }
 
@@ -234,20 +235,20 @@ button, a, input, select, textarea {
     @apply input appearance-none cursor-pointer;
   }
 
-  /* Orange Primary Button (Vibrant & High-Contrast in Light & Dark) */
+  /* ZENITH Primary Button (#2563FF to #00D4FF Gradient) */
   .btn-primary {
     @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl;
-    @apply bg-orange-gradient hover:opacity-95 active:scale-[0.98];
+    @apply bg-gradient-to-r from-[#2563FF] via-[#1D4ED8] to-[#00D4FF] hover:opacity-95 active:scale-[0.98];
     @apply text-white font-bold text-sm tracking-wide;
-    @apply transition-all duration-200 shadow-md shadow-brand-500/20 dark:shadow-glow-orange border border-brand-400/30;
+    @apply transition-all duration-200 shadow-md shadow-[#2563FF]/25 dark:shadow-glow-blue border border-[#00D4FF]/25;
     @apply disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none;
   }
 
   /* Secondary Button */
   .btn-secondary {
     @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl;
-    @apply bg-slate-100 hover:bg-slate-200 dark:bg-slate-900 dark:hover:bg-slate-800 active:scale-[0.98];
-    @apply text-slate-800 dark:text-slate-200 font-semibold text-sm;
+    @apply bg-slate-100 hover:bg-slate-200 dark:bg-[#111827] dark:hover:bg-[#1E293B] active:scale-[0.98];
+    @apply text-slate-800 dark:text-[#F8FAFC] font-semibold text-sm;
     @apply border border-slate-200 dark:border-slate-700/80 hover:border-slate-300 dark:hover:border-slate-600;
     @apply transition-all duration-200 shadow-sm;
     @apply disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none;

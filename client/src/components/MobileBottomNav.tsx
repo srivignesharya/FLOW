@@ -18,7 +18,7 @@ interface NavItem {
 }
 
 const PRIMARY_TABS: NavItem[] = [
-  { name: 'Home', path: '/', icon: Home },
+  { name: 'Dashboard', path: '/dashboard', icon: Home },
   { name: 'Tasks', path: '/tasks', icon: CheckSquare },
   { name: 'Copilot', path: '#copilot', icon: Bot, isAi: true },
   { name: 'Planner', path: '/planner', icon: Calendar },
@@ -51,31 +51,31 @@ export const MobileBottomNav: React.FC = () => {
                 onClick={openCopilot}
                 className={`relative flex flex-col items-center justify-center py-1.5 px-1 rounded-2xl transition-all duration-200 select-none min-h-[50px] ${
                   isActive
-                    ? 'text-orange-500 dark:text-orange-400 font-bold'
+                    ? 'text-[#00D4FF] font-bold'
                     : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
                 }`}
               >
                 {isActive && (
                   <motion.div
                     layoutId="mobileActiveTabPill"
-                    className="absolute inset-0 rounded-2xl bg-gradient-to-tr from-orange-500/15 via-amber-500/15 to-orange-500/10 dark:from-orange-500/25 dark:to-amber-500/15 border border-orange-500/20"
+                    className="absolute inset-0 rounded-2xl bg-gradient-to-tr from-[#2563FF]/20 via-[#00D4FF]/15 to-[#2563FF]/10 border border-[#00D4FF]/30"
                     transition={{ type: 'spring', stiffness: 500, damping: 35 }}
                   />
                 )}
 
                 <div className="relative z-10">
                   <div className={`relative p-0.5 transition-transform ${isActive ? 'scale-110' : ''}`}>
-                    <Icon className="h-5 w-5 text-brand-500 dark:text-brand-400" />
+                    <Icon className="h-5 w-5 text-[#00D4FF]" />
                     <motion.div
                       animate={{ scale: [1, 1.3, 1], opacity: [0.8, 1, 0.8] }}
                       transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
-                      className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-orange-500 ring-2 ring-white dark:ring-slate-950"
+                      className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-[#00D4FF] ring-2 ring-white dark:ring-slate-950"
                     />
                   </div>
                 </div>
 
                 <span className={`relative z-10 text-[10px] tracking-tight mt-0.5 line-clamp-1 ${
-                  isActive ? 'font-bold text-orange-500 dark:text-orange-400' : 'font-medium text-slate-500 dark:text-slate-400'
+                  isActive ? 'font-bold text-[#00D4FF]' : 'font-medium text-slate-500 dark:text-slate-400'
                 }`}>
                   {tab.name}
                 </span>
