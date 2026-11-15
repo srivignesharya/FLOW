@@ -1,6 +1,6 @@
 import React from 'react';
 
-interface ZenithLogoProps {
+interface FlowLogoProps {
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
   showWordmark?: boolean;
   showTagline?: boolean;
@@ -8,7 +8,7 @@ interface ZenithLogoProps {
   className?: string;
 }
 
-export const ZenithLogo: React.FC<ZenithLogoProps> = ({
+export const ZenithLogo: React.FC<FlowLogoProps> = ({
   size = 'md',
   showWordmark = true,
   showTagline = false,
@@ -33,7 +33,7 @@ export const ZenithLogo: React.FC<ZenithLogoProps> = ({
 
   return (
     <div className={`inline-flex items-center gap-2.5 select-none ${className}`}>
-      {/* Zenith Peak + Star Geometric Icon */}
+      {/* FLOW Geometric Icon — Mountain Peak + Star */}
       <div
         className={`${iconSizeClasses[size]} relative shrink-0 flex items-center justify-center rounded-xl bg-[#0B1020] border border-[#2563FF]/30 shadow-md shadow-[#2563FF]/20`}
         aria-hidden="true"
@@ -45,12 +45,12 @@ export const ZenithLogo: React.FC<ZenithLogoProps> = ({
           className="w-full h-full p-1.5"
         >
           <defs>
-            {/* Primary Zenith Deep Blue to Cyan Gradient */}
-            <linearGradient id="zenithPeakLeft" x1="12" y1="38" x2="24" y2="10" gradientUnits="userSpaceOnUse">
+            {/* Primary Deep Blue to Cyan Gradient */}
+            <linearGradient id="flowPeakLeft" x1="12" y1="38" x2="24" y2="10" gradientUnits="userSpaceOnUse">
               <stop offset="0%" stopColor="#1D4ED8" />
               <stop offset="100%" stopColor="#2563FF" />
             </linearGradient>
-            <linearGradient id="zenithPeakRight" x1="36" y1="38" x2="24" y2="10" gradientUnits="userSpaceOnUse">
+            <linearGradient id="flowPeakRight" x1="36" y1="38" x2="24" y2="10" gradientUnits="userSpaceOnUse">
               <stop offset="0%" stopColor="#2563FF" />
               <stop offset="100%" stopColor="#00D4FF" />
             </linearGradient>
@@ -60,19 +60,19 @@ export const ZenithLogo: React.FC<ZenithLogoProps> = ({
             </radialGradient>
           </defs>
 
-          {/* Zenith Ambient Apex Corona */}
+          {/* Ambient Apex Corona */}
           <circle cx="24" cy="12" r="8" fill="url(#starGlow)" opacity="0.6" />
 
-          {/* Sharp Zenith Peak — Left Facet */}
+          {/* Sharp Peak — Left Facet */}
           <path
             d="M 24 13 L 9 39 L 24 33 Z"
-            fill="url(#zenithPeakLeft)"
+            fill="url(#flowPeakLeft)"
           />
 
-          {/* Sharp Zenith Peak — Right Facet (Lighter / Cyan Sheen) */}
+          {/* Sharp Peak — Right Facet (Lighter / Cyan Sheen) */}
           <path
             d="M 24 13 L 39 39 L 24 33 Z"
-            fill="url(#zenithPeakRight)"
+            fill="url(#flowPeakRight)"
           />
 
           {/* Center Ridge / Crest Spine */}
@@ -92,7 +92,7 @@ export const ZenithLogo: React.FC<ZenithLogoProps> = ({
             strokeLinejoin="round"
           />
 
-          {/* Distinctive 8-Point Zenith Star at the Summit */}
+          {/* 8-Point Star at the Summit */}
           {/* Vertical & Horizontal Major Spikes */}
           <path
             d="M 24 5 L 25.5 10 L 30 11.5 L 25.5 13 L 24 18 L 22.5 13 L 18 11.5 L 22.5 10 Z"
