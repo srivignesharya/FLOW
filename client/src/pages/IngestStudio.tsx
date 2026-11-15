@@ -240,7 +240,7 @@ export const IngestStudio: React.FC = () => {
             <span>Syllabus & Document Ingest Studio</span>
           </h1>
           <p className="text-slate-500 dark:text-[#94A3B8] text-xs sm:text-sm mt-1">
-            Upload course syllabi, lecture slides, assignment PDFs, or paste announcement text. ZENITH AI extracts commitments for your review.
+            Upload course syllabi, lecture slides, assignment PDFs, or paste announcement text. FLOW AI extracts commitments for your review.
           </p>
         </div>
 

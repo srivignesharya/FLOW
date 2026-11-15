@@ -115,11 +115,11 @@ export const ZenithLogo: React.FC<ZenithLogoProps> = ({
             <span
               className={`font-black tracking-tight text-[#F8FAFC] ${textSizes[size]}`}
             >
-              ZENITH
+              FLOW
             </span>
             {showBadge && (
               <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-[#2563FF]/15 text-[#00D4FF] border border-[#00D4FF]/30">
-                by IMV
+                FLOW • IMV
               </span>
             )}
           </div>

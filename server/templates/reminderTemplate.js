@@ -1,5 +1,5 @@
 /**
- * ZENITH by IMV — Deadline Reminder HTML Email Template
+ * FLOW by IMV — Deadline Reminder HTML Email Template
  * Theme: Astronomy Midnight (#0B1020), Surface (#111827), Primary Blue (#2563FF), Accent Cyan (#00D4FF)
  */
 
@@ -25,7 +25,7 @@ export const generateReminderEmailHtml = ({
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Deadline Reminder — ZENITH by IMV</title>
+  <title>Deadline Reminder — FLOW — Powered by IMV</title>
 </head>
 <body style="margin: 0; padding: 0; background-color: #0B1020; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; -webkit-font-smoothing: antialiased; color: #F8FAFC;">
   <table border="0" cellpadding="0" cellspacing="0" width="100%" style="table-layout: fixed; background-color: #0B1020; padding: 40px 10px;">
@@ -43,10 +43,10 @@ export const generateReminderEmailHtml = ({
                       ▲
                     </div>
                     <div style="font-size: 28px; font-weight: 900; letter-spacing: 2px; color: #F8FAFC; text-transform: uppercase;">
-                      ZENITH
+                      FLOW
                     </div>
                     <div style="font-size: 11px; font-weight: 700; letter-spacing: 1.5px; color: #00D4FF; text-transform: uppercase; margin-top: 4px;">
-                      by IMV • Reach Higher. Live Brighter.
+                      Powered by IMV
                     </div>
                   </td>
                 </tr>
@@ -61,7 +61,7 @@ export const generateReminderEmailHtml = ({
                 Hello ${userName || 'Student'},
               </h1>
               <p style="font-size: 14px; line-height: 1.6; color: #94A3B8; margin: 0 0 28px 0;">
-                This is an automated academic alert from your ZENITH assistant: an assignment deadline is approaching within the next 24 hours.
+                This is an automated academic alert from your FLOW assistant: an assignment deadline is approaching within the next 24 hours.
               </p>
 
               <!-- Assignment Info Box -->
@@ -113,7 +113,7 @@ export const generateReminderEmailHtml = ({
               <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: rgba(37, 99, 255, 0.08); border-left: 4px solid #2563FF; border-radius: 6px; padding: 16px; margin-bottom: 32px;">
                 <tr>
                   <td style="font-size: 13px; line-height: 1.5; color: #F8FAFC;">
-                    <strong style="color: #00D4FF;">ZENITH Recommendation:</strong> Complete a focused study block today to prevent deadline pressure. Review your 7-day study schedule in the planner.
+                    <strong style="color: #00D4FF;">FLOW Recommendation:</strong> Complete a focused study block today to prevent deadline pressure. Review your 7-day study schedule in the planner.
                   </td>
                 </tr>
               </table>
@@ -123,7 +123,7 @@ export const generateReminderEmailHtml = ({
                 <tr>
                   <td align="center">
                     <a href="${dashboardUrl}" target="_blank" style="display: inline-block; background: linear-gradient(135deg, #2563FF 0%, #1D4ED8 50%, #00D4FF 100%); color: #ffffff; text-decoration: none; font-size: 14px; font-weight: 800; padding: 14px 32px; border-radius: 10px; border: 1px solid #00D4FF; box-shadow: 0 4px 14px rgba(37, 99, 255, 0.35);">
-                      Open ZENITH Dashboard &rarr;
+                      Open FLOW Dashboard &rarr;
                     </a>
                   </td>
                 </tr>
@@ -134,8 +134,8 @@ export const generateReminderEmailHtml = ({
           <!-- Footer -->
           <tr>
             <td align="center" style="background-color: #0B1020; padding: 24px; border-top: 1px solid #1E293B; font-size: 12px; color: #94A3B8; line-height: 1.5;">
-              <div style="font-weight: 800; color: #F8FAFC; font-size: 13px; letter-spacing: 1px;">ZENITH v1.1</div>
-              <div style="color: #00D4FF; font-weight: 700; font-size: 10px; margin-top: 2px; text-transform: uppercase;">by IMV • Reach Higher. Live Brighter.</div>
+              <div style="font-weight: 800; color: #F8FAFC; font-size: 13px; letter-spacing: 1px;">FLOW v1.1</div>
+              <div style="color: #00D4FF; font-weight: 700; font-size: 10px; margin-top: 2px; text-transform: uppercase;">Powered by IMV</div>
               <div style="margin-top: 8px; color: #64748B;">AI-Powered Student Productivity Platform</div>
               <div style="margin-top: 12px; font-size: 10px; color: #475569;">
                 You are receiving this automated alert based on your stored syllabus commitments.

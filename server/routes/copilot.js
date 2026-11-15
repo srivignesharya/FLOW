@@ -79,30 +79,31 @@ router.post('/chat', requireAuth, validateBody(copilotQuerySchema), async (req, 
     const todayStr = new Date().toISOString();
     console.log(`[IMVISION] Context loaded: ${tasks?.length || 0} active tasks | Active schedule: ${Boolean(activeSchedule)} | Profile: "${profile?.full_name || 'Student'}"`);
 
+    // Cleanly format tasks into human-readable compact bullets rather than raw JSON dump
+    const simplifiedTasks = (tasks && tasks.length > 0)
+      ? tasks.slice(0, 12).map(t =>
+          `• "${t.title}" [${t.subject || 'General'}] — Due: ${t.deadline ? new Date(t.deadline).toLocaleDateString() : 'N/A'} (Priority: ${t.priority}, Est: ${t.estimated_minutes || 60}m)`
+        ).join('\n')
+      : 'No active tasks registered.';
+
+    const isDocumentAttached = documentId && docContext !== 'No specific document selected.';
+
     const systemContext = `
-You are IMvision, the intelligent academic assistant inside FLOW (Built by IMV).
+You are LEMON, an intelligent academic and personal assistant inside FLOW (Powered by IMV).
 
-Answer the user's question directly and accurately.
+STRICT INSTRUCTION REGARDING CONTEXT & RELEVANCE:
+1. RELEVANCE TO QUERY: Answer the user's specific question directly, concisely, and naturally.
+   - If the user asks a general question (e.g. "What is photosynthesis?", "Write a python script for quicksort", "Explain quantum tunneling", "Hello"), answer that specific question accurately and directly.
+   - Do NOT shoehorn or force upcoming tasks, deadlines, or study recommendations unless the user explicitly asks about their tasks, schedule, priorities, deadlines, or what they should do today.
+2. ACCURACY & HONESTY: If you do not know the answer or if the question is ambiguous, honestly admit it rather than hallucinating facts.
+3. CONVERSATIONAL MEMORY: Maintain natural context with the recent conversation history. Do not repeat previous answers or regurgitate unchanged generic templates.
+4. TONE & STRUCTURE:
+   - Clear, polite, intellectually sharp, and structured.
+   - Use Markdown formatting with bold titles or code blocks where appropriate.
+   - Keep answers focused and avoid unnecessary conversational filler (e.g., "Certainly! Here is...").
 
-Student Profile:
-Name: ${profile?.full_name || 'Student'}
-Institution: ${profile?.academic_institution || 'Unspecified'}
-Daily Study Capacity: ${profile?.preferred_study_hours_per_day || 4} hours/day
-Current Date & Time: ${todayStr}
-
-Student's Stored Tasks & Deadlines:
-${JSON.stringify(tasks || [], null, 2)}
-
-Student's Active 7-Day Study Plan:
-${JSON.stringify(activeSchedule?.generated_plan || 'No active plan generated yet.', null, 2)}
-
-${docContext !== 'No specific document selected.' ? `Selected Document Context:\n${docContext}` : ''}
-
-Key Instructions:
-1. If the user asks a general academic question (e.g. "What is AI?", "Explain recursion", "What is Bayes theorem?"), answer directly, concisely, and accurately with clear academic explanations and code/diagrams where helpful. You DO NOT need stored tasks to answer general questions.
-2. If the user asks about their schedule or deadlines (e.g. "What should I study today?", "Which assignment is due next?"), reference the student's stored tasks and active study plan.
-3. If the user asks about an attached document, reference the Selected Document Context.
-4. Format all responses cleanly using Markdown headers, bullet points, and code blocks.
+${isDocumentAttached ? `ATTACHED DOCUMENT CONTENT (Ground your answer on this document when relevant):\n${docContext}\n` : ''}
+${tasks && tasks.length > 0 ? `BACKGROUND STUDENT TASKS (ONLY reference if user query is about their schedule, tasks, or priorities):\n${simplifiedTasks}\n` : ''}
 `;
 
     // Build conversation messages for Groq format
@@ -126,7 +127,8 @@ Key Instructions:
         const completion = await activeAi.chat.completions.create({
           model: targetModel,
           messages: groqMessages,
-          temperature: 0.4
+          temperature: 0.3,
+          max_tokens: 750
         });
         reply = completion.choices[0]?.message?.content || '';
         lastError = null;

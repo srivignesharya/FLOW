@@ -212,7 +212,7 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
           {/* Footer Info */}
           <div className="p-3 border-t border-slate-800 bg-[#0B1020]/90 text-[11px] text-[#94A3B8] flex items-center justify-between">
             <span>Showing {results.length} result{results.length === 1 ? '' : 's'}</span>
-            <span className="font-mono">ZENITH Search Engine</span>
+            <span className="font-mono">FLOW Search Engine</span>
           </div>
         </motion.div>
       </div>

@@ -16,16 +16,51 @@ export const AuthCallback: React.FC = () => {
         if (error) throw error;
 
         if (session) {
-          // Synchronize profile with FLOW backend
-          await api.post('/auth/sync');
-          navigate('/', { replace: true });
+          // Direct Supabase profile sync fallback (guarantees profile exists immediately)
+          try {
+            const user = session.user;
+            const fullName = user.user_metadata?.full_name || user.user_metadata?.name || 'Student';
+            const avatarUrl = user.user_metadata?.avatar_url || user.user_metadata?.picture || '';
+            await supabase.from('profiles').upsert({
+              id: user.id,
+              email: user.email!,
+              full_name: fullName,
+              avatar_url: avatarUrl
+            }, { onConflict: 'id' });
+          } catch (profileErr) {
+            console.warn('[AUTH CALLBACK] Direct Supabase profile sync notice:', profileErr);
+          }
+
+          // Synchronize profile with FLOW backend non-blockingly (so network errors or sleeping backends don't fail login)
+          api.post('/auth/sync').catch((syncErr) => {
+            console.warn('[AUTH CALLBACK] Backend profile sync postponed or offline:', syncErr?.message);
+          });
+
+          navigate('/dashboard', { replace: true });
         } else {
           // If no session found yet, subscribe briefly to auth state changes
           const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
             if (session) {
-              await api.post('/auth/sync').catch(console.error);
+              try {
+                const user = session.user;
+                const fullName = user.user_metadata?.full_name || user.user_metadata?.name || 'Student';
+                const avatarUrl = user.user_metadata?.avatar_url || user.user_metadata?.picture || '';
+                await supabase.from('profiles').upsert({
+                  id: user.id,
+                  email: user.email!,
+                  full_name: fullName,
+                  avatar_url: avatarUrl
+                }, { onConflict: 'id' });
+              } catch (profileErr) {
+                console.warn('[AUTH CALLBACK] Direct Supabase profile sync notice:', profileErr);
+              }
+
+              api.post('/auth/sync').catch((syncErr) => {
+                console.warn('[AUTH CALLBACK] Backend profile sync postponed or offline:', syncErr?.message);
+              });
+
               subscription.unsubscribe();
-              navigate('/', { replace: true });
+              navigate('/dashboard', { replace: true });
             }
           });
 

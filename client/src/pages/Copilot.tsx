@@ -100,15 +100,15 @@ export const Copilot: React.FC = () => {
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-lg sm:text-xl font-black tracking-tight text-slate-900 dark:text-white">
-                AI Academic Copilot
+                LEMON
               </h1>
               <span className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[11px] font-bold border border-emerald-500/20">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                <span>Active</span>
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                <span>Online</span>
               </span>
             </div>
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              Autonomous context-aware study architect powered by Gemini AI
+              Autonomous study intelligence powered by FLOW
             </p>
           </div>
         </div>
@@ -219,7 +219,7 @@ export const Copilot: React.FC = () => {
             className="card bg-rose-500/10 border-rose-500/30 p-3 sm:px-5 flex items-center justify-between text-xs"
           >
             <span className="font-semibold text-rose-600 dark:text-rose-400">
-              Are you sure you want to clear your Copilot conversation history?
+              Are you sure you want to clear your LEMON conversation history?
             </span>
             <div className="flex items-center gap-2">
               <button
@@ -248,7 +248,7 @@ export const Copilot: React.FC = () => {
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-2 min-h-0">
           {historyLoading ? (
             <div className="h-full flex flex-col items-center justify-center space-y-3 text-slate-400 text-xs">
-              <Sparkles className="h-7 w-7 text-brand-500 animate-spin" />
+              <Sparkles className="h-7 w-7 text-brand-500 animate-pulse" />
               <p className="font-medium">Connecting to Gemini AI and synchronizing syllabus context...</p>
             </div>
           ) : messages.length === 0 ? (
@@ -263,10 +263,10 @@ export const Copilot: React.FC = () => {
 
               <div className="space-y-1.5">
                 <h2 className="text-xl font-black tracking-tight text-slate-900 dark:text-white">
-                  Welcome to your Academic Copilot
+                  Welcome to LEMON AI Assistant
                 </h2>
                 <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed max-w-md">
-                  Ask me questions about your uploaded course syllabi, plan study sprints, or let me synthesize your upcoming deadlines into structured steps.
+                  Your central academic intelligence partner in FLOW. Ask me questions about your course syllabi, exam questions, formulas, or study schedules.
                 </p>
               </div>
 
@@ -344,7 +344,7 @@ export const Copilot: React.FC = () => {
                 onKeyDown={handleKeyDown}
                 placeholder={
                   selectedDoc
-                    ? `Ask Copilot questions specifically about "${selectedDoc.file_name}"...`
+                    ? `Ask LEMON questions specifically about "${selectedDoc.file_name}"...`
                     : 'Ask anything about your coursework, assignments, or study strategy...'
                 }
                 className="w-full px-4 py-3 bg-transparent text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none resize-none max-h-36 min-h-[48px]"

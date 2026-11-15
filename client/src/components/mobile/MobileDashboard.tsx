@@ -186,7 +186,7 @@ export const MobileDashboard: React.FC<MobileDashboardProps> = ({
           className="flex items-center gap-1.5 px-3 py-2 rounded-2xl bg-gradient-to-r from-orange-500/15 to-amber-500/15 text-orange-600 dark:text-orange-400 border border-orange-500/30 text-xs font-bold whitespace-nowrap shadow-xs active:scale-95 transition-all"
         >
           <Bot className="h-3.5 w-3.5 text-orange-500" />
-          <span>Ask Copilot</span>
+          <span>Ask LEMON</span>
         </button>
 
         <Link

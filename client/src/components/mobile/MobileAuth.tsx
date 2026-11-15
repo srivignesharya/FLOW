@@ -254,7 +254,7 @@ export const MobileAuth: React.FC<MobileAuthProps> = ({
           </button>
         )}
         <p className="text-[11px] text-slate-500 pt-3">
-          © 2026 ZENITH v1.1 • by IMV • Reach Higher. Live Brighter.
+          © 2026 FLOW v1.1 • Powered by IMV
         </p>
       </div>
     </div>

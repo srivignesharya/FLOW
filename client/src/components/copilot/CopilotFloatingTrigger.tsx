@@ -22,8 +22,8 @@ export const CopilotFloatingTrigger: React.FC = () => {
             transition={{ duration: 0.15 }}
             className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-900/90 dark:bg-slate-900/90 text-white text-xs font-semibold shadow-xl border border-slate-700 backdrop-blur-md"
           >
-            <Sparkles className="h-3.5 w-3.5 text-brand-400 animate-spin" />
-            <span>Ask Copilot</span>
+            <Sparkles className="h-3.5 w-3.5 text-brand-400" />
+            <span>Ask LEMON</span>
             <kbd className="px-1.5 py-0.5 rounded bg-slate-800 text-[10px] font-mono text-slate-300 border border-slate-700">
               Ctrl+J
             </kbd>
@@ -34,13 +34,13 @@ export const CopilotFloatingTrigger: React.FC = () => {
       {/* Floating Action Button */}
       <motion.button
         id="copilot-floating-btn"
-        whileHover={{ scale: 1.08 }}
-        whileTap={{ scale: 0.92 }}
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
         onClick={toggleCopilot}
         className="relative group p-0.5 rounded-2xl focus:outline-none"
-        aria-label="Open AI Copilot"
+        aria-label="Open LEMON AI"
       >
         {/* Animated Glow Aura */}
         <div className="absolute -inset-1 rounded-2xl bg-gradient-to-r from-brand-500 via-orange-500 to-amber-500 opacity-70 group-hover:opacity-100 blur-md transition-opacity duration-300 animate-pulse" />

@@ -111,7 +111,7 @@ export const QuickAddModal: React.FC<QuickAddModalProps> = ({
                   Quick Add Task
                 </h3>
                 <p className="text-xs text-[#94A3B8]">
-                  Schedule an assignment or study commitment in ZENITH
+                  Schedule an assignment or study commitment in FLOW
                 </p>
               </div>
             </div>
@@ -283,7 +283,7 @@ export const QuickAddModal: React.FC<QuickAddModalProps> = ({
                 disabled={loading}
                 className="btn-primary"
               >
-                {loading ? 'Adding Task...' : 'Add Task to ZENITH'}
+                {loading ? 'Adding Task...' : 'Add Task to FLOW'}
               </button>
             </div>
           </form>

@@ -154,13 +154,13 @@ export const Dashboard: React.FC = () => {
             <div className="space-y-1.5 sm:space-y-2">
               <div className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1 rounded-full bg-[#2563FF]/15 border border-[#2563FF]/30 text-[#00D4FF] text-[11px] sm:text-xs font-semibold">
                 <Sparkles className="h-3 sm:h-3.5 w-3 sm:w-3.5 text-[#00D4FF]" />
-                <span>ZENITH v1.1 • by IMV</span>
+                <span>FLOW v1.1 • Powered by IMV</span>
               </div>
               <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-white">
                 {getGreeting()}, <span className="bg-gradient-to-r from-[#2563FF] via-[#93c5fd] to-[#00D4FF] bg-clip-text text-transparent">{userName}</span>
               </h1>
               <p className="text-[#94A3B8] text-xs sm:text-sm lg:text-base font-medium max-w-lg">
-                Reach Higher. Live Brighter. Here is your real-time academic execution status.
+                FLOW Academic Platform. Here is your real-time daily schedule and workload status.
               </p>
             </div>
 

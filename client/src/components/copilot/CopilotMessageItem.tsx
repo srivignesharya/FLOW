@@ -76,7 +76,7 @@ export const CopilotMessageItem: React.FC<CopilotMessageItemProps> = ({
         deadline: defaultDeadline.toISOString(),
         priority: taskPriority,
         estimatedMinutes: Number(taskMinutes) || 60,
-        description: `Created via Flow AI Copilot:\n\n${message.content.slice(0, 300)}...`,
+        description: `Created via LEMON:\n\n${message.content.slice(0, 300)}...`,
         taskType: 'assignment'
       });
 
@@ -103,11 +103,8 @@ export const CopilotMessageItem: React.FC<CopilotMessageItemProps> = ({
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.2 }}
-      className={`flex items-start gap-3 my-3.5 px-1.5 ${isUser ? 'flex-row-reverse' : 'flex-row'}`}
+    <div
+      className={`flex items-start gap-3 my-3 px-1.5 transition-all ${isUser ? 'flex-row-reverse' : 'flex-row'}`}
     >
       {/* Avatar */}
       {isUser ? (
@@ -143,27 +140,33 @@ export const CopilotMessageItem: React.FC<CopilotMessageItemProps> = ({
           <div className="prose prose-sm dark:prose-invert max-w-none text-slate-800 dark:text-slate-200 leading-relaxed font-normal space-y-2">
             <ReactMarkdown
               components={{
-                p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
-                ul: ({ children }) => <ul className="list-disc ml-5 mb-2 space-y-1">{children}</ul>,
-                ol: ({ children }) => <ol className="list-decimal ml-5 mb-2 space-y-1">{children}</ol>,
-                li: ({ children }) => <li className="pl-0.5">{children}</li>,
-                h1: ({ children }) => <h1 className="text-base font-black text-brand-600 dark:text-brand-400 mt-2 mb-1">{children}</h1>,
-                h2: ({ children }) => <h2 className="text-sm font-bold text-brand-600 dark:text-brand-400 mt-2 mb-1">{children}</h2>,
-                h3: ({ children }) => <h3 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider mt-2 mb-1">{children}</h3>,
+                p: ({ children }) => <p className="mb-2.5 last:mb-0 leading-relaxed text-[13.5px]">{children}</p>,
+                ul: ({ children }) => <ul className="space-y-1.5 my-2.5 ml-1">{children}</ul>,
+                ol: ({ children }) => <ol className="list-decimal space-y-1.5 my-2.5 ml-5">{children}</ol>,
+                li: ({ children }) => (
+                  <li className="flex items-start gap-2 text-[13.5px] leading-relaxed">
+                    <span className="h-1.5 w-1.5 rounded-full bg-brand-500 mt-2 shrink-0" />
+                    <span className="flex-1">{children}</span>
+                  </li>
+                ),
+                strong: ({ children }) => <strong className="font-bold text-brand-600 dark:text-brand-400">{children}</strong>,
+                h1: ({ children }) => <h1 className="text-base font-black text-slate-900 dark:text-white mt-3 mb-1.5 tracking-tight">{children}</h1>,
+                h2: ({ children }) => <h2 className="text-sm font-bold text-slate-900 dark:text-white mt-2.5 mb-1 tracking-tight">{children}</h2>,
+                h3: ({ children }) => <h3 className="text-xs font-bold text-brand-600 dark:text-brand-400 uppercase tracking-wider mt-2 mb-1">{children}</h3>,
                 code: ({ children, className }) => {
                   const isInline = !className;
                   return isInline ? (
-                    <code className="px-1.5 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-brand-600 dark:text-brand-400 text-xs font-mono">
+                    <code className="px-1.5 py-0.5 rounded-md bg-brand-500/10 text-brand-600 dark:text-brand-300 text-xs font-mono font-medium">
                       {children}
                     </code>
                   ) : (
-                    <div className="relative my-2.5 rounded-xl bg-slate-950 p-3 text-xs font-mono text-slate-200 overflow-x-auto border border-slate-800">
+                    <div className="relative my-3 rounded-2xl bg-slate-950 p-3.5 text-xs font-mono text-slate-200 overflow-x-auto border border-slate-800 shadow-inner">
                       <code>{children}</code>
                     </div>
                   );
                 },
                 blockquote: ({ children }) => (
-                  <blockquote className="border-l-2 border-brand-500 pl-3 italic text-slate-600 dark:text-slate-400 my-2">
+                  <blockquote className="border-l-2 border-brand-500 bg-brand-500/5 dark:bg-brand-500/10 rounded-r-xl px-3 py-2 italic text-slate-700 dark:text-slate-300 my-2.5 text-xs">
                     {children}
                   </blockquote>
                 )
@@ -218,7 +221,7 @@ export const CopilotMessageItem: React.FC<CopilotMessageItemProps> = ({
                   <CalendarPlus className="h-5 w-5" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-slate-900 dark:text-white text-base">Add Copilot Task</h3>
+                  <h3 className="font-bold text-slate-900 dark:text-white text-base">Add LEMON Task</h3>
                   <p className="text-xs text-slate-500 dark:text-slate-400">Save AI recommendation directly to Task Board</p>
                 </div>
               </div>
@@ -306,6 +309,6 @@ export const CopilotMessageItem: React.FC<CopilotMessageItemProps> = ({
           </div>
         )}
       </AnimatePresence>
-    </motion.div>
+    </div>
   );
 };

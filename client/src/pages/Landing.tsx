@@ -36,7 +36,7 @@ export const Landing: React.FC = () => {
       {/* Semantic Top Navigation */}
       <header className="sticky top-0 z-40 bg-[#0B1020]/80 backdrop-blur-xl border-b border-slate-800/80 px-4 sm:px-8 py-3.5 transition-all">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <Link to="/" className="cursor-pointer" aria-label="ZENITH Home">
+          <Link to="/" className="cursor-pointer" aria-label="FLOW Home">
             <ZenithLogo size="sm" showWordmark={true} showBadge={true} />
           </Link>
 
@@ -86,7 +86,7 @@ export const Landing: React.FC = () => {
           {/* Tagline Badge */}
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#2563FF]/10 border border-[#2563FF]/25 text-[#00D4FF] text-xs font-bold mb-6 shadow-sm">
             <Sparkles className="h-3.5 w-3.5" />
-            <span>ZENITH v1.1 • Reach Higher. Live Brighter.</span>
+            <span>FLOW v1.1 • Reach Higher. Live Brighter.</span>
           </div>
 
           {/* Primary Descriptive H1 */}
@@ -96,7 +96,7 @@ export const Landing: React.FC = () => {
 
           {/* Natural, descriptive subtitle */}
           <p className="mt-6 text-sm sm:text-lg text-[#94A3B8] max-w-2xl mx-auto leading-relaxed font-normal">
-            Organize assignments, deadlines, documents, and study plans with ZENITH by IMV. Extract syllabus tasks automatically, schedule 7-day adaptive study blocks, and execute with clarity.
+            Organize assignments, deadlines, documents, and study plans with FLOW by IMV. Extract syllabus tasks automatically, schedule 7-day adaptive study blocks, and execute with clarity.
           </p>
 
           {/* Hero CTAs */}
@@ -125,7 +125,7 @@ export const Landing: React.FC = () => {
                 <div className="h-3 w-3 rounded-full bg-rose-500/80" />
                 <div className="h-3 w-3 rounded-full bg-amber-500/80" />
                 <div className="h-3 w-3 rounded-full bg-emerald-500/80" />
-                <span className="text-xs font-mono text-slate-500 ml-2">zenith.academic.workspace</span>
+                <span className="text-xs font-mono text-slate-500 ml-2">flow.academic.workspace</span>
               </div>
               <span className="text-[11px] font-semibold text-[#00D4FF] bg-[#2563FF]/15 px-2 py-0.5 rounded border border-[#2563FF]/30">
                 Live Preview
@@ -171,7 +171,7 @@ export const Landing: React.FC = () => {
                 Designed for Ambitious Students and Academic Researchers
               </h2>
               <p className="mt-3 text-sm text-[#94A3B8]">
-                Whether balancing difficult STEM problem sets, clinical rotations, or research papers, ZENITH structures your workload into realistic daily actions.
+                Whether balancing difficult STEM problem sets, clinical rotations, or research papers, FLOW structures your workload into realistic daily actions.
               </p>
             </div>
 
@@ -214,7 +214,7 @@ export const Landing: React.FC = () => {
           <div className="max-w-6xl mx-auto">
             <div className="text-center max-w-2xl mx-auto mb-12">
               <h2 id="how-it-works-heading" className="text-2xl sm:text-3xl font-extrabold text-[#F8FAFC] tracking-tight">
-                How ZENITH Simplifies Academic Workflows
+                How FLOW Simplifies Academic Workflows
               </h2>
               <p className="mt-3 text-sm text-[#94A3B8]">
                 A deliberate three-stage process transforms raw syllabus text into structured daily achievement.
@@ -291,10 +291,10 @@ export const Landing: React.FC = () => {
                   <div className="p-2 rounded-xl bg-indigo-500/15 text-indigo-400">
                     <Bot className="h-5 w-5" />
                   </div>
-                  <h3 className="text-base font-bold text-[#F8FAFC]">Academic Copilot Assistant</h3>
+                  <h3 className="text-base font-bold text-[#F8FAFC]">LEMON AI Assistant</h3>
                 </div>
                 <p className="text-xs sm:text-sm text-[#94A3B8] leading-relaxed">
-                  An AI study copilot grounded in your stored syllabus context. Ask questions regarding exam formats, homework submission guidelines, or subject focus strategies.
+                  An intelligent AI academic assistant grounded in your stored syllabus context. Ask questions regarding exam formats, homework submission guidelines, or subject focus strategies.
                 </p>
               </div>
 
@@ -320,7 +320,7 @@ export const Landing: React.FC = () => {
               Enterprise-Grade Foundation & Privacy First
             </h2>
             <p className="text-xs sm:text-sm text-[#94A3B8] leading-relaxed">
-              ZENITH is engineered on Supabase with strict PostgreSQL Row Level Security (RLS). Every task, document, and study schedule is accessible exclusively by its authenticated owner. Powered by resilient AI orchestration with Google Gemini and Groq Llama 3.3 models.
+              FLOW is engineered on Supabase with strict PostgreSQL Row Level Security (RLS). Every task, document, and study schedule is accessible exclusively by its authenticated owner. Powered by resilient AI orchestration with Google Gemini and Groq Llama 3.3 models.
             </p>
             <div className="pt-4 flex flex-wrap items-center justify-center gap-3 text-xs font-semibold text-[#94A3B8]">
               <span className="px-3 py-1 rounded-full bg-[#0B1020] border border-slate-800">PostgreSQL RLS Security</span>
@@ -338,14 +338,14 @@ export const Landing: React.FC = () => {
               Reach Higher. Live Brighter.
             </h2>
             <p className="text-sm text-[#94A3B8] max-w-xl mx-auto">
-              Upgrade your academic workflow with ZENITH v1.1 by IMV. Sign in or create a free account to begin structuring your semester today.
+              Upgrade your academic workflow with FLOW v1.1 by IMV. Sign in or create a free account to begin structuring your semester today.
             </p>
             <div className="pt-2">
               <Link
                 to="/auth"
                 className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl bg-gradient-to-r from-[#2563FF] via-[#1D4ED8] to-[#00D4FF] text-white font-bold text-sm shadow-xl shadow-[#2563FF]/30 hover:opacity-95 active:scale-95 transition-all"
               >
-                <span>Launch ZENITH Workspace</span>
+                <span>Launch FLOW Workspace</span>
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </div>
@@ -368,7 +368,7 @@ export const Landing: React.FC = () => {
           </div>
 
           <div>
-            © 2026 ZENITH v1.1 • by IMV • All rights reserved
+            © 2026 FLOW v1.1 • by IMV • All rights reserved
           </div>
         </div>
       </footer>

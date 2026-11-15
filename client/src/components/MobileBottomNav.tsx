@@ -5,7 +5,8 @@ import {
   CheckSquare, 
   Calendar, 
   Bot, 
-  Settings
+  Settings,
+  GraduationCap
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useCopilot } from '../context/CopilotContext';
@@ -19,9 +20,9 @@ interface NavItem {
 
 const PRIMARY_TABS: NavItem[] = [
   { name: 'Dashboard', path: '/dashboard', icon: Home },
+  { name: 'Study', path: '/study', icon: GraduationCap },
+  { name: 'LEMON', path: '#copilot', icon: Bot, isAi: true },
   { name: 'Tasks', path: '/tasks', icon: CheckSquare },
-  { name: 'Copilot', path: '#copilot', icon: Bot, isAi: true },
-  { name: 'Planner', path: '/planner', icon: Calendar },
   { name: 'Settings', path: '/settings', icon: Settings },
 ];
 

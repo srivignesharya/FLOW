@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { useNavigate } from 'react-router-dom';
 import { Sparkles, ArrowRight, BookOpen, Calendar, Bot, Eye, EyeOff, KeyRound, CheckCircle2, Target } from 'lucide-react';
@@ -9,10 +9,12 @@ import { PasswordStrengthMeter } from '../components/PasswordStrengthMeter';
 import { GoogleIcon } from '../components/GoogleIcon';
 import { MobileAuth } from '../components/mobile/MobileAuth';
 import { ZenithLogo } from '../components/ZenithLogo';
+import { useAuth } from '../context/AuthContext';
 
 type AuthViewMode = 'signin' | 'signup' | 'forgot_password';
 
 export const Auth: React.FC = () => {
+  const { user, signIn } = useAuth();
   const [viewMode, setViewMode] = useState<AuthViewMode>('signin');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -26,6 +28,13 @@ export const Auth: React.FC = () => {
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const navigate = useNavigate();
+
+  // If already authenticated, automatically route to the workspace
+  useEffect(() => {
+    if (user) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [user, navigate]);
 
   const handleGoogleSignIn = async () => {
     if (googleLoading || loading) return;
@@ -80,9 +89,9 @@ export const Auth: React.FC = () => {
         if (error) throw error;
         setMessage('Registration successful! Please check your email for the confirmation link.');
       } else if (viewMode === 'signin') {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        const { error } = await signIn(email, password);
         if (error) throw error;
-        navigate('/');
+        navigate('/dashboard', { replace: true });
       } else if (viewMode === 'forgot_password') {
         // Redirect URL points to /reset-password route
         const redirectUrl = `${window.location.origin}/reset-password`;
@@ -161,7 +170,7 @@ export const Auth: React.FC = () => {
             transition={{ delay: 0.1 }}
             className="text-[#94A3B8] text-base leading-relaxed"
           >
-            Organize assignments, deadlines, documents, and 7-day study plans with ZENITH by IMV, an AI-powered student productivity platform.
+            Organize assignments, deadlines, documents, and 7-day study plans with FLOW — Powered by IMV, an AI-powered student productivity platform.
           </motion.p>
 
           <div className="grid grid-cols-1 gap-4 pt-4">
@@ -198,7 +207,7 @@ export const Auth: React.FC = () => {
         </div>
 
         <div className="relative z-10 text-xs text-[#94A3B8]">
-          © 2026 ZENITH v1.1 • by IMV • All rights reserved
+          © 2026 FLOW v1.1 • Powered by IMV • All rights reserved
         </div>
       </div>
 

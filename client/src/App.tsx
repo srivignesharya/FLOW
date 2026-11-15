@@ -13,12 +13,15 @@ const Dashboard = lazy(() => import('./pages/Dashboard').then(m => ({ default: m
 const IngestStudio = lazy(() => import('./pages/IngestStudio').then(m => ({ default: m.IngestStudio })));
 const TaskManager = lazy(() => import('./pages/TaskManager').then(m => ({ default: m.TaskManager })));
 const StudyPlanner = lazy(() => import('./pages/StudyPlanner').then(m => ({ default: m.StudyPlanner })));
+const Study = lazy(() => import('./pages/Study').then(m => ({ default: m.Study })));
 const Analytics = lazy(() => import('./pages/Analytics').then(m => ({ default: m.Analytics })));
 const Settings = lazy(() => import('./pages/Settings').then(m => ({ default: m.Settings })));
 const Copilot = lazy(() => import('./pages/Copilot').then(m => ({ default: m.Copilot })));
+const Admin = lazy(() => import('./pages/Admin').then(m => ({ default: m.Admin })));
 const ResetPassword = lazy(() => import('./pages/ResetPassword').then(m => ({ default: m.ResetPassword })));
 const AuthCallback = lazy(() => import('./pages/AuthCallback').then(m => ({ default: m.AuthCallback })));
 
+import { AdminRoute } from './components/AdminRoute';
 import { ToastProvider } from './components/ToastContainer';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -45,12 +48,12 @@ const RootRoute: React.FC = () => {
   const { user, loading } = useAuth();
 
   if (loading) {
-    return <LoadingSpinner fullPage text="Initializing ZENITH workspace..." />;
+    return <LoadingSpinner fullPage text="Initializing FLOW workspace..." />;
   }
 
   if (user) {
     return (
-      <Suspense fallback={<LoadingSpinner fullPage text="Loading ZENITH dashboard..." />}>
+      <Suspense fallback={<LoadingSpinner fullPage text="Loading FLOW dashboard..." />}>
         <Layout>
           <Dashboard />
         </Layout>
@@ -84,6 +87,15 @@ export const App: React.FC = () => {
           }
         />
 
+        <Route
+          path="/flow"
+          element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+
       <Route
         path="/copilot"
         element={
@@ -98,6 +110,15 @@ export const App: React.FC = () => {
         element={
           <ProtectedRoute>
             <IngestStudio />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/study"
+        element={
+          <ProtectedRoute>
+            <Study />
           </ProtectedRoute>
         }
       />
@@ -138,6 +159,17 @@ export const App: React.FC = () => {
         }
       />
 
+      <Route
+        path="/admin"
+        element={
+          <AdminRoute>
+            <ProtectedRoute>
+              <Admin />
+            </ProtectedRoute>
+          </AdminRoute>
+        }
+      />
+
       {/* Catch-all fallback */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
@@ -147,3 +179,4 @@ export const App: React.FC = () => {
 };
 
 export default App;
+

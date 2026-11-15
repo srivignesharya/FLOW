@@ -8,6 +8,8 @@ import ingestRoutes from './routes/ingest.js';
 import taskRoutes from './routes/tasks.js';
 import plannerRoutes from './routes/planner.js';
 import copilotRoutes from './routes/copilot.js';
+import adminRoutes from './routes/admin.js';
+import studyRoutes from './routes/study.js';
 
 import { standardLimiter } from './middleware/rateLimiter.js';
 import { errorHandler } from './utils/errorHandler.js';
@@ -30,8 +32,27 @@ app.set('trust proxy', 1);
 // SECURITY & PARSING MIDDLEWARE
 // ============================================================
 app.use(helmet());
+// Determine allowed CORS origins
+const defaultOrigins = ['http://localhost:5173', 'http://localhost:3000'];
+const configuredOrigins = process.env.CLIENT_URL
+  ? process.env.CLIENT_URL.split(',').map((s) => s.trim())
+  : [];
+const allowedOrigins = [...defaultOrigins, ...configuredOrigins];
+
 app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:5173',
+  origin: (origin, callback) => {
+    // Allow non-browser requests (mobile, server-to-server, curl)
+    if (!origin) return callback(null, true);
+
+    // Allow configured origins and any Vercel deployment domain
+    if (
+      allowedOrigins.includes(origin) ||
+      /^https:\/\/.*\.vercel\.app$/.test(origin)
+    ) {
+      return callback(null, true);
+    }
+    return callback(new Error(`Origin ${origin} not allowed by CORS`));
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
@@ -48,6 +69,8 @@ app.use('/api/v1/ingest', ingestRoutes);
 app.use('/api/v1/tasks', taskRoutes);
 app.use('/api/v1/planner', plannerRoutes);
 app.use('/api/v1/copilot', copilotRoutes);
+app.use('/api/v1/admin', adminRoutes);
+app.use('/api/v1/study', studyRoutes);
 
 // Test Email Endpoint with Detailed Execution Timing
 app.post('/api/v1/test-email', requireAuth, async (req, res) => {

@@ -129,7 +129,7 @@ export const CopilotDrawer: React.FC = () => {
           initial={{ x: isExpanded ? 0 : '100%', opacity: isExpanded ? 0 : 1, scale: isExpanded ? 0.96 : 1 }}
           animate={{ x: 0, opacity: 1, scale: 1 }}
           exit={{ x: isExpanded ? 0 : '100%', opacity: 0, scale: isExpanded ? 0.96 : 1 }}
-          transition={{ type: 'spring', damping: 28, stiffness: 280 }}
+          transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
           className={`pointer-events-auto flex flex-col bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-2xl shadow-black/30 overflow-hidden ${
             isExpanded
               ? 'w-full max-w-5xl h-full max-h-[92vh] rounded-3xl'
@@ -151,7 +151,7 @@ export const CopilotDrawer: React.FC = () => {
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
                   <h2 className="font-extrabold text-slate-900 dark:text-white text-base tracking-tight truncate">
-                    Flow AI Copilot
+                    LEMON AI
                   </h2>
                   <span className="flex h-2 w-2 relative">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
@@ -159,7 +159,7 @@ export const CopilotDrawer: React.FC = () => {
                   </span>
                 </div>
                 <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 truncate">
-                  Context-aware academic intelligence
+                  FLOW Academic Intelligence Assistant
                 </p>
               </div>
             </div>
@@ -274,7 +274,7 @@ export const CopilotDrawer: React.FC = () => {
                 type="button"
                 onClick={closeCopilot}
                 className="p-2 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                title="Close Copilot (Esc)"
+                title="Close LEMON (Esc)"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -318,7 +318,7 @@ export const CopilotDrawer: React.FC = () => {
           <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-2 min-h-0">
             {historyLoading ? (
               <div className="h-full flex flex-col items-center justify-center space-y-3 text-slate-400 text-xs">
-                <Sparkles className="h-6 w-6 text-brand-500 animate-spin" />
+                <Sparkles className="h-6 w-6 text-brand-500 animate-pulse" />
                 <p>Loading academic context...</p>
               </div>
             ) : messages.length === 0 ? (
@@ -442,7 +442,7 @@ export const CopilotDrawer: React.FC = () => {
                   onKeyDown={handleKeyDown}
                   placeholder={
                     selectedDoc
-                      ? `Ask Copilot about "${selectedDoc.file_name}"...`
+                      ? `Ask LEMON about "${selectedDoc.file_name}"...`
                       : 'Ask anything about deadlines, coursework, or exams...'
                   }
                   className="w-full px-3.5 py-2.5 sm:py-3 bg-transparent text-xs sm:text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none resize-none max-h-28 sm:max-h-32 min-h-[42px]"
@@ -465,8 +465,8 @@ export const CopilotDrawer: React.FC = () => {
 
             <div className="flex items-center justify-between mt-2 text-[10px] text-slate-400 px-1">
               <span className="hidden sm:inline">Press <kbd className="px-1 py-0.5 rounded bg-slate-200 dark:bg-slate-800 font-mono text-[9px]">Enter ↵</kbd> to send</span>
-              <span className="sm:hidden text-[10px] text-slate-400 font-medium">Flow AI • Powered by Google Gemini</span>
-              <span className="hidden sm:inline"><kbd className="px-1 py-0.5 rounded bg-slate-200 dark:bg-slate-800 font-mono text-[9px]">Ctrl+J</kbd> toggles Copilot</span>
+              <span className="sm:hidden text-[10px] text-slate-400 font-medium">FLOW AI • LEMON Academic Engine</span>
+              <span className="hidden sm:inline"><kbd className="px-1 py-0.5 rounded bg-slate-200 dark:bg-slate-800 font-mono text-[9px]">Ctrl+J</kbd> toggles LEMON</span>
             </div>
           </div>
         </motion.div>

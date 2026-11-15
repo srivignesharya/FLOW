@@ -10,28 +10,37 @@ import {
   BarChart3,
   Zap,
   PanelLeft,
-  Plus
+  Plus,
+  ShieldCheck,
+  GraduationCap
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { clsx } from 'clsx';
 import { useCopilot } from '../context/CopilotContext';
+import { useAuth } from '../context/AuthContext';
 import { ZenithLogo } from './ZenithLogo';
 
 const links = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, exact: false },
-  { to: '/copilot', label: 'AI Copilot', icon: Bot, exact: false, isAi: true },
+  { to: '/study', label: 'FLOW Study', icon: GraduationCap, exact: false, badge: 'New' },
+  { to: '/copilot', label: 'LEMON AI', icon: Bot, exact: false, isAi: true },
   { to: '/ingest', label: 'Upload & Ingest', icon: FileUp, exact: false },
   { to: '/tasks', label: 'Task Manager', icon: CheckSquare, exact: false },
   { to: '/planner', label: 'Study Planner', icon: Calendar, exact: false },
   { to: '/analytics', label: 'Analytics', icon: BarChart3, exact: false },
-  { to: '/settings', label: 'Settings', icon: Settings, exact: false }
+  { to: '/settings', label: 'Settings', icon: Settings, exact: false },
+  { to: '/admin', label: 'Admin Panel', icon: ShieldCheck, exact: false, isAdmin: true }
 ];
 
 export const Sidebar: React.FC = () => {
   const [collapsed, setCollapsed] = useState(false);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const { openCopilot } = useCopilot();
+  const { user } = useAuth();
   const navigate = useNavigate();
+
+  const isSuperAdmin = user?.email?.trim().toLowerCase() === 'flowbyimv@gmail.com';
+  const visibleLinks = links.filter((link) => !link.isAdmin || isSuperAdmin);
 
   return (
     <motion.aside
@@ -50,7 +59,7 @@ export const Sidebar: React.FC = () => {
         <div
           onClick={() => navigate('/dashboard')}
           className="flex items-center gap-2.5 min-w-0 cursor-pointer"
-          title="ZENITH v1.1 by IMV"
+          title="FLOW — Powered by IMV"
         >
           <ZenithLogo
             size="sm"
@@ -104,7 +113,7 @@ export const Sidebar: React.FC = () => {
             transition={{ duration: 0.2, ease: 'easeOut' }}
             className="space-y-1.5"
           >
-            {links.map((link, index) => (
+            {visibleLinks.map((link, index) => (
               <NavLink
                 key={link.to}
                 to={link.to}
@@ -182,6 +191,13 @@ export const Sidebar: React.FC = () => {
                         <span className="relative inline-flex rounded-full h-2 w-2 bg-brand-500" />
                       </span>
                     )}
+
+                    {/* Admin Shield indicator */}
+                    {!collapsed && (link as any).isAdmin && (
+                      <span className="relative z-10 ml-auto px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">
+                        HQ
+                      </span>
+                    )}
                   </>
                 )}
               </NavLink>
@@ -203,14 +219,14 @@ export const Sidebar: React.FC = () => {
             <div className="px-3 py-2.5 rounded-xl bg-[#0B1020]/90 border border-[#2563FF]/25 shadow-sm">
               <div className="flex items-center justify-between">
                 <p className="text-xs font-black tracking-tight text-[#F8FAFC]">
-                  ZENITH <span className="text-[10px] text-[#00D4FF] font-semibold">v1.1</span>
+                  FLOW <span className="text-[10px] text-[#00D4FF] font-semibold">v1.1</span>
                 </p>
                 <span className="text-[10px] font-semibold text-[#00D4FF] bg-[#2563FF]/15 border border-[#2563FF]/30 px-1.5 py-0.5 rounded">
                   by IMV
                 </span>
               </div>
               <p className="text-[11px] text-[#94A3B8] mt-0.5 font-medium">
-                Reach Higher. Live Brighter.
+                Academic Workflow Platform
               </p>
             </div>
           </motion.div>

@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import multer from 'multer';
 import PDFParser from 'pdf2json';
+import pdfParse from 'pdf-parse/lib/pdf-parse.js';
 import { requireAuth } from '../middleware/authMiddleware.js';
 import { validateBody, textIngestSchema } from '../middleware/validation.js';
 import { aiServiceLimiter } from '../middleware/rateLimiter.js';
@@ -197,20 +198,47 @@ router.post('/file', requireAuth, aiServiceLimiter, upload.single('file'), async
     let extractedText = '';
 
     if (req.file.mimetype === 'application/pdf') {
+      // 1. Try robust pdf-parse first
       try {
-        extractedText = await new Promise((resolve, reject) => {
-          const pdfParser = new PDFParser(null, 1);
-          pdfParser.on("pdfParser_dataError", errData => {
-            console.error(`[PDF] Parser Error:`, errData.parserError);
-            reject(errData.parserError);
+        const parsed = await pdfParse(req.file.buffer);
+        if (parsed && parsed.text && parsed.text.trim().length > 0) {
+          extractedText = parsed.text;
+        }
+      } catch (err1) {
+        console.warn(`[PDF] Primary pdfParse failed, falling back:`, err1.message);
+      }
+
+      // 2. Fallback to pdf2json if pdfParse returned empty
+      if (!extractedText || extractedText.trim().length === 0) {
+        try {
+          extractedText = await new Promise((resolve, reject) => {
+            const pdfParser = new PDFParser(null, 1);
+            pdfParser.on("pdfParser_dataError", errData => reject(errData.parserError));
+            pdfParser.on("pdfParser_dataReady", () => {
+              try {
+                resolve(decodeURIComponent(pdfParser.getRawTextContent()));
+              } catch (_) {
+                resolve(pdfParser.getRawTextContent());
+              }
+            });
+            pdfParser.parseBuffer(req.file.buffer);
           });
-          pdfParser.on("pdfParser_dataReady", () => {
-            resolve(pdfParser.getRawTextContent());
-          });
-          pdfParser.parseBuffer(req.file.buffer);
-        });
-      } catch (err) {
-        console.error(`[PDF] PDF parsing failed: ${err}`);
+        } catch (err2) {
+          console.warn(`[PDF] Secondary pdf2json failed:`, err2.message);
+        }
+      }
+
+      // 3. Fallback to Gemini Multimodal Vision OCR if text is minimal (< 60 chars, likely scanned/slides)
+      if ((!extractedText || extractedText.trim().length < 60) && hasGemini()) {
+        console.log(`[PDF] Text too short (${extractedText.length} chars). Invoking Gemini Vision OCR for PDF...`);
+        try {
+          const ocrText = await performVisionOcr(req.file.buffer, 'application/pdf');
+          if (ocrText && ocrText.length > extractedText.length) {
+            extractedText = ocrText;
+          }
+        } catch (ocrErr) {
+          console.warn(`[PDF] Gemini Vision OCR fallback failed:`, ocrErr.message);
+        }
       }
     } else if (req.file.mimetype.includes('image') || req.file.originalname.toLowerCase().includes('scanned')) {
       extractedText = await performVisionOcr(req.file.buffer, req.file.mimetype);
@@ -235,14 +263,15 @@ router.post('/file', requireAuth, aiServiceLimiter, upload.single('file'), async
 
     console.log(`[EXTRACTION] File "${req.file.originalname}": ${validTasks.length} valid tasks extracted`);
 
-    // Save document record
+    // Save document record with raw_text_content so Copilot and Admin can access it
     const { data: doc, error: docErr } = await supabaseAdmin
       .from('documents')
       .insert({
         user_id: userId,
         file_name: req.file.originalname,
         file_type: req.file.mimetype.includes('pdf') ? 'pdf' : 'image',
-        file_path: `${userId}/${Date.now()}_${req.file.originalname}`
+        file_path: `${userId}/${Date.now()}_${req.file.originalname}`,
+        raw_text_content: extractedText
       })
       .select()
       .single();
