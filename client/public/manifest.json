@@ -1,7 +1,31 @@
 ﻿{
   "short_name": "FLOW",
-  "name": "FLOW by IMV — AI Student Productivity Platform",
+  "name": "FLOW — Powered by IMV",
   "icons": [
+    {
+      "src": "/icon-192x192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512x512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-192x192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icon-512x512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "maskable"
+    },
     {
       "src": "/favicon.svg",
       "type": "image/svg+xml",
@@ -9,8 +33,8 @@
     }
   ],
   "start_url": "/",
-  "background_color": "#0B1020",
-  "theme_color": "#0B1020",
+  "background_color": "#101114",
+  "theme_color": "#101114",
   "display": "standalone",
-  "description": "Organize assignments, deadlines, documents and study plans with FLOW by IMV, an AI-powered student productivity platform."
+  "description": "Organize assignments, deadlines, documents, and exam preparation with FLOW by IMV, an AI-powered academic productivity platform."
 }

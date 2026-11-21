@@ -118,15 +118,15 @@ export const SmartTodayView: React.FC<SmartTodayViewProps> = ({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-slate-800">
         <div>
           <div className="flex items-center gap-2">
-            <span className="h-2.5 w-2.5 rounded-full bg-[#00D4FF] animate-pulse" />
+            <span className="h-2.5 w-2.5 rounded-full bg-[#FF9D24] animate-pulse" />
             <h2 className="text-lg sm:text-xl font-black text-[#F8FAFC] tracking-tight">
               Smart Today View
             </h2>
-            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-[#2563FF]/15 text-[#00D4FF] border border-[#2563FF]/30">
+            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-[#FF8A00]/15 text-[#FF9D24] border border-[#FF8A00]/30">
               {todayFormatted}
             </span>
           </div>
-          <p className="text-xs text-[#94A3B8] mt-0.5">
+          <p className="text-xs text-[#A1A1AA] mt-0.5">
             Real-time unified priority synthesis across all your course commitments.
           </p>
         </div>
@@ -134,7 +134,7 @@ export const SmartTodayView: React.FC<SmartTodayViewProps> = ({
         <div className="flex items-center gap-2">
           <button
             onClick={onOpenQuickAdd}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#2563FF]/15 hover:bg-[#2563FF]/25 text-[#00D4FF] border border-[#2563FF]/30 text-xs font-bold transition-colors cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#FF8A00]/15 hover:bg-[#FF8A00]/25 text-[#FF9D24] border border-[#FF8A00]/30 text-xs font-bold transition-colors cursor-pointer"
           >
             <Plus className="h-3.5 w-3.5" />
             <span>Quick Add</span>
@@ -147,7 +147,7 @@ export const SmartTodayView: React.FC<SmartTodayViewProps> = ({
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="relative rounded-2xl bg-gradient-to-r from-[#111827] via-[#161F36] to-[#111827] border border-[#2563FF]/40 p-4 sm:p-5 shadow-lg overflow-hidden"
+          className="relative rounded-2xl bg-gradient-to-r from-[#18191E] via-[#161F36] to-[#18191E] border border-[#FF8A00]/40 p-4 sm:p-5 shadow-lg overflow-hidden"
         >
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-start gap-3.5">
@@ -160,7 +160,7 @@ export const SmartTodayView: React.FC<SmartTodayViewProps> = ({
               </button>
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-[#2563FF]/20 text-[#00D4FF] border border-[#2563FF]/30">
+                  <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-[#FF8A00]/20 text-[#FF9D24] border border-[#FF8A00]/30">
                     Highest Priority Next Action
                   </span>
                   <StatusBadge type="priority" value={nextAction.priority} />
@@ -168,10 +168,10 @@ export const SmartTodayView: React.FC<SmartTodayViewProps> = ({
                 <h3 className="text-base font-bold text-[#F8FAFC] mt-1.5">
                   {nextAction.title}
                 </h3>
-                <div className="flex flex-wrap items-center gap-2 mt-1 text-xs text-[#94A3B8]">
+                <div className="flex flex-wrap items-center gap-2 mt-1 text-xs text-[#A1A1AA]">
                   <span className="font-medium text-[#F8FAFC]">{nextAction.subject}</span>
                   <span>•</span>
-                  <span className={new Date(nextAction.deadline) < new Date() ? 'text-rose-400 font-bold' : 'text-[#00D4FF] font-semibold'}>
+                  <span className={new Date(nextAction.deadline) < new Date() ? 'text-rose-400 font-bold' : 'text-[#FF9D24] font-semibold'}>
                     ⏰ {getRelativeDeadline(nextAction.deadline).label} ({formatDate(nextAction.deadline)})
                   </span>
                   <span>•</span>
@@ -232,10 +232,10 @@ export const SmartTodayView: React.FC<SmartTodayViewProps> = ({
       )}
 
       {/* 4. Due Today Section */}
-      <div className="p-4 rounded-2xl bg-[#111827] border border-slate-800 space-y-3">
+      <div className="p-4 rounded-2xl bg-[#18191E] border border-slate-800 space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-[#F8FAFC] font-bold text-xs">
-            <Clock className="h-4 w-4 text-[#00D4FF]" />
+            <Clock className="h-4 w-4 text-[#FF9D24]" />
             <span>Due Today ({todayTasks.length})</span>
           </div>
           {completedTodayCount > 0 && (
@@ -260,7 +260,7 @@ export const SmartTodayView: React.FC<SmartTodayViewProps> = ({
                   </button>
                   <div className="min-w-0">
                     <p className="text-xs font-semibold text-[#F8FAFC] truncate">{task.title}</p>
-                    <p className="text-[11px] text-[#94A3B8]">
+                    <p className="text-[11px] text-[#A1A1AA]">
                       {task.subject} • Due {new Date(task.deadline).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • ~{task.estimated_minutes || 60}m
                     </p>
                   </div>
@@ -274,7 +274,7 @@ export const SmartTodayView: React.FC<SmartTodayViewProps> = ({
             ))}
           </div>
         ) : (
-          <div className="py-5 text-center text-xs text-[#94A3B8]">
+          <div className="py-5 text-center text-xs text-[#A1A1AA]">
             {completedTodayCount > 0 ? (
               <span className="text-emerald-400">🎉 All tasks for today are completed!</span>
             ) : (
@@ -285,13 +285,13 @@ export const SmartTodayView: React.FC<SmartTodayViewProps> = ({
       </div>
 
       {/* 5. Upcoming This Week (Next 7 Days) */}
-      <div className="p-4 rounded-2xl bg-[#111827] border border-slate-800 space-y-3">
+      <div className="p-4 rounded-2xl bg-[#18191E] border border-slate-800 space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-[#F8FAFC] font-bold text-xs">
-            <Calendar className="h-4 w-4 text-[#2563FF]" />
+            <Calendar className="h-4 w-4 text-[#FF8A00]" />
             <span>Upcoming Deadlines ({upcomingTasks.length})</span>
           </div>
-          <span className="text-[11px] text-[#94A3B8]">Next 7 Days</span>
+          <span className="text-[11px] text-[#A1A1AA]">Next 7 Days</span>
         </div>
 
         {upcomingTasks.length > 0 ? (
@@ -308,7 +308,7 @@ export const SmartTodayView: React.FC<SmartTodayViewProps> = ({
                   </button>
                   <div className="min-w-0">
                     <p className="text-xs font-semibold text-[#F8FAFC] truncate">{task.title}</p>
-                    <p className="text-[11px] text-[#94A3B8]">
+                    <p className="text-[11px] text-[#A1A1AA]">
                       {task.subject} • {getRelativeDeadline(task.deadline).label} ({formatDate(task.deadline)})
                     </p>
                   </div>
@@ -321,7 +321,7 @@ export const SmartTodayView: React.FC<SmartTodayViewProps> = ({
             ))}
           </div>
         ) : (
-          <div className="py-4 text-center text-xs text-[#94A3B8]">
+          <div className="py-4 text-center text-xs text-[#A1A1AA]">
             No upcoming deadlines in the next 7 days.
           </div>
         )}
@@ -330,3 +330,4 @@ export const SmartTodayView: React.FC<SmartTodayViewProps> = ({
   );
 };
 export default SmartTodayView;
+

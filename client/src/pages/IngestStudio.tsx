@@ -236,10 +236,10 @@ export const IngestStudio: React.FC = () => {
       <div className="hidden md:block space-y-6 sm:space-y-8 max-w-4xl mx-auto">
         <div>
           <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white flex items-center gap-2.5 sm:gap-3">
-            <Upload className="h-6 sm:h-7 w-6 sm:w-7 text-[#00D4FF]" />
+            <Upload className="h-6 sm:h-7 w-6 sm:w-7 text-[#FF9D24]" />
             <span>Syllabus & Document Ingest Studio</span>
           </h1>
-          <p className="text-slate-500 dark:text-[#94A3B8] text-xs sm:text-sm mt-1">
+          <p className="text-slate-500 dark:text-[#A1A1AA] text-xs sm:text-sm mt-1">
             Upload course syllabi, lecture slides, assignment PDFs, or paste announcement text. FLOW AI extracts commitments for your review.
           </p>
         </div>
@@ -251,7 +251,7 @@ export const IngestStudio: React.FC = () => {
             onClick={() => { setActiveTab('file'); setReviewMode(false); }}
             className={`flex items-center gap-2 py-3 px-4 font-semibold text-xs sm:text-sm border-b-2 transition-colors ${
               activeTab === 'file'
-                ? 'border-[#2563FF] text-[#00D4FF] dark:text-[#00D4FF]'
+                ? 'border-[#FF8A00] text-[#FF9D24] dark:text-[#FF9D24]'
                 : 'border-transparent text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'
             }`}
           >
@@ -263,7 +263,7 @@ export const IngestStudio: React.FC = () => {
             onClick={() => { setActiveTab('text'); setReviewMode(false); }}
             className={`flex items-center gap-2 py-3 px-4 font-semibold text-xs sm:text-sm border-b-2 transition-colors ${
               activeTab === 'text'
-                ? 'border-[#2563FF] text-[#00D4FF] dark:text-[#00D4FF]'
+                ? 'border-[#FF8A00] text-[#FF9D24] dark:text-[#FF9D24]'
                 : 'border-transparent text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'
             }`}
           >
@@ -282,10 +282,10 @@ export const IngestStudio: React.FC = () => {
 
         {/* Loading Progress State */}
         {loading && (
-          <div className="card p-6 text-center space-y-3 bg-[#111827] border-slate-800">
-            <div className="h-10 w-10 mx-auto rounded-full border-2 border-[#2563FF] border-t-transparent animate-spin" />
+          <div className="card p-6 text-center space-y-3 bg-[#18191E] border-slate-800">
+            <div className="h-10 w-10 mx-auto rounded-full border-2 border-[#FF8A00] border-t-transparent animate-spin" />
             <h3 className="text-sm font-bold text-[#F8FAFC]">AI Ingestion in Progress</h3>
-            <p className="text-xs text-[#94A3B8]">{processingStep || 'Processing document commitments...'}</p>
+            <p className="text-xs text-[#A1A1AA]">{processingStep || 'Processing document commitments...'}</p>
           </div>
         )}
 
@@ -294,12 +294,12 @@ export const IngestStudio: React.FC = () => {
           <motion.div
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
-            className="card p-5 sm:p-7 space-y-5 bg-[#111827] border-slate-800"
+            className="card p-5 sm:p-7 space-y-5 bg-[#18191E] border-slate-800"
           >
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-800">
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-[#2563FF]/20 text-[#00D4FF] border border-[#2563FF]/30">
+                  <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-[#FF8A00]/20 text-[#FF9D24] border border-[#FF8A00]/30">
                     Step 2: Review & Verify
                   </span>
                   <span className="text-xs font-bold text-[#F8FAFC]">
@@ -309,7 +309,7 @@ export const IngestStudio: React.FC = () => {
                 <h3 className="text-base font-bold text-[#F8FAFC] mt-1">
                   Review Extracted Commitments Before Saving
                 </h3>
-                <p className="text-xs text-[#94A3B8]">
+                <p className="text-xs text-[#A1A1AA]">
                   Verify dates and titles. Tasks flagged as duplicates are unchecked by default.
                 </p>
               </div>
@@ -318,7 +318,7 @@ export const IngestStudio: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setReviewMode(false)}
-                  className="px-3.5 py-2 rounded-xl text-xs font-semibold text-[#94A3B8] hover:text-white hover:bg-slate-800 transition-colors"
+                  className="px-3.5 py-2 rounded-xl text-xs font-semibold text-[#A1A1AA] hover:text-white hover:bg-slate-800 transition-colors"
                 >
                   Discard
                 </button>
@@ -341,8 +341,8 @@ export const IngestStudio: React.FC = () => {
                   key={idx}
                   className={`p-4 rounded-xl border transition-all ${
                     task.selected
-                      ? 'bg-[#0B1020] border-slate-800'
-                      : 'bg-[#0B1020]/40 border-slate-800/40 opacity-60'
+                      ? 'bg-[#101114] border-slate-800'
+                      : 'bg-[#101114]/40 border-slate-800/40 opacity-60'
                   }`}
                 >
                   <div className="flex items-start gap-3">
@@ -350,7 +350,7 @@ export const IngestStudio: React.FC = () => {
                       type="checkbox"
                       checked={Boolean(task.selected)}
                       onChange={() => toggleSelectTask(idx)}
-                      className="mt-1.5 h-4 w-4 rounded border-slate-700 text-[#2563FF] focus:ring-0 cursor-pointer"
+                      className="mt-1.5 h-4 w-4 rounded border-slate-700 text-[#FF8A00] focus:ring-0 cursor-pointer"
                     />
 
                     <div className="flex-1 space-y-2.5">
@@ -364,7 +364,7 @@ export const IngestStudio: React.FC = () => {
 
                       {/* Title Edit */}
                       <div>
-                        <label className="text-[10px] font-bold text-[#94A3B8] uppercase">Task Title</label>
+                        <label className="text-[10px] font-bold text-[#A1A1AA] uppercase">Task Title</label>
                         <input
                           type="text"
                           value={task.title}
@@ -376,7 +376,7 @@ export const IngestStudio: React.FC = () => {
                       {/* Subject, Deadline, Priority Row */}
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                         <div>
-                          <label className="text-[10px] font-bold text-[#94A3B8] uppercase">Subject</label>
+                          <label className="text-[10px] font-bold text-[#A1A1AA] uppercase">Subject</label>
                           <input
                             type="text"
                             value={task.subject}
@@ -386,7 +386,7 @@ export const IngestStudio: React.FC = () => {
                         </div>
 
                         <div>
-                          <label className="text-[10px] font-bold text-[#94A3B8] uppercase">Deadline</label>
+                          <label className="text-[10px] font-bold text-[#A1A1AA] uppercase">Deadline</label>
                           <input
                             type="datetime-local"
                             value={task.deadline ? new Date(new Date(task.deadline).getTime() - new Date(task.deadline).getTimezoneOffset() * 60000).toISOString().slice(0, 16) : ''}
@@ -396,7 +396,7 @@ export const IngestStudio: React.FC = () => {
                         </div>
 
                         <div>
-                          <label className="text-[10px] font-bold text-[#94A3B8] uppercase">Priority</label>
+                          <label className="text-[10px] font-bold text-[#A1A1AA] uppercase">Priority</label>
                           <select
                             value={task.priority}
                             onChange={(e) => updatePendingTask(idx, 'priority', e.target.value as any)}
@@ -429,9 +429,9 @@ export const IngestStudio: React.FC = () => {
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
-              className={`border-2 border-dashed rounded-3xl p-6 sm:p-12 text-center transition-all bg-white dark:bg-[#111827] ${
+              className={`border-2 border-dashed rounded-3xl p-6 sm:p-12 text-center transition-all bg-white dark:bg-[#18191E] ${
                 isDragging
-                  ? 'border-[#00D4FF] bg-[#2563FF]/10 scale-[1.01]'
+                  ? 'border-[#FF9D24] bg-[#FF8A00]/10 scale-[1.01]'
                   : 'border-slate-300 dark:border-slate-800 hover:border-slate-400 dark:hover:border-slate-700'
               }`}
             >
@@ -444,7 +444,7 @@ export const IngestStudio: React.FC = () => {
               />
               <label htmlFor="file-upload-input" className="cursor-pointer block space-y-3 sm:space-y-4">
                 <div className="flex justify-center">
-                  <div className="relative p-3.5 sm:p-5 rounded-2xl bg-gradient-to-tr from-[#2563FF] to-[#00D4FF] text-white shadow-xl shadow-[#2563FF]/20">
+                  <div className="relative p-3.5 sm:p-5 rounded-2xl bg-gradient-to-tr from-[#FF8A00] to-[#FF9D24] text-white shadow-xl shadow-[#FF8A00]/20">
                     {file ? <FileCheck className="h-7 sm:h-10 w-7 sm:w-10 text-emerald-300" /> : <Upload className="h-7 sm:h-10 w-7 sm:w-10" />}
                   </div>
                 </div>
@@ -452,7 +452,7 @@ export const IngestStudio: React.FC = () => {
                   <span className="font-bold text-sm sm:text-base text-slate-900 dark:text-white block break-words">
                     {file ? file.name : 'Tap to choose or drag & drop syllabus document'}
                   </span>
-                  <p className="text-[11px] sm:text-xs text-slate-500 dark:text-[#94A3B8]">
+                  <p className="text-[11px] sm:text-xs text-slate-500 dark:text-[#A1A1AA]">
                     Supports PDF, PNG, JPEG, WebP (Max limit: 100 MB)
                   </p>
                 </div>
@@ -476,9 +476,9 @@ export const IngestStudio: React.FC = () => {
 
         {/* Text Form (When not in review mode) */}
         {!reviewMode && activeTab === 'text' && (
-          <form onSubmit={handleTextUpload} className="card p-4 sm:p-6 space-y-4 sm:space-y-6 bg-white dark:bg-[#111827] border-slate-200 dark:border-slate-800">
+          <form onSubmit={handleTextUpload} className="card p-4 sm:p-6 space-y-4 sm:space-y-6 bg-white dark:bg-[#18191E] border-slate-200 dark:border-slate-800">
             <div>
-              <label className="block text-xs font-semibold text-slate-500 dark:text-[#94A3B8] uppercase tracking-wider mb-2">
+              <label className="block text-xs font-semibold text-slate-500 dark:text-[#A1A1AA] uppercase tracking-wider mb-2">
                 Raw Syllabus or Circular Text
               </label>
               <textarea
@@ -510,7 +510,7 @@ export const IngestStudio: React.FC = () => {
           <motion.div
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
-            className="card p-5 sm:p-7 space-y-4 bg-white dark:bg-[#111827] border-slate-200 dark:border-slate-800"
+            className="card p-5 sm:p-7 space-y-4 bg-white dark:bg-[#18191E] border-slate-200 dark:border-slate-800"
           >
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-800 pb-4">
               <div className="flex items-center gap-3">
@@ -521,7 +521,7 @@ export const IngestStudio: React.FC = () => {
                   <h3 className="font-bold text-sm sm:text-base text-slate-900 dark:text-white">
                     {result.tasks.length} Commitment{result.tasks.length === 1 ? '' : 's'} Active in Workspace
                   </h3>
-                  <p className="text-xs text-slate-500 dark:text-[#94A3B8]">
+                  <p className="text-xs text-slate-500 dark:text-[#A1A1AA]">
                     Source: {result.document?.file_name || 'Text Excerpt'}
                   </p>
                 </div>
@@ -552,7 +552,7 @@ export const IngestStudio: React.FC = () => {
                 <div key={idx} className="py-3 flex items-center justify-between gap-3">
                   <div className="min-w-0">
                     <p className="text-xs font-bold text-slate-900 dark:text-white truncate">{t.title}</p>
-                    <p className="text-[11px] text-slate-500 dark:text-[#94A3B8]">
+                    <p className="text-[11px] text-slate-500 dark:text-[#A1A1AA]">
                       {t.subject} • Due {new Date(t.deadline).toLocaleDateString()}
                     </p>
                   </div>
@@ -567,3 +567,4 @@ export const IngestStudio: React.FC = () => {
   );
 };
 export default IngestStudio;
+

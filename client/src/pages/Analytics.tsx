@@ -97,7 +97,7 @@ export const Analytics: React.FC = () => {
     hours: Number((subjectMap[name].minutes / 60).toFixed(1))
   }));
 
-  const COLORS = ['#2563FF', '#00D4FF', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899'];
+  const COLORS = ['#FF8A00', '#FF9D24', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899'];
 
   // Priority Breakdown
   const priorityData = [
@@ -112,7 +112,7 @@ export const Analytics: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-slate-900 dark:text-slate-50 flex items-center gap-2.5 sm:gap-3">
-            <BarChart3 className="h-6 sm:h-7 w-6 sm:w-7 text-[#00D4FF]" />
+            <BarChart3 className="h-6 sm:h-7 w-6 sm:w-7 text-[#FF9D24]" />
             <span>Academic Performance & Productivity Analytics</span>
           </h1>
           <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm mt-1">
@@ -128,7 +128,7 @@ export const Analytics: React.FC = () => {
               onClick={() => setTimeRange(pill)}
               className={`px-3 py-1.5 rounded-lg text-xs font-bold capitalize transition-all ${
                 timeRange === pill
-                  ? 'bg-gradient-to-r from-[#2563FF] to-[#00D4FF] text-white shadow-sm'
+                  ? 'bg-gradient-to-r from-[#FF8A00] to-[#FF9D24] text-white shadow-sm'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
@@ -163,14 +163,14 @@ export const Analytics: React.FC = () => {
             <InteractiveCard className="p-4 sm:p-5 space-y-1.5">
               <div className="flex items-center justify-between">
                 <span className="text-[10px] sm:text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Study Velocity</span>
-                <div className="p-2 rounded-xl bg-[#2563FF]/10 text-[#00D4FF] border border-[#2563FF]/20">
+                <div className="p-2 rounded-xl bg-[#FF8A00]/10 text-[#FF9D24] border border-[#FF8A00]/20">
                   <Clock className="h-4 w-4" />
                 </div>
               </div>
               <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white">
                 {hoursStudied} <span className="text-xs sm:text-sm font-normal text-slate-400">hrs</span>
               </div>
-              <p className="text-[11px] text-[#00D4FF] font-medium">
+              <p className="text-[11px] text-[#FF9D24] font-medium">
                 {Number((totalEstimatedMinutes / 60).toFixed(1))} Total Scheduled Hrs
               </p>
             </InteractiveCard>
@@ -185,7 +185,7 @@ export const Analytics: React.FC = () => {
               <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white">
                 <AnimatedCounter value={exams.length} /> <span className="text-xs sm:text-sm font-normal text-slate-400">Scheduled</span>
               </div>
-              <p className="text-[11px] text-purple-400 font-medium">FLOW Study Active Modules</p>
+              <p className="text-[11px] text-orange-400 font-medium">Study (Beta) Active Modules</p>
             </InteractiveCard>
 
             <InteractiveCard className="p-4 sm:p-5 space-y-1.5">
@@ -208,7 +208,7 @@ export const Analytics: React.FC = () => {
           {exams.length > 0 && (
             <div className="card p-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl space-y-4">
               <h3 className="font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center gap-2">
-                <Target className="h-4 sm:h-5 w-4 sm:w-5 text-[#00D4FF]" />
+                <Target className="h-4 sm:h-5 w-4 sm:w-5 text-[#FF9D24]" />
                 <span>Upcoming Examination Preparation Radar</span>
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -218,7 +218,7 @@ export const Analytics: React.FC = () => {
                     <div key={ex.id} className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 space-y-2">
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-bold text-slate-900 dark:text-white truncate">{ex.subject}</span>
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#2563FF]/15 text-[#00D4FF]">
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#FF8A00]/15 text-[#FF9D24]">
                           {daysRemaining > 0 ? `${daysRemaining} days left` : 'Today'}
                         </span>
                       </div>
@@ -248,7 +248,7 @@ export const Analytics: React.FC = () => {
               {/* Subject Distribution */}
               <InteractiveCard className="p-4 sm:p-6 space-y-4">
                 <h3 className="font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center gap-2">
-                  <BookOpen className="h-4 sm:h-5 w-4 sm:w-5 text-[#2563FF]" />
+                  <BookOpen className="h-4 sm:h-5 w-4 sm:w-5 text-[#FF8A00]" />
                   <span>Subject Focus Allocation</span>
                 </h3>
                 <div className="h-56 sm:h-64">
@@ -284,15 +284,15 @@ export const Analytics: React.FC = () => {
               {/* Priority Workload Distribution */}
               <InteractiveCard className="p-4 sm:p-6 space-y-4">
                 <h3 className="font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center gap-2">
-                  <TrendingUp className="h-4 sm:h-5 w-4 sm:w-5 text-[#00D4FF]" />
+                  <TrendingUp className="h-4 sm:h-5 w-4 sm:w-5 text-[#FF9D24]" />
                   <span>Commitment Priority Distribution</span>
                 </h3>
                 <div className="h-56 sm:h-64">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={priorityData}>
                       <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                      <XAxis dataKey="name" stroke="#94a3b8" />
-                      <YAxis stroke="#94a3b8" allowDecimals={false} />
+                      <XAxis dataKey="name" stroke="#A1A1AA" />
+                      <YAxis stroke="#A1A1AA" allowDecimals={false} />
                       <Tooltip
                         contentStyle={{
                           backgroundColor: '#0f172a',
@@ -319,3 +319,4 @@ export const Analytics: React.FC = () => {
 };
 
 export default Analytics;
+

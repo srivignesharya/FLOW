@@ -20,7 +20,7 @@ interface NavItem {
 
 const PRIMARY_TABS: NavItem[] = [
   { name: 'Dashboard', path: '/dashboard', icon: Home },
-  { name: 'Study', path: '/study', icon: GraduationCap },
+  { name: 'Study (Beta)', path: '/study', icon: GraduationCap },
   { name: 'LEMON', path: '#copilot', icon: Bot, isAi: true },
   { name: 'Tasks', path: '/tasks', icon: CheckSquare },
   { name: 'Settings', path: '/settings', icon: Settings },
@@ -52,31 +52,31 @@ export const MobileBottomNav: React.FC = () => {
                 onClick={openCopilot}
                 className={`relative flex flex-col items-center justify-center py-1.5 px-1 rounded-2xl transition-all duration-200 select-none min-h-[50px] ${
                   isActive
-                    ? 'text-[#00D4FF] font-bold'
+                    ? 'text-[#FF9D24] font-bold'
                     : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
                 }`}
               >
                 {isActive && (
                   <motion.div
                     layoutId="mobileActiveTabPill"
-                    className="absolute inset-0 rounded-2xl bg-gradient-to-tr from-[#2563FF]/20 via-[#00D4FF]/15 to-[#2563FF]/10 border border-[#00D4FF]/30"
+                    className="absolute inset-0 rounded-2xl bg-gradient-to-tr from-[#FF8A00]/20 via-[#FF9D24]/15 to-[#FF8A00]/10 border border-[#FF9D24]/30"
                     transition={{ type: 'spring', stiffness: 500, damping: 35 }}
                   />
                 )}
 
                 <div className="relative z-10">
                   <div className={`relative p-0.5 transition-transform ${isActive ? 'scale-110' : ''}`}>
-                    <Icon className="h-5 w-5 text-[#00D4FF]" />
+                    <Icon className="h-5 w-5 text-[#FF9D24]" />
                     <motion.div
                       animate={{ scale: [1, 1.3, 1], opacity: [0.8, 1, 0.8] }}
                       transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
-                      className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-[#00D4FF] ring-2 ring-white dark:ring-slate-950"
+                      className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-[#FF9D24] ring-2 ring-white dark:ring-slate-950"
                     />
                   </div>
                 </div>
 
                 <span className={`relative z-10 text-[10px] tracking-tight mt-0.5 line-clamp-1 ${
-                  isActive ? 'font-bold text-[#00D4FF]' : 'font-medium text-slate-500 dark:text-slate-400'
+                  isActive ? 'font-bold text-[#FF9D24]' : 'font-medium text-slate-500 dark:text-slate-400'
                 }`}>
                   {tab.name}
                 </span>
@@ -142,3 +142,4 @@ export const MobileBottomNav: React.FC = () => {
 };
 
 export default MobileBottomNav;
+

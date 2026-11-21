@@ -22,7 +22,7 @@ import { ZenithLogo } from './ZenithLogo';
 
 const links = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, exact: false },
-  { to: '/study', label: 'FLOW Study', icon: GraduationCap, exact: false, badge: 'New' },
+  { to: '/study', label: 'Study', icon: GraduationCap, exact: false, badge: 'Beta' },
   { to: '/copilot', label: 'LEMON AI', icon: Bot, exact: false, isAi: true },
   { to: '/ingest', label: 'Upload & Ingest', icon: FileUp, exact: false },
   { to: '/tasks', label: 'Task Manager', icon: CheckSquare, exact: false },
@@ -169,11 +169,18 @@ export const Sidebar: React.FC = () => {
                       )}
                     />
 
-                    {/* Label */}
+                    {/* Label & Beta / AI Badges */}
                     {!collapsed && (
-                      <span className="relative z-10 whitespace-nowrap tracking-tight">
-                        {link.label}
-                      </span>
+                      <div className="relative z-10 flex items-center gap-2">
+                        <span className="whitespace-nowrap tracking-tight">
+                          {link.label}
+                        </span>
+                        {link.badge && (
+                          <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-[#FF8A00]/15 text-[#FF9D24] border border-[#FF8A00]/30 shrink-0">
+                            {link.badge}
+                          </span>
+                        )}
+                      </div>
                     )}
 
                     {/* Active Indicator Dot or AI Badge */}
@@ -216,12 +223,12 @@ export const Sidebar: React.FC = () => {
             transition={{ duration: 0.2 }}
             className="p-4 border-t border-slate-200 dark:border-slate-800 shrink-0"
           >
-            <div className="px-3 py-2.5 rounded-xl bg-[#0B1020]/90 border border-[#2563FF]/25 shadow-sm">
+            <div className="px-3 py-2.5 rounded-xl bg-[#101114]/90 border border-[#FF8A00]/25 shadow-sm">
               <div className="flex items-center justify-between">
                 <p className="text-xs font-black tracking-tight text-[#F8FAFC]">
-                  FLOW <span className="text-[10px] text-[#00D4FF] font-semibold">v1.1</span>
+                  FLOW <span className="text-[10px] text-[#FF9D24] font-semibold">v1.1</span>
                 </p>
-                <span className="text-[10px] font-semibold text-[#00D4FF] bg-[#2563FF]/15 border border-[#2563FF]/30 px-1.5 py-0.5 rounded">
+                <span className="text-[10px] font-semibold text-[#FF9D24] bg-[#FF8A00]/15 border border-[#FF8A00]/30 px-1.5 py-0.5 rounded">
                   by IMV
                 </span>
               </div>
@@ -235,3 +242,4 @@ export const Sidebar: React.FC = () => {
     </motion.aside>
   );
 };
+

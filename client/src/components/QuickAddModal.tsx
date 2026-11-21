@@ -95,22 +95,22 @@ export const QuickAddModal: React.FC<QuickAddModalProps> = ({
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 15 }}
           transition={{ type: 'spring', damping: 25, stiffness: 350 }}
-          className="relative w-full max-w-lg rounded-2xl bg-[#111827] border border-slate-800 text-[#F8FAFC] shadow-2xl overflow-hidden"
+          className="relative w-full max-w-lg rounded-2xl bg-[#18191E] border border-slate-800 text-[#F8FAFC] shadow-2xl overflow-hidden"
           role="dialog"
           aria-modal="true"
           aria-labelledby="quick-add-title"
         >
           {/* Header */}
-          <div className="flex items-center justify-between p-5 border-b border-slate-800 bg-[#0B1020]/60">
+          <div className="flex items-center justify-between p-5 border-b border-slate-800 bg-[#101114]/60">
             <div className="flex items-center gap-2.5">
-              <div className="h-8 w-8 rounded-xl bg-[#2563FF]/15 text-[#00D4FF] flex items-center justify-center border border-[#2563FF]/30">
+              <div className="h-8 w-8 rounded-xl bg-[#FF8A00]/15 text-[#FF9D24] flex items-center justify-center border border-[#FF8A00]/30">
                 <Plus className="h-4 w-4" />
               </div>
               <div>
                 <h3 id="quick-add-title" className="text-base font-bold text-[#F8FAFC]">
                   Quick Add Task
                 </h3>
-                <p className="text-xs text-[#94A3B8]">
+                <p className="text-xs text-[#A1A1AA]">
                   Schedule an assignment or study commitment in FLOW
                 </p>
               </div>
@@ -118,7 +118,7 @@ export const QuickAddModal: React.FC<QuickAddModalProps> = ({
 
             <button
               onClick={onClose}
-              className="p-1.5 rounded-lg text-[#94A3B8] hover:text-[#F8FAFC] hover:bg-slate-800 transition-colors"
+              className="p-1.5 rounded-lg text-[#A1A1AA] hover:text-[#F8FAFC] hover:bg-slate-800 transition-colors"
               aria-label="Close dialog"
             >
               <X className="h-5 w-5" />
@@ -136,7 +136,7 @@ export const QuickAddModal: React.FC<QuickAddModalProps> = ({
 
             {/* Title */}
             <div>
-              <label className="block text-xs font-semibold text-[#94A3B8] mb-1.5">
+              <label className="block text-xs font-semibold text-[#A1A1AA] mb-1.5">
                 Task / Assignment Title <span className="text-rose-400">*</span>
               </label>
               <input
@@ -153,7 +153,7 @@ export const QuickAddModal: React.FC<QuickAddModalProps> = ({
             {/* Subject & Type Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-semibold text-[#94A3B8] mb-1.5">
+                <label className="block text-xs font-semibold text-[#A1A1AA] mb-1.5">
                   Subject / Course
                 </label>
                 <input
@@ -166,7 +166,7 @@ export const QuickAddModal: React.FC<QuickAddModalProps> = ({
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-[#94A3B8] mb-1.5">
+                <label className="block text-xs font-semibold text-[#A1A1AA] mb-1.5">
                   Task Category
                 </label>
                 <select
@@ -185,28 +185,28 @@ export const QuickAddModal: React.FC<QuickAddModalProps> = ({
             {/* Deadline with Quick Presets */}
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <label className="text-xs font-semibold text-[#94A3B8]">
+                <label className="text-xs font-semibold text-[#A1A1AA]">
                   Deadline <span className="text-rose-400">*</span>
                 </label>
                 <div className="flex items-center gap-1.5">
                   <button
                     type="button"
                     onClick={() => setQuickDeadline(8)}
-                    className="text-[10px] font-semibold px-2 py-0.5 rounded bg-slate-800 hover:bg-[#2563FF]/20 hover:text-[#00D4FF] text-[#94A3B8] transition-colors"
+                    className="text-[10px] font-semibold px-2 py-0.5 rounded bg-slate-800 hover:bg-[#FF8A00]/20 hover:text-[#FF9D24] text-[#A1A1AA] transition-colors"
                   >
                     Today
                   </button>
                   <button
                     type="button"
                     onClick={() => setQuickDeadline(24)}
-                    className="text-[10px] font-semibold px-2 py-0.5 rounded bg-slate-800 hover:bg-[#2563FF]/20 hover:text-[#00D4FF] text-[#94A3B8] transition-colors"
+                    className="text-[10px] font-semibold px-2 py-0.5 rounded bg-slate-800 hover:bg-[#FF8A00]/20 hover:text-[#FF9D24] text-[#A1A1AA] transition-colors"
                   >
                     Tomorrow
                   </button>
                   <button
                     type="button"
                     onClick={() => setQuickDeadline(168)}
-                    className="text-[10px] font-semibold px-2 py-0.5 rounded bg-slate-800 hover:bg-[#2563FF]/20 hover:text-[#00D4FF] text-[#94A3B8] transition-colors"
+                    className="text-[10px] font-semibold px-2 py-0.5 rounded bg-slate-800 hover:bg-[#FF8A00]/20 hover:text-[#FF9D24] text-[#A1A1AA] transition-colors"
                   >
                     Next Week
                   </button>
@@ -224,7 +224,7 @@ export const QuickAddModal: React.FC<QuickAddModalProps> = ({
             {/* Priority & Est. Time */}
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-semibold text-[#94A3B8] mb-1.5">
+                <label className="block text-xs font-semibold text-[#A1A1AA] mb-1.5">
                   Priority
                 </label>
                 <select
@@ -239,7 +239,7 @@ export const QuickAddModal: React.FC<QuickAddModalProps> = ({
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-[#94A3B8] mb-1.5">
+                <label className="block text-xs font-semibold text-[#A1A1AA] mb-1.5">
                   Est. Minutes
                 </label>
                 <input
@@ -255,7 +255,7 @@ export const QuickAddModal: React.FC<QuickAddModalProps> = ({
 
             {/* Notes / Description */}
             <div>
-              <label className="block text-xs font-semibold text-[#94A3B8] mb-1.5">
+              <label className="block text-xs font-semibold text-[#A1A1AA] mb-1.5">
                 Notes (Optional)
               </label>
               <textarea
@@ -273,7 +273,7 @@ export const QuickAddModal: React.FC<QuickAddModalProps> = ({
                 type="button"
                 onClick={onClose}
                 disabled={loading}
-                className="px-4 py-2 rounded-xl text-xs font-semibold text-[#94A3B8] hover:text-[#F8FAFC] hover:bg-slate-800 transition-colors"
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-[#A1A1AA] hover:text-[#F8FAFC] hover:bg-slate-800 transition-colors"
               >
                 Cancel
               </button>
@@ -293,3 +293,4 @@ export const QuickAddModal: React.FC<QuickAddModalProps> = ({
   );
 };
 export default QuickAddModal;
+

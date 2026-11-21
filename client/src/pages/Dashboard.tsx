@@ -106,7 +106,7 @@ export const Dashboard: React.FC = () => {
     subjectMap[subj] = (subjectMap[subj] || 0) + 1;
   });
   const subjectChartData = Object.keys(subjectMap).map(k => ({ name: k, value: subjectMap[k] }));
-  const COLORS = ['#2563FF', '#00D4FF', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899'];
+  const COLORS = ['#FF8A00', '#FF9D24', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899'];
 
   return (
     <>
@@ -144,22 +144,22 @@ export const Dashboard: React.FC = () => {
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
-          className="relative rounded-2xl sm:rounded-3xl bg-gradient-to-r from-[#0B1020] via-[#111827] to-[#161F36] border border-slate-800 p-5 sm:p-8 lg:p-10 overflow-hidden shadow-2xl"
+          className="relative rounded-2xl sm:rounded-3xl bg-gradient-to-r from-[#101114] via-[#18191E] to-[#161F36] border border-slate-800 p-5 sm:p-8 lg:p-10 overflow-hidden shadow-2xl"
         >
           {/* Ambient Astronomy Glow */}
-          <div className="absolute -top-24 -right-24 h-96 w-96 rounded-full bg-[#2563FF]/15 blur-3xl pointer-events-none" />
-          <div className="absolute -bottom-24 -left-24 h-96 w-96 rounded-full bg-[#00D4FF]/10 blur-3xl pointer-events-none" />
+          <div className="absolute -top-24 -right-24 h-96 w-96 rounded-full bg-[#FF8A00]/15 blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-24 -left-24 h-96 w-96 rounded-full bg-[#FF9D24]/10 blur-3xl pointer-events-none" />
 
           <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-5 sm:gap-6">
             <div className="space-y-1.5 sm:space-y-2">
-              <div className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1 rounded-full bg-[#2563FF]/15 border border-[#2563FF]/30 text-[#00D4FF] text-[11px] sm:text-xs font-semibold">
-                <Sparkles className="h-3 sm:h-3.5 w-3 sm:w-3.5 text-[#00D4FF]" />
+              <div className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1 rounded-full bg-[#FF8A00]/15 border border-[#FF8A00]/30 text-[#FF9D24] text-[11px] sm:text-xs font-semibold">
+                <Sparkles className="h-3 sm:h-3.5 w-3 sm:w-3.5 text-[#FF9D24]" />
                 <span>FLOW v1.1 • Powered by IMV</span>
               </div>
               <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-white">
-                {getGreeting()}, <span className="bg-gradient-to-r from-[#2563FF] via-[#93c5fd] to-[#00D4FF] bg-clip-text text-transparent">{userName}</span>
+                {getGreeting()}, <span className="bg-gradient-to-r from-[#FF8A00] via-[#93c5fd] to-[#FF9D24] bg-clip-text text-transparent">{userName}</span>
               </h1>
-              <p className="text-[#94A3B8] text-xs sm:text-sm lg:text-base font-medium max-w-lg">
+              <p className="text-[#A1A1AA] text-xs sm:text-sm lg:text-base font-medium max-w-lg">
                 FLOW Academic Platform. Here is your real-time daily schedule and workload status.
               </p>
             </div>
@@ -168,10 +168,10 @@ export const Dashboard: React.FC = () => {
               {/* Global Search Button */}
               <button
                 onClick={() => setIsSearchOpen(true)}
-                className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-[#111827] hover:bg-[#1E293B] text-[#94A3B8] hover:text-[#F8FAFC] border border-slate-700/80 text-xs font-semibold transition-colors cursor-pointer"
+                className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-[#18191E] hover:bg-[#1E293B] text-[#A1A1AA] hover:text-[#F8FAFC] border border-slate-700/80 text-xs font-semibold transition-colors cursor-pointer"
                 title="Search Workspace (Ctrl+K)"
               >
-                <Search className="h-4 w-4 text-[#00D4FF]" />
+                <Search className="h-4 w-4 text-[#FF9D24]" />
                 <span className="hidden lg:inline">Search (Ctrl+K)</span>
               </button>
 
@@ -184,7 +184,7 @@ export const Dashboard: React.FC = () => {
               </button>
 
               <Link to="/ingest">
-                <MotionButton variant="secondary" icon={<Sparkles className="h-4 w-4 text-[#00D4FF]" />}>
+                <MotionButton variant="secondary" icon={<Sparkles className="h-4 w-4 text-[#FF9D24]" />}>
                   Ingest Syllabus
                 </MotionButton>
               </Link>
@@ -219,14 +219,14 @@ export const Dashboard: React.FC = () => {
             <InteractiveCard className="p-3.5 sm:p-5 space-y-2 sm:space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-[10px] sm:text-xs font-semibold text-slate-400 uppercase tracking-wider truncate">📚 Pending</span>
-                <div className="p-1.5 sm:p-2.5 rounded-lg sm:rounded-xl bg-[#2563FF]/15 text-[#00D4FF] border border-[#2563FF]/30 shrink-0">
+                <div className="p-1.5 sm:p-2.5 rounded-lg sm:rounded-xl bg-[#FF8A00]/15 text-[#FF9D24] border border-[#FF8A00]/30 shrink-0">
                   <Clock className="h-4 sm:h-5 w-4 sm:w-5" />
                 </div>
               </div>
               <div className="text-2xl sm:text-3xl font-black text-white">
                 <AnimatedCounter value={pending.length} /> <span className="text-xs sm:text-sm font-normal text-slate-400">Tasks</span>
               </div>
-              <p className="text-[11px] sm:text-xs text-[#00D4FF] font-semibold truncate">{highPriority.length} High Priority</p>
+              <p className="text-[11px] sm:text-xs text-[#FF9D24] font-semibold truncate">{highPriority.length} High Priority</p>
             </InteractiveCard>
 
             {/* 3. Next Deadline */}
@@ -269,7 +269,7 @@ export const Dashboard: React.FC = () => {
             onClick={() => setDashboardTab('today')}
             className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
               dashboardTab === 'today'
-                ? 'bg-[#2563FF]/20 text-[#00D4FF] border border-[#2563FF]/30 shadow-sm'
+                ? 'bg-[#FF8A00]/20 text-[#FF9D24] border border-[#FF8A00]/30 shadow-sm'
                 : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
             }`}
           >
@@ -281,7 +281,7 @@ export const Dashboard: React.FC = () => {
             onClick={() => setDashboardTab('calendar')}
             className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
               dashboardTab === 'calendar'
-                ? 'bg-[#2563FF]/20 text-[#00D4FF] border border-[#2563FF]/30 shadow-sm'
+                ? 'bg-[#FF8A00]/20 text-[#FF9D24] border border-[#FF8A00]/30 shadow-sm'
                 : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
             }`}
           >
@@ -293,7 +293,7 @@ export const Dashboard: React.FC = () => {
             onClick={() => setDashboardTab('overview')}
             className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
               dashboardTab === 'overview'
-                ? 'bg-[#2563FF]/20 text-[#00D4FF] border border-[#2563FF]/30 shadow-sm'
+                ? 'bg-[#FF8A00]/20 text-[#FF9D24] border border-[#FF8A00]/30 shadow-sm'
                 : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
             }`}
           >
@@ -331,7 +331,7 @@ export const Dashboard: React.FC = () => {
                 <h2 className="text-base sm:text-lg font-bold text-white">
                   Upcoming Deadlines
                 </h2>
-                <Link to="/tasks" className="text-xs text-[#00D4FF] hover:underline flex items-center gap-1 font-medium">
+                <Link to="/tasks" className="text-xs text-[#FF9D24] hover:underline flex items-center gap-1 font-medium">
                   <span>View all tasks</span>
                   <ArrowUpRight className="h-3.5 w-3.5" />
                 </Link>
@@ -347,7 +347,7 @@ export const Dashboard: React.FC = () => {
                           {task.title}
                         </div>
                         <div className="text-xs text-slate-400 mt-0.5 flex flex-wrap items-center gap-1.5 sm:gap-2">
-                          <span className="font-medium text-[#00D4FF]">{task.subject}</span>
+                          <span className="font-medium text-[#FF9D24]">{task.subject}</span>
                           <span>•</span>
                           <span className={rel.isOverdue ? 'text-red-400 font-semibold' : rel.isUrgent ? 'text-amber-400 font-medium' : ''}>
                             {rel.label} ({formatDate(task.deadline)})
@@ -414,3 +414,4 @@ export const Dashboard: React.FC = () => {
 };
 
 export default Dashboard;
+

@@ -24,8 +24,8 @@ export const Navbar: React.FC = () => {
         </div>
 
         {/* Desktop Academic Workspace Badge */}
-        <span className="hidden md:inline-flex text-xs font-bold px-3 py-1 rounded-full bg-[#2563FF]/10 text-[#00D4FF] border border-[#2563FF]/25 items-center gap-1.5 shadow-sm">
-          <Sparkles className="h-3.5 w-3.5 text-[#00D4FF]" />
+        <span className="hidden md:inline-flex text-xs font-bold px-3 py-1 rounded-full bg-[#FF8A00]/10 text-[#FF9D24] border border-[#FF8A00]/25 items-center gap-1.5 shadow-sm">
+          <Sparkles className="h-3.5 w-3.5 text-[#FF9D24]" />
           <span>FLOW v1.1 • Powered by IMV</span>
         </span>
       </div>
@@ -36,10 +36,10 @@ export const Navbar: React.FC = () => {
         <button
           id="navbar-copilot-btn"
           onClick={openCopilot}
-          className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-[#2563FF]/10 via-[#1D4ED8]/10 to-[#00D4FF]/10 hover:from-[#2563FF]/20 hover:to-[#00D4FF]/20 text-[#2563FF] dark:text-[#00D4FF] border border-[#2563FF]/30 transition-all font-semibold text-xs shadow-sm hover:scale-[1.02] active:scale-95"
+          className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-[#FF8A00]/10 via-[#FF9D24]/10 to-[#FF8A00]/10 hover:from-[#FF8A00]/20 hover:to-[#FF9D24]/20 text-[#FF8A00] dark:text-[#FF9D24] border border-[#FF8A00]/30 transition-all font-semibold text-xs shadow-sm hover:scale-[1.02] active:scale-95"
           title="Open LEMON AI (Ctrl+J)"
         >
-          <Bot className="h-4 w-4 text-[#00D4FF]" />
+          <Bot className="h-4 w-4 text-[#FF9D24]" />
           <span>LEMON</span>
         </button>
 

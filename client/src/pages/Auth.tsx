@@ -168,51 +168,51 @@ export const Auth: React.FC = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="text-[#94A3B8] text-base leading-relaxed"
+            className="text-[#A1A1AA] text-base leading-relaxed"
           >
             Organize assignments, deadlines, documents, and 7-day study plans with FLOW — Powered by IMV, an AI-powered student productivity platform.
           </motion.p>
 
           <div className="grid grid-cols-1 gap-4 pt-4">
-            <div className="flex items-center gap-3 p-3.5 rounded-xl bg-[#111827]/80 border border-slate-800/80 backdrop-blur-sm">
-              <div className="p-2 rounded-lg bg-[#2563FF]/15 text-[#00D4FF]">
+            <div className="flex items-center gap-3 p-3.5 rounded-xl bg-[#18191E]/80 border border-slate-800/80 backdrop-blur-sm">
+              <div className="p-2 rounded-lg bg-[#FF8A00]/15 text-[#FF9D24]">
                 <BookOpen className="h-5 w-5" />
               </div>
               <div>
                 <h4 className="text-sm font-semibold text-[#F8FAFC]">Instant Syllabus Ingestion</h4>
-                <p className="text-xs text-[#94A3B8]">Extract assignments & weightages from course PDFs and images automatically.</p>
+                <p className="text-xs text-[#A1A1AA]">Extract assignments & weightages from course PDFs and images automatically.</p>
               </div>
             </div>
 
-            <div className="flex items-center gap-3 p-3.5 rounded-xl bg-[#111827]/80 border border-slate-800/80 backdrop-blur-sm">
-              <div className="p-2 rounded-lg bg-[#2563FF]/15 text-[#2563FF]">
+            <div className="flex items-center gap-3 p-3.5 rounded-xl bg-[#18191E]/80 border border-slate-800/80 backdrop-blur-sm">
+              <div className="p-2 rounded-lg bg-[#FF8A00]/15 text-[#FF8A00]">
                 <Calendar className="h-5 w-5" />
               </div>
               <div>
                 <h4 className="text-sm font-semibold text-[#F8FAFC]">Optimized 7-Day Study Plans</h4>
-                <p className="text-xs text-[#94A3B8]">Dynamic daily focus blocks prioritized by urgency and course weightage.</p>
+                <p className="text-xs text-[#A1A1AA]">Dynamic daily focus blocks prioritized by urgency and course weightage.</p>
               </div>
             </div>
 
-            <div className="flex items-center gap-3 p-3.5 rounded-xl bg-[#111827]/80 border border-slate-800/80 backdrop-blur-sm">
+            <div className="flex items-center gap-3 p-3.5 rounded-xl bg-[#18191E]/80 border border-slate-800/80 backdrop-blur-sm">
               <div className="p-2 rounded-lg bg-indigo-500/15 text-indigo-400">
                 <Target className="h-5 w-5" />
               </div>
               <div>
                 <h4 className="text-sm font-semibold text-[#F8FAFC]">Smart Academic Tracking</h4>
-                <p className="text-xs text-[#94A3B8]">Track deadlines, progress metrics, and assignments seamlessly.</p>
+                <p className="text-xs text-[#A1A1AA]">Track deadlines, progress metrics, and assignments seamlessly.</p>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="relative z-10 text-xs text-[#94A3B8]">
+        <div className="relative z-10 text-xs text-[#A1A1AA]">
           © 2026 FLOW v1.1 • Powered by IMV • All rights reserved
         </div>
       </div>
 
       {/* Right Form Panel */}
-      <div className="flex-1 flex flex-col justify-between bg-[#0B1020]">
+      <div className="flex-1 flex flex-col justify-between bg-[#101114]">
         <div className="my-auto flex items-center justify-center p-6 sm:p-12 w-full">
           <div className="w-full max-w-md space-y-8">
             {/* Mobile Brand Logo */}
@@ -430,3 +430,4 @@ export const Auth: React.FC = () => {
   </>
 );
 };
+

@@ -85,13 +85,13 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: -10 }}
           transition={{ duration: 0.2 }}
-          className="relative w-full max-w-2xl rounded-2xl bg-[#111827] border border-slate-800 text-[#F8FAFC] shadow-2xl overflow-hidden"
+          className="relative w-full max-w-2xl rounded-2xl bg-[#18191E] border border-slate-800 text-[#F8FAFC] shadow-2xl overflow-hidden"
           role="dialog"
           aria-modal="true"
         >
           {/* Search Input Bar */}
-          <div className="p-4 border-b border-slate-800 flex items-center gap-3 bg-[#0B1020]/80">
-            <Search className="h-5 w-5 text-[#00D4FF] shrink-0" />
+          <div className="p-4 border-b border-slate-800 flex items-center gap-3 bg-[#101114]/80">
+            <Search className="h-5 w-5 text-[#FF9D24] shrink-0" />
             <input
               type="text"
               value={query}
@@ -117,13 +117,13 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
           </div>
 
           {/* Category Filter Pills */}
-          <div className="px-4 py-2 border-b border-slate-800/80 bg-[#111827] flex items-center gap-2 overflow-x-auto text-xs">
+          <div className="px-4 py-2 border-b border-slate-800/80 bg-[#18191E] flex items-center gap-2 overflow-x-auto text-xs">
             <span className="text-[11px] font-semibold text-slate-500 shrink-0">Filter:</span>
             <button
               onClick={() => setCategoryFilter('all')}
               className={`px-2.5 py-1 rounded-lg font-semibold transition-colors shrink-0 ${
                 categoryFilter === 'all'
-                  ? 'bg-[#2563FF]/20 text-[#00D4FF] border border-[#2563FF]/30'
+                  ? 'bg-[#FF8A00]/20 text-[#FF9D24] border border-[#FF8A00]/30'
                   : 'text-slate-400 hover:text-white hover:bg-slate-800'
               }`}
             >
@@ -143,7 +143,7 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
               onClick={() => setCategoryFilter('assignment')}
               className={`px-2.5 py-1 rounded-lg font-semibold transition-colors shrink-0 ${
                 categoryFilter === 'assignment'
-                  ? 'bg-[#2563FF]/20 text-[#93c5fd] border border-[#2563FF]/30'
+                  ? 'bg-[#FF8A00]/20 text-[#93c5fd] border border-[#FF8A00]/30'
                   : 'text-slate-400 hover:text-white hover:bg-slate-800'
               }`}
             >
@@ -173,7 +173,7 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
                 >
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                      <span className="font-semibold text-xs text-[#F8FAFC] group-hover:text-[#00D4FF] transition-colors truncate">
+                      <span className="font-semibold text-xs text-[#F8FAFC] group-hover:text-[#FF9D24] transition-colors truncate">
                         {task.title}
                       </span>
                       {task.status === 'completed' && (
@@ -183,7 +183,7 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
                       )}
                     </div>
 
-                    <div className="flex items-center gap-2 mt-1 text-[11px] text-[#94A3B8]">
+                    <div className="flex items-center gap-2 mt-1 text-[11px] text-[#A1A1AA]">
                       <span className="font-medium text-[#F8FAFC]">{task.subject}</span>
                       <span>•</span>
                       <span className={rel.isOverdue ? 'text-rose-400 font-semibold' : rel.isUrgent ? 'text-amber-400' : ''}>
@@ -194,14 +194,14 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
 
                   <div className="flex items-center gap-2 shrink-0">
                     <StatusBadge type="priority" value={task.priority} />
-                    <ArrowRight className="h-4 w-4 text-slate-600 group-hover:text-[#00D4FF] transition-colors" />
+                    <ArrowRight className="h-4 w-4 text-slate-600 group-hover:text-[#FF9D24] transition-colors" />
                   </div>
                 </div>
               );
             })}
 
             {results.length === 0 && (
-              <div className="py-12 text-center text-xs text-[#94A3B8] space-y-1">
+              <div className="py-12 text-center text-xs text-[#A1A1AA] space-y-1">
                 <Search className="h-6 w-6 mx-auto opacity-30" />
                 <p>No matching tasks found for "{query}".</p>
                 <p className="text-[11px] text-slate-500">Try searching by subject or assignment title.</p>
@@ -210,7 +210,7 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
           </div>
 
           {/* Footer Info */}
-          <div className="p-3 border-t border-slate-800 bg-[#0B1020]/90 text-[11px] text-[#94A3B8] flex items-center justify-between">
+          <div className="p-3 border-t border-slate-800 bg-[#101114]/90 text-[11px] text-[#A1A1AA] flex items-center justify-between">
             <span>Showing {results.length} result{results.length === 1 ? '' : 's'}</span>
             <span className="font-mono">FLOW Search Engine</span>
           </div>
@@ -220,3 +220,4 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
   );
 };
 export default GlobalSearchModal;
+

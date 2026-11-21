@@ -94,16 +94,16 @@ export const UnifiedCalendarView: React.FC<UnifiedCalendarViewProps> = ({
   return (
     <div className="space-y-6">
       {/* Calendar Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl bg-[#111827] border border-slate-800">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl bg-[#18191E] border border-slate-800">
         <div className="flex items-center gap-3">
-          <div className="h-9 w-9 rounded-xl bg-[#2563FF]/15 text-[#00D4FF] flex items-center justify-center border border-[#2563FF]/30">
+          <div className="h-9 w-9 rounded-xl bg-[#FF8A00]/15 text-[#FF9D24] flex items-center justify-center border border-[#FF8A00]/30">
             <CalendarIcon className="h-5 w-5" />
           </div>
           <div>
             <h3 className="text-base font-bold text-[#F8FAFC]">
               Unified Academic Calendar
             </h3>
-            <p className="text-xs text-[#94A3B8]">
+            <p className="text-xs text-[#A1A1AA]">
               {tasks.length} synchronized assignments & commitments
             </p>
           </div>
@@ -116,10 +116,10 @@ export const UnifiedCalendarView: React.FC<UnifiedCalendarViewProps> = ({
           >
             Today
           </button>
-          <div className="flex items-center gap-1 border border-slate-800 rounded-xl p-0.5 bg-[#0B1020]">
+          <div className="flex items-center gap-1 border border-slate-800 rounded-xl p-0.5 bg-[#101114]">
             <button
               onClick={handlePrevMonth}
-              className="p-1.5 rounded-lg text-[#94A3B8] hover:text-white hover:bg-slate-800 transition-colors"
+              className="p-1.5 rounded-lg text-[#A1A1AA] hover:text-white hover:bg-slate-800 transition-colors"
               title="Previous month"
             >
               <ChevronLeft className="h-4 w-4" />
@@ -129,7 +129,7 @@ export const UnifiedCalendarView: React.FC<UnifiedCalendarViewProps> = ({
             </span>
             <button
               onClick={handleNextMonth}
-              className="p-1.5 rounded-lg text-[#94A3B8] hover:text-white hover:bg-slate-800 transition-colors"
+              className="p-1.5 rounded-lg text-[#A1A1AA] hover:text-white hover:bg-slate-800 transition-colors"
               title="Next month"
             >
               <ChevronRight className="h-4 w-4" />
@@ -141,9 +141,9 @@ export const UnifiedCalendarView: React.FC<UnifiedCalendarViewProps> = ({
       {/* Main Grid & Selected Day Panel */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Month Calendar Grid (2 cols on lg) */}
-        <div className="lg:col-span-2 p-5 rounded-2xl bg-[#111827] border border-slate-800">
+        <div className="lg:col-span-2 p-5 rounded-2xl bg-[#18191E] border border-slate-800">
           {/* Day of Week Headers */}
-          <div className="grid grid-cols-7 gap-1 text-center text-xs font-bold text-[#94A3B8] pb-3 border-b border-slate-800">
+          <div className="grid grid-cols-7 gap-1 text-center text-xs font-bold text-[#A1A1AA] pb-3 border-b border-slate-800">
             <span>Sun</span>
             <span>Mon</span>
             <span>Tue</span>
@@ -174,20 +174,20 @@ export const UnifiedCalendarView: React.FC<UnifiedCalendarViewProps> = ({
                   onClick={() => setSelectedDate(new Date(year, month, dayNum))}
                   className={`h-16 sm:h-20 p-1.5 rounded-xl border transition-all cursor-pointer flex flex-col justify-between select-none ${
                     active
-                      ? 'bg-[#2563FF]/20 border-[#00D4FF] shadow-sm shadow-[#2563FF]/20'
+                      ? 'bg-[#FF8A00]/20 border-[#FF9D24] shadow-sm shadow-[#FF8A00]/20'
                       : today
-                      ? 'bg-[#1E293B] border-[#2563FF]/40 text-[#00D4FF]'
-                      : 'bg-[#0B1020]/70 border-slate-800/80 hover:border-slate-700 hover:bg-[#0B1020]'
+                      ? 'bg-[#1E293B] border-[#FF8A00]/40 text-[#FF9D24]'
+                      : 'bg-[#101114]/70 border-slate-800/80 hover:border-slate-700 hover:bg-[#101114]'
                   }`}
                 >
                   <div className="flex items-center justify-between">
                     <span className={`text-xs font-bold ${
-                      today ? 'text-[#00D4FF]' : active ? 'text-[#F8FAFC]' : 'text-slate-400'
+                      today ? 'text-[#FF9D24]' : active ? 'text-[#F8FAFC]' : 'text-slate-400'
                     }`}>
                       {dayNum}
                     </span>
                     {dayTasks.length > 0 && (
-                      <span className="text-[10px] font-bold px-1.5 rounded-full bg-[#2563FF]/20 text-[#00D4FF]">
+                      <span className="text-[10px] font-bold px-1.5 rounded-full bg-[#FF8A00]/20 text-[#FF9D24]">
                         {dayTasks.length}
                       </span>
                     )}
@@ -203,14 +203,14 @@ export const UnifiedCalendarView: React.FC<UnifiedCalendarViewProps> = ({
                             ? 'line-through text-slate-500 bg-slate-800/40'
                             : t.priority === 'high'
                             ? 'bg-rose-500/20 text-rose-300'
-                            : 'bg-[#2563FF]/20 text-[#93c5fd]'
+                            : 'bg-[#FF8A00]/20 text-[#93c5fd]'
                         }`}
                       >
                         {t.title}
                       </div>
                     ))}
                     {dayTasks.length > 2 && (
-                      <span className="text-[9px] text-[#94A3B8] font-bold block text-right">
+                      <span className="text-[9px] text-[#A1A1AA] font-bold block text-right">
                         +{dayTasks.length - 2} more
                       </span>
                     )}
@@ -222,7 +222,7 @@ export const UnifiedCalendarView: React.FC<UnifiedCalendarViewProps> = ({
         </div>
 
         {/* Selected Day Task Detail Panel */}
-        <div className="p-5 rounded-2xl bg-[#111827] border border-slate-800 space-y-4 flex flex-col justify-between">
+        <div className="p-5 rounded-2xl bg-[#18191E] border border-slate-800 space-y-4 flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between pb-3 border-b border-slate-800">
               <div>
@@ -233,14 +233,14 @@ export const UnifiedCalendarView: React.FC<UnifiedCalendarViewProps> = ({
                     day: 'numeric'
                   })}
                 </h4>
-                <p className="text-xs text-[#94A3B8]">
+                <p className="text-xs text-[#A1A1AA]">
                   {selectedDayTasks.length} task{selectedDayTasks.length === 1 ? '' : 's'} scheduled
                 </p>
               </div>
 
               <button
                 onClick={onOpenQuickAdd}
-                className="p-1.5 rounded-lg bg-[#2563FF]/15 text-[#00D4FF] hover:bg-[#2563FF]/25 border border-[#2563FF]/30 transition-colors"
+                className="p-1.5 rounded-lg bg-[#FF8A00]/15 text-[#FF9D24] hover:bg-[#FF8A00]/25 border border-[#FF8A00]/30 transition-colors"
                 title="Quick Add Task for this day"
               >
                 <Plus className="h-4 w-4" />
@@ -269,7 +269,7 @@ export const UnifiedCalendarView: React.FC<UnifiedCalendarViewProps> = ({
                       {task.title}
                     </p>
                     <div className="flex items-center gap-2 mt-1">
-                      <span className="text-[10px] text-[#00D4FF] font-medium">{task.subject}</span>
+                      <span className="text-[10px] text-[#FF9D24] font-medium">{task.subject}</span>
                       <StatusBadge type="priority" value={task.priority} />
                     </div>
 
@@ -278,14 +278,14 @@ export const UnifiedCalendarView: React.FC<UnifiedCalendarViewProps> = ({
                         href={getGoogleCalendarUrl(task)}
                         target="_blank"
                         rel="noreferrer"
-                        className="inline-flex items-center gap-1 text-[10px] font-medium text-[#94A3B8] hover:text-[#00D4FF] transition-colors"
+                        className="inline-flex items-center gap-1 text-[10px] font-medium text-[#A1A1AA] hover:text-[#FF9D24] transition-colors"
                       >
                         <ExternalLink className="h-3 w-3" />
                         <span>Google Cal</span>
                       </a>
                       <button
                         onClick={() => downloadIcsFile(task)}
-                        className="inline-flex items-center gap-1 text-[10px] font-medium text-[#94A3B8] hover:text-[#00D4FF] transition-colors"
+                        className="inline-flex items-center gap-1 text-[10px] font-medium text-[#A1A1AA] hover:text-[#FF9D24] transition-colors"
                       >
                         <Download className="h-3 w-3" />
                         <span>.ICS</span>
@@ -296,12 +296,12 @@ export const UnifiedCalendarView: React.FC<UnifiedCalendarViewProps> = ({
               ))}
 
               {selectedDayTasks.length === 0 && (
-                <div className="py-12 text-center text-xs text-[#94A3B8] space-y-2">
+                <div className="py-12 text-center text-xs text-[#A1A1AA] space-y-2">
                   <CalendarIcon className="h-8 w-8 mx-auto opacity-40 text-slate-500" />
                   <p>No deadlines scheduled for this day.</p>
                   <button
                     onClick={onOpenQuickAdd}
-                    className="text-xs text-[#00D4FF] font-bold hover:underline"
+                    className="text-xs text-[#FF9D24] font-bold hover:underline"
                   >
                     + Add a task
                   </button>
@@ -310,7 +310,7 @@ export const UnifiedCalendarView: React.FC<UnifiedCalendarViewProps> = ({
             </div>
           </div>
 
-          <div className="pt-3 border-t border-slate-800 text-[11px] text-[#94A3B8] text-center">
+          <div className="pt-3 border-t border-slate-800 text-[11px] text-[#A1A1AA] text-center">
             Dates displayed in local timezone: {Intl.DateTimeFormat().resolvedOptions().timeZone}
           </div>
         </div>
@@ -319,3 +319,4 @@ export const UnifiedCalendarView: React.FC<UnifiedCalendarViewProps> = ({
   );
 };
 export default UnifiedCalendarView;
+
