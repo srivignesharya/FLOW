@@ -23,6 +23,7 @@ const AuthCallback = lazy(() => import('./pages/AuthCallback').then(m => ({ defa
 
 import { AdminRoute } from './components/AdminRoute';
 import { ToastProvider } from './components/ToastContainer';
+import { PWAInstallModal } from './components/PWAInstallModal';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, loading } = useAuth();
@@ -174,6 +175,7 @@ export const App: React.FC = () => {
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
     </Suspense>
+    <PWAInstallModal />
     </>
   );
 };

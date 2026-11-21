@@ -15,12 +15,12 @@ export const Navbar: React.FC = () => {
   const initials = user?.email?.charAt(0).toUpperCase() || 'U';
 
   return (
-    <header className="h-16 shrink-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200/80 dark:border-slate-800/80 px-4 sm:px-6 flex items-center justify-between sticky top-0 z-30 shadow-sm dark:shadow-md">
+    <header className="h-16 shrink-0 bg-white/80 dark:bg-[#101114]/90 backdrop-blur-xl border-b border-slate-200/80 dark:border-[#27272A] px-3 sm:px-6 flex items-center justify-between sticky top-0 z-30 shadow-sm dark:shadow-md">
       {/* Left Badge / Mobile Brand */}
-      <div className="flex items-center gap-2.5">
+      <div className="flex items-center gap-2 sm:gap-3 shrink-0 min-w-0">
         {/* Mobile Brand Logo */}
-        <div className="flex items-center gap-2 md:hidden">
-          <ZenithLogo size="xs" showWordmark={true} showBadge={true} />
+        <div className="flex items-center md:hidden shrink-0">
+          <ZenithLogo size="sm" showWordmark={true} showBadge={false} />
         </div>
 
         {/* Desktop Academic Workspace Badge */}
@@ -31,7 +31,7 @@ export const Navbar: React.FC = () => {
       </div>
 
       {/* Right User Controls */}
-      <div className="flex items-center gap-2 sm:gap-3">
+      <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
         {/* LEMON AI Assistant Trigger (Desktop only - mobile has dedicated bottom nav tab) */}
         <button
           id="navbar-copilot-btn"
@@ -47,17 +47,17 @@ export const Navbar: React.FC = () => {
         <NotificationCenter />
 
         {/* Animated Theme Switcher */}
-        <SwitchMode width={58} height={28} />
+        <SwitchMode width={52} height={26} />
 
         {/* Divider */}
-        <div className="h-6 w-px bg-slate-200 dark:bg-slate-800 mx-1" />
+        <div className="h-6 w-px bg-slate-200 dark:bg-[#27272A] mx-0.5 sm:mx-1" />
 
         {/* User Profile */}
-        <div className="flex items-center gap-3">
-          <div className="h-9 w-9 rounded-full bg-gradient-to-br from-brand-500 via-orange-500 to-amber-500 flex items-center justify-center text-white text-sm font-black shadow-md dark:shadow-glow-orange border border-brand-400/30">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-full bg-gradient-to-br from-[#FF8A00] via-[#FF9D24] to-amber-500 flex items-center justify-center text-white text-xs sm:text-sm font-black shadow-md dark:shadow-glow-orange border border-[#FF9D24]/30 shrink-0">
             {initials}
           </div>
-          <span className="text-sm font-semibold text-slate-800 dark:text-slate-200 hidden md:block max-w-[160px] truncate">
+          <span className="text-sm font-semibold text-slate-800 dark:text-slate-200 hidden lg:block max-w-[150px] truncate">
             {user?.email}
           </span>
         </div>
@@ -66,13 +66,15 @@ export const Navbar: React.FC = () => {
         <button
           id="sign-out-btn"
           onClick={signOut}
-          className="p-2 rounded-xl text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
+          className="p-1.5 sm:p-2 rounded-xl text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors shrink-0"
           title="Sign Out"
           aria-label="Sign out"
         >
-          <LogOut className="h-5 w-5" />
+          <LogOut className="h-4 w-4 sm:h-5 sm:w-5" />
         </button>
       </div>
     </header>
   );
 };
+
+export default Navbar;
