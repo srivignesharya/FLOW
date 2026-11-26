@@ -230,23 +230,40 @@ router.post('/exams/:id/upload-docs', requireAuth, upload.array('files', 5), asy
       });
     }
 
+    if (combinedExtractedText.trim().length === 0) {
+      return res.status(422).json({
+        success: false,
+        error: 'Could not extract readable text from the uploaded file(s). If this is a scanned PDF, please upload it as PNG/JPG images or ensure the PDF has selectable text.',
+        files: uploadedFileSummaries,
+        totalCharsExtracted: 0
+      });
+    }
+
     // Attach to Exam in Supabase or memory
+    let dbUpdated = false;
     try {
-      const { data: exam } = await supabaseAdmin
+      const { data: exam, error: fetchErr } = await supabaseAdmin
         .from('study_exams')
         .select('*')
         .eq('id', id)
         .eq('user_id', userId)
         .single();
 
-      if (exam) {
+      if (!fetchErr && exam) {
         const updatedSyllabus = `${exam.syllabus_text || ''}\n${combinedExtractedText}`.trim();
-        await supabaseAdmin
+        const { error: updateErr } = await supabaseAdmin
           .from('study_exams')
           .update({ syllabus_text: updatedSyllabus, updated_at: new Date().toISOString() })
           .eq('id', id);
+        if (updateErr) {
+          console.error('[FLOW STUDY UPLOAD] Supabase update error:', updateErr.message);
+        } else {
+          dbUpdated = true;
+        }
       }
-    } catch {}
+    } catch (dbErr) {
+      console.warn('[FLOW STUDY UPLOAD] Supabase fallback:', dbErr.message);
+    }
 
     // In-memory update
     const userExams = memoryExams.get(userId) || [];
@@ -258,7 +275,8 @@ router.post('/exams/:id/upload-docs', requireAuth, upload.array('files', 5), asy
 
     res.json({
       success: true,
-      message: `Successfully processed ${req.files.length} document(s).`,
+      dbUpdated,
+      message: `Extracted ${combinedExtractedText.length.toLocaleString()} characters from ${req.files.length} document(s).`,
       files: uploadedFileSummaries,
       totalCharsExtracted: combinedExtractedText.length
     });
@@ -374,9 +392,8 @@ Return ONLY valid JSON matching this exact structure:
       return res.status(502).json({ error: 'AI generation did not complete cleanly. Please retry.' });
     }
 
-    // Assign IDs
-    const topicsWithIds = (generatedData.topics || []).map((t, idx) => ({
-      id: `top-${Date.now()}-${idx}`,
+    // Prepare rows (omit id for Supabase so DB generates valid UUIDs)
+    const topicsPayload = (generatedData.topics || []).map((t) => ({
       exam_id: id,
       user_id: userId,
       unit_name: t.unit_name || 'Unit 1',
@@ -386,8 +403,7 @@ Return ONLY valid JSON matching this exact structure:
       is_difficult: false
     }));
 
-    const questionsWithIds = (generatedData.questions || []).map((q, idx) => ({
-      id: `q-${Date.now()}-${idx}`,
+    const questionsPayload = (generatedData.questions || []).map((q) => ({
       exam_id: id,
       user_id: userId,
       unit_name: q.unit_name || 'Unit 1',
@@ -402,8 +418,7 @@ Return ONLY valid JSON matching this exact structure:
       attempt_verdict: null
     }));
 
-    const flashcardsWithIds = (generatedData.flashcards || []).map((f, idx) => ({
-      id: `fc-${Date.now()}-${idx}`,
+    const flashcardsPayload = (generatedData.flashcards || []).map((f) => ({
       exam_id: id,
       user_id: userId,
       topic_name: f.topic_name || 'General',
@@ -412,25 +427,54 @@ Return ONLY valid JSON matching this exact structure:
       difficulty: f.difficulty || 'medium'
     }));
 
-    // Try Supabase inserts
+    let persistedTopics = [];
+    let persistedQuestions = [];
+    let persistedFlashcards = [];
+
+    // Try Supabase inserts with proper error checking
     try {
-      if (topicsWithIds.length > 0) await supabaseAdmin.from('study_topics').insert(topicsWithIds);
-      if (questionsWithIds.length > 0) await supabaseAdmin.from('study_questions').insert(questionsWithIds);
-      if (flashcardsWithIds.length > 0) await supabaseAdmin.from('study_flashcards').insert(flashcardsWithIds);
-    } catch {}
+      if (topicsPayload.length > 0) {
+        const { data: tData, error: tErr } = await supabaseAdmin.from('study_topics').insert(topicsPayload).select();
+        if (tErr) console.error('[FLOW STUDY] study_topics insert error:', tErr.message);
+        else if (tData) persistedTopics = tData;
+      }
+      if (questionsPayload.length > 0) {
+        const { data: qData, error: qErr } = await supabaseAdmin.from('study_questions').insert(questionsPayload).select();
+        if (qErr) console.error('[FLOW STUDY] study_questions insert error:', qErr.message);
+        else if (qData) persistedQuestions = qData;
+      }
+      if (flashcardsPayload.length > 0) {
+        const { data: fData, error: fErr } = await supabaseAdmin.from('study_flashcards').insert(flashcardsPayload).select();
+        if (fErr) console.error('[FLOW STUDY] study_flashcards insert error:', fErr.message);
+        else if (fData) persistedFlashcards = fData;
+      }
+    } catch (dbErr) {
+      console.error('[FLOW STUDY] Supabase generate-materials exception:', dbErr.message);
+    }
+
+    // Fallback to in-memory with generated IDs if Supabase didn't persist
+    if (persistedTopics.length === 0 && topicsPayload.length > 0) {
+      persistedTopics = topicsPayload.map((t, idx) => ({ id: `top-${Date.now()}-${idx}`, ...t }));
+    }
+    if (persistedQuestions.length === 0 && questionsPayload.length > 0) {
+      persistedQuestions = questionsPayload.map((q, idx) => ({ id: `q-${Date.now()}-${idx}`, ...q }));
+    }
+    if (persistedFlashcards.length === 0 && flashcardsPayload.length > 0) {
+      persistedFlashcards = flashcardsPayload.map((f, idx) => ({ id: `fc-${Date.now()}-${idx}`, ...f }));
+    }
 
     // Memory Store Update
     if (foundMem) {
-      foundMem.topics = topicsWithIds;
-      foundMem.questions = questionsWithIds;
-      foundMem.flashcards = flashcardsWithIds;
+      foundMem.topics = [...(foundMem.topics || []), ...persistedTopics];
+      foundMem.questions = [...(foundMem.questions || []), ...persistedQuestions];
+      foundMem.flashcards = [...(foundMem.flashcards || []), ...persistedFlashcards];
     }
 
     res.json({
       success: true,
-      topics: topicsWithIds,
-      questions: questionsWithIds,
-      flashcards: flashcardsWithIds
+      topics: persistedTopics,
+      questions: persistedQuestions,
+      flashcards: persistedFlashcards
     });
   } catch (err) {
     next(err);
@@ -661,6 +705,92 @@ router.get('/exams/:id/formula-pdf', requireAuth, async (req, res, next) => {
     }
 
     doc.end();
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ============================================================
+// 11. POST /api/v1/study/extract-timetable — AI Timetable Extraction
+// ============================================================
+router.post('/extract-timetable', requireAuth, upload.single('file'), async (req, res, next) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'Please upload a PDF or image of your exam timetable.' });
+    }
+
+    let rawText = '';
+    if (req.file.mimetype === 'application/pdf') {
+      rawText = await extractTextFromPdf(req.file.buffer);
+    } else if (req.file.mimetype.startsWith('image/')) {
+      rawText = await performVisionOcr(req.file.buffer, req.file.mimetype);
+    }
+
+    if (!rawText || rawText.trim().length < 15) {
+      return res.status(422).json({
+        error: 'Could not extract readable text from the timetable. Try a clearer image or selectable-text PDF.'
+      });
+    }
+
+    const prompt = `
+You are LEMON, an academic timetable parser inside FLOW.
+Extract all examination schedule entries from the provided timetable text.
+Do NOT confuse this with a syllabus or question paper—extract ONLY exam schedule rows.
+
+For each exam found, extract:
+- subject: Subject name (e.g. "Data Structures & Algorithms")
+- subject_code: Subject code if present (e.g. "CS301"), else ""
+- exam_name: Examination title or type (e.g. "End Semester Exam", "Midterm", "CIA 2")
+- exam_date: Date in YYYY-MM-DD format (if year is missing, infer ${new Date().getFullYear()})
+- exam_time: Time slot if present (e.g. "09:30 AM - 12:30 PM"), else ""
+- semester: Semester if present (e.g. "Semester 5"), else ""
+- exam_type: Type if present (e.g. "Theory", "Practical", "Internal"), else ""
+
+Return ONLY valid JSON:
+{
+  "exams": [
+    {
+      "subject": "Subject Name",
+      "subject_code": "CS301",
+      "exam_name": "End Semester Exam",
+      "exam_date": "2026-12-10",
+      "exam_time": "09:30 AM - 12:30 PM",
+      "semester": "Sem 5",
+      "exam_type": "Theory"
+    }
+  ]
+}
+
+TIMETABLE TEXT:
+${rawText.slice(0, 20000)}
+`;
+
+    const aiRes = await callAiCompletion({
+      systemInstruction: 'You are LEMON, an academic timetable extraction engine. Output valid JSON only.',
+      prompt,
+      preferGemini: true,
+      jsonMode: true
+    });
+
+    let parsed = null;
+    try {
+      parsed = JSON.parse(aiRes);
+    } catch {
+      const m = aiRes.match(/\{[\s\S]*\}/);
+      if (m) parsed = JSON.parse(m[0]);
+    }
+
+    const extractedExams = Array.isArray(parsed?.exams) ? parsed.exams : [];
+    if (extractedExams.length === 0) {
+      return res.status(422).json({
+        error: 'No examination schedule entries could be identified in this document.'
+      });
+    }
+
+    res.json({
+      success: true,
+      exams: extractedExams
+    });
   } catch (err) {
     next(err);
   }

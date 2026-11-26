@@ -41,17 +41,27 @@ export const Study: React.FC = () => {
 
   // New Exam Modal
   const [isNewExamOpen, setIsNewExamOpen] = useState(false);
+  const [examModalTab, setExamModalTab] = useState<'manual' | 'timetable'>('manual');
   const [newSubject, setNewSubject] = useState('');
   const [newExamName, setNewExamName] = useState('');
   const [newExamDate, setNewExamDate] = useState('');
   const [newSyllabusText, setNewSyllabusText] = useState('');
   const [savingExam, setSavingExam] = useState(false);
 
+  // Timetable Upload State
+  const [timetableFile, setTimetableFile] = useState<File | null>(null);
+  const [extractingTimetable, setExtractingTimetable] = useState(false);
+  const [extractedTimetableExams, setExtractedTimetableExams] = useState<any[]>([]);
+  const [timetableError, setTimetableError] = useState<string | null>(null);
+  const [savingTimetable, setSavingTimetable] = useState(false);
+
   // Document Upload State
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [uploadDocType, setUploadDocType] = useState<'syllabus' | 'previous_papers'>('syllabus');
   const [uploadingDocs, setUploadingDocs] = useState(false);
+  const [uploadStage, setUploadStage] = useState<'idle' | 'uploading' | 'processing' | 'analysing' | 'saving' | 'completed' | 'failed'>('idle');
   const [uploadFeedback, setUploadFeedback] = useState<string | null>(null);
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Active Mode: 'hub' | 'learn' | 'priority' | 'test' | 'pomodoro'
@@ -189,29 +199,125 @@ export const Study: React.FC = () => {
     setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
-  // Upload Files to Exam Context
+  // Upload Files to Exam Context + Automatically Trigger LEMON AI Extraction
   const handleUploadDocs = async () => {
     if (!selectedExamId || selectedFiles.length === 0) return;
     try {
       setUploadingDocs(true);
+      setUploadStage('uploading');
       setUploadFeedback(null);
       const formData = new FormData();
       selectedFiles.forEach((file) => formData.append('files', file));
       formData.append('docType', uploadDocType);
 
-      const res = await api.post(`/study/exams/${selectedExamId}/upload-docs`, formData, {
+      setUploadStage('processing');
+      const uploadRes = await api.post(`/study/exams/${selectedExamId}/upload-docs`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
 
-      setUploadFeedback(`✓ ${res.data.message || 'Files uploaded and processed!'}`);
+      if (!uploadRes.data?.success || uploadRes.data?.totalCharsExtracted === 0) {
+        throw new Error(uploadRes.data?.error || 'No readable text could be extracted from the uploaded document(s).');
+      }
+
+      setUploadStage('analysing');
+      const genRes = await api.post(`/study/exams/${selectedExamId}/generate-materials`, {
+        syllabusText: uploadDocType === 'syllabus' ? undefined : examDetail?.exam?.syllabus_text
+      });
+
+      if (!genRes.data?.success) {
+        throw new Error(genRes.data?.error || 'AI extraction failed to structure study materials.');
+      }
+
+      setUploadStage('saving');
       setSelectedFiles([]);
       if (fileInputRef.current) fileInputRef.current.value = '';
       await loadExamDetail(selectedExamId);
+
+      const tCount = genRes.data.topics?.length || 0;
+      const qCount = genRes.data.questions?.length || 0;
+      const fCount = genRes.data.flashcards?.length || 0;
+      setUploadStage('completed');
+      setUploadFeedback(`✓ Completed! Extracted ${tCount} topics, ${qCount} priority questions, and ${fCount} flashcards.`);
     } catch (err: any) {
-      console.error('[FLOW STUDY] Document upload failed:', err);
-      setUploadFeedback(err.response?.data?.error || 'Failed to upload documents. Please check file type & size.');
+      console.error('[FLOW STUDY] Document ingestion failed:', err);
+      setUploadStage('failed');
+      setUploadFeedback(err.response?.data?.error || err.message || 'Failed to process documents. Please check file type & size.');
     } finally {
       setUploadingDocs(false);
+    }
+  };
+
+  // Direct Authenticated Formula Sheet PDF Download
+  const handleDownloadFormulaPdf = async () => {
+    if (!selectedExamId || downloadingPdf) return;
+    try {
+      setDownloadingPdf(true);
+      const res = await api.get(`/study/exams/${selectedExamId}/formula-pdf`, {
+        responseType: 'blob'
+      });
+      const blob = new Blob([res.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      const safeSubject = (currentExam?.subject || 'FLOW_Study').replace(/[^a-zA-Z0-9_-]+/g, '_');
+      link.href = url;
+      link.download = `${safeSubject}_Formula_Sheet.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err: any) {
+      console.error('[FLOW STUDY] Formula PDF download failed:', err);
+      alert(err.response?.data?.error || 'Failed to download Formula Sheet PDF.');
+    } finally {
+      setDownloadingPdf(false);
+    }
+  };
+
+  // Timetable Upload & AI Extraction
+  const handleExtractTimetable = async () => {
+    if (!timetableFile) return;
+    try {
+      setExtractingTimetable(true);
+      setTimetableError(null);
+      const formData = new FormData();
+      formData.append('file', timetableFile);
+      const res = await api.post('/study/extract-timetable', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      if (!res.data?.success || !res.data?.exams?.length) {
+        throw new Error(res.data?.error || 'No exam schedule entries found.');
+      }
+      setExtractedTimetableExams(res.data.exams);
+    } catch (err: any) {
+      setTimetableError(err.response?.data?.error || err.message || 'Failed to extract timetable.');
+    } finally {
+      setExtractingTimetable(false);
+    }
+  };
+
+  const handleSaveTimetableExams = async () => {
+    if (extractedTimetableExams.length === 0) return;
+    try {
+      setSavingTimetable(true);
+      let lastCreatedId: string | null = null;
+      for (const item of extractedTimetableExams) {
+        if (!item.subject || !item.exam_date) continue;
+        const res = await api.post('/study/exams', {
+          subject: item.subject_code ? `${item.subject} (${item.subject_code})` : item.subject,
+          exam_name: [item.exam_name, item.semester, item.exam_type, item.exam_time].filter(Boolean).join(' • ') || 'Examination',
+          exam_date: item.exam_date
+        });
+        if (res.data?.id) lastCreatedId = res.data.id;
+      }
+      setIsNewExamOpen(false);
+      setTimetableFile(null);
+      setExtractedTimetableExams([]);
+      await loadExams();
+      if (lastCreatedId) setSelectedExamId(lastCreatedId);
+    } catch (err: any) {
+      setTimetableError(err.response?.data?.error || 'Failed to save one or more exams.');
+    } finally {
+      setSavingTimetable(false);
     }
   };
 
@@ -316,10 +422,6 @@ export const Study: React.FC = () => {
   const questionsPct = questions.length > 0 ? Math.round((attemptedQuestions / questions.length) * 100) : 0;
   const overallReadiness = Math.round((topicCoveragePct * 0.6) + (questionsPct * 0.4));
 
-  if (loading) {
-    return <LoadingSpinner fullPage text="Initializing Study (Beta) Workspace..." />;
-  }
-
   return (
     <div className="max-w-7xl mx-auto space-y-8 pb-16">
       {/* 1. Header Banner */}
@@ -349,15 +451,15 @@ export const Study: React.FC = () => {
             </button>
 
             {selectedExamId && (
-              <a
-                href={`/api/v1/study/exams/${selectedExamId}/formula-pdf`}
-                target="_blank"
-                rel="noreferrer"
-                className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-[#FF9D24] border border-[#FF8A00]/30 text-xs font-bold transition-all flex items-center gap-2"
+              <button
+                type="button"
+                onClick={handleDownloadFormulaPdf}
+                disabled={downloadingPdf}
+                className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-[#FF9D24] border border-[#FF8A00]/30 text-xs font-bold transition-all flex items-center gap-2 disabled:opacity-50"
               >
                 <Download className="h-4 w-4" />
-                <span>Formula Sheet PDF</span>
-              </a>
+                <span>{downloadingPdf ? 'Downloading...' : 'Formula Sheet PDF'}</span>
+              </button>
             )}
           </div>
         </div>
@@ -365,7 +467,13 @@ export const Study: React.FC = () => {
 
       {/* 2. Exam Picker Ribbon */}
       <div className="flex items-center gap-3 overflow-x-auto pb-2 scrollbar-none">
-        {exams.length === 0 ? (
+        {loading ? (
+          <div className="flex gap-3">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="h-14 w-48 rounded-2xl bg-[#18191E] border border-slate-800 animate-pulse" />
+            ))}
+          </div>
+        ) : exams.length === 0 ? (
           <div className="p-4 rounded-2xl bg-[#18191E] border border-slate-800 text-xs text-[#A1A1AA]">
             No exams scheduled yet. Click <strong>Add Exam Schedule</strong> above to start preparation!
           </div>
@@ -595,7 +703,13 @@ export const Study: React.FC = () => {
                         className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#FF8A00] to-[#FF9D24] text-white text-xs font-bold shadow-md hover:opacity-95 transition-all flex items-center gap-2"
                       >
                         <UploadCloud className="h-4 w-4" />
-                        <span>{uploadingDocs ? 'Extracting Text & Ingesting...' : 'Upload & Attach to Exam'}</span>
+                        <span>
+                          {uploadStage === 'uploading' ? 'Uploading...' :
+                           uploadStage === 'processing' ? 'Processing Text...' :
+                           uploadStage === 'analysing' ? 'LEMON Analysing...' :
+                           uploadStage === 'saving' ? 'Saving...' :
+                           'Upload & Extract with LEMON'}
+                        </span>
                       </button>
                     </div>
                   </div>
@@ -995,72 +1109,210 @@ export const Study: React.FC = () => {
       {/* 5. Create Exam Modal */}
       <AnimatePresence>
         {isNewExamOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm overflow-y-auto">
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="w-full max-w-lg bg-[#18191E] border border-slate-800 rounded-3xl p-6 sm:p-8 space-y-5 text-white"
+              className="w-full max-w-2xl bg-[#18191E] border border-slate-800 rounded-3xl p-6 sm:p-8 space-y-5 text-white my-8"
             >
-              <h3 className="text-xl font-black">Register Exam for Preparation</h3>
-              <form onSubmit={handleCreateExam} className="space-y-4">
-                <div>
-                  <label className="text-xs font-semibold text-[#A1A1AA] block mb-1">Subject Name *</label>
-                  <input
-                    required
-                    value={newSubject}
-                    onChange={(e) => setNewSubject(e.target.value)}
-                    placeholder="e.g. Operating Systems / CS401"
-                    className="w-full p-3 rounded-xl bg-[#101114] border border-slate-800 text-xs text-white focus:outline-none focus:border-[#FF9D24]"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-semibold text-[#A1A1AA] block mb-1">Examination Title *</label>
-                  <input
-                    required
-                    value={newExamName}
-                    onChange={(e) => setNewExamName(e.target.value)}
-                    placeholder="e.g. End-Semester Examination"
-                    className="w-full p-3 rounded-xl bg-[#101114] border border-slate-800 text-xs text-white focus:outline-none focus:border-[#FF9D24]"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-semibold text-[#A1A1AA] block mb-1">Target Examination Date *</label>
-                  <input
-                    type="date"
-                    required
-                    value={newExamDate}
-                    onChange={(e) => setNewExamDate(e.target.value)}
-                    className="w-full p-3 rounded-xl bg-[#101114] border border-slate-800 text-xs text-white focus:outline-none focus:border-[#FF9D24]"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-semibold text-[#A1A1AA] block mb-1">Syllabus Overview / Topics (Optional)</label>
-                  <textarea
-                    rows={3}
-                    value={newSyllabusText}
-                    onChange={(e) => setNewSyllabusText(e.target.value)}
-                    placeholder="Paste key chapters or topics..."
-                    className="w-full p-3 rounded-xl bg-[#101114] border border-slate-800 text-xs text-white focus:outline-none focus:border-[#FF9D24] resize-none"
-                  />
-                </div>
-                <div className="flex items-center justify-end gap-3 pt-3">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xl font-black">Add Exam Schedule</h3>
+                <div className="flex items-center gap-1 p-1 rounded-xl bg-[#101114] border border-slate-800">
                   <button
                     type="button"
-                    onClick={() => setIsNewExamOpen(false)}
-                    className="px-4 py-2 rounded-xl text-xs text-[#A1A1AA] hover:text-white"
+                    onClick={() => setExamModalTab('manual')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                      examModalTab === 'manual' ? 'bg-[#FF8A00] text-white' : 'text-[#A1A1AA] hover:text-white'
+                    }`}
                   >
-                    Cancel
+                    Manual Entry
                   </button>
                   <button
-                    type="submit"
-                    disabled={savingExam}
-                    className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#FF8A00] to-[#FF9D24] text-white text-xs font-bold"
+                    type="button"
+                    onClick={() => setExamModalTab('timetable')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                      examModalTab === 'timetable' ? 'bg-[#FF8A00] text-white' : 'text-[#A1A1AA] hover:text-white'
+                    }`}
                   >
-                    {savingExam ? 'Saving...' : 'Save & Prepare'}
+                    Upload Exam Schedule
                   </button>
                 </div>
-              </form>
+              </div>
+
+              {examModalTab === 'manual' ? (
+                <form onSubmit={handleCreateExam} className="space-y-4">
+                  <div>
+                    <label className="text-xs font-semibold text-[#A1A1AA] block mb-1">Subject Name *</label>
+                    <input
+                      required
+                      value={newSubject}
+                      onChange={(e) => setNewSubject(e.target.value)}
+                      placeholder="e.g. Operating Systems / CS401"
+                      className="w-full p-3 rounded-xl bg-[#101114] border border-slate-800 text-xs text-white focus:outline-none focus:border-[#FF9D24]"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-[#A1A1AA] block mb-1">Examination Title *</label>
+                    <input
+                      required
+                      value={newExamName}
+                      onChange={(e) => setNewExamName(e.target.value)}
+                      placeholder="e.g. End-Semester Examination"
+                      className="w-full p-3 rounded-xl bg-[#101114] border border-slate-800 text-xs text-white focus:outline-none focus:border-[#FF9D24]"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-[#A1A1AA] block mb-1">Target Examination Date *</label>
+                    <input
+                      type="date"
+                      required
+                      value={newExamDate}
+                      onChange={(e) => setNewExamDate(e.target.value)}
+                      className="w-full p-3 rounded-xl bg-[#101114] border border-slate-800 text-xs text-white focus:outline-none focus:border-[#FF9D24]"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-[#A1A1AA] block mb-1">Syllabus Overview / Topics (Optional)</label>
+                    <textarea
+                      rows={3}
+                      value={newSyllabusText}
+                      onChange={(e) => setNewSyllabusText(e.target.value)}
+                      placeholder="Paste key chapters or topics..."
+                      className="w-full p-3 rounded-xl bg-[#101114] border border-slate-800 text-xs text-white focus:outline-none focus:border-[#FF9D24] resize-none"
+                    />
+                  </div>
+                  <div className="flex items-center justify-end gap-3 pt-3">
+                    <button
+                      type="button"
+                      onClick={() => setIsNewExamOpen(false)}
+                      className="px-4 py-2 rounded-xl text-xs text-[#A1A1AA] hover:text-white"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={savingExam}
+                      className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#FF8A00] to-[#FF9D24] text-white text-xs font-bold"
+                    >
+                      {savingExam ? 'Saving...' : 'Save & Prepare'}
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                <div className="space-y-4">
+                  <p className="text-xs text-[#A1A1AA]">
+                    Upload your examination timetable (PDF, PNG, JPG, JPEG, WebP). LEMON will extract subjects, codes, dates, and times for you to review.
+                  </p>
+                  <input
+                    type="file"
+                    accept=".pdf,image/png,image/jpeg,image/webp"
+                    onChange={(e) => {
+                      setTimetableFile(e.target.files?.[0] || null);
+                      setTimetableError(null);
+                    }}
+                    className="w-full p-3 rounded-xl bg-[#101114] border border-slate-800 text-xs text-slate-300 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-[#FF8A00]/20 file:text-[#FF9D24]"
+                  />
+
+                  {timetableFile && extractedTimetableExams.length === 0 && (
+                    <button
+                      type="button"
+                      onClick={handleExtractTimetable}
+                      disabled={extractingTimetable}
+                      className="w-full py-2.5 rounded-xl bg-gradient-to-r from-[#FF8A00] to-[#FF9D24] text-white text-xs font-bold"
+                    >
+                      {extractingTimetable ? 'LEMON Extracting Timetable...' : 'Extract Exam Schedule'}
+                    </button>
+                  )}
+
+                  {timetableError && (
+                    <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-xs text-rose-400">
+                      {timetableError}
+                    </div>
+                  )}
+
+                  {extractedTimetableExams.length > 0 && (
+                    <div className="space-y-3 max-h-64 overflow-y-auto pr-1">
+                      <span className="text-[11px] font-bold text-[#FF9D24] uppercase tracking-wider block">
+                        Confirm Extracted Exams ({extractedTimetableExams.length})
+                      </span>
+                      {extractedTimetableExams.map((ex, idx) => (
+                        <div key={idx} className="p-3 rounded-xl bg-[#101114] border border-slate-800 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                          <input
+                            value={ex.subject || ''}
+                            onChange={(e) => {
+                              const copy = [...extractedTimetableExams];
+                              copy[idx].subject = e.target.value;
+                              setExtractedTimetableExams(copy);
+                            }}
+                            placeholder="Subject Name"
+                            className="p-2 rounded-lg bg-[#18191E] border border-slate-800 text-white"
+                          />
+                          <input
+                            value={ex.subject_code || ''}
+                            onChange={(e) => {
+                              const copy = [...extractedTimetableExams];
+                              copy[idx].subject_code = e.target.value;
+                              setExtractedTimetableExams(copy);
+                            }}
+                            placeholder="Code (e.g. CS301)"
+                            className="p-2 rounded-lg bg-[#18191E] border border-slate-800 text-white"
+                          />
+                          <input
+                            type="date"
+                            value={ex.exam_date || ''}
+                            onChange={(e) => {
+                              const copy = [...extractedTimetableExams];
+                              copy[idx].exam_date = e.target.value;
+                              setExtractedTimetableExams(copy);
+                            }}
+                            className="p-2 rounded-lg bg-[#18191E] border border-slate-800 text-white"
+                          />
+                          <div className="flex gap-2">
+                            <input
+                              value={ex.exam_time || ''}
+                              onChange={(e) => {
+                                const copy = [...extractedTimetableExams];
+                                copy[idx].exam_time = e.target.value;
+                                setExtractedTimetableExams(copy);
+                              }}
+                              placeholder="Time"
+                              className="flex-1 p-2 rounded-lg bg-[#18191E] border border-slate-800 text-white"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setExtractedTimetableExams(prev => prev.filter((_, i) => i !== idx))}
+                              className="p-2 rounded-lg bg-rose-500/10 text-rose-400 hover:bg-rose-500/20"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-end gap-3 pt-3">
+                    <button
+                      type="button"
+                      onClick={() => setIsNewExamOpen(false)}
+                      className="px-4 py-2 rounded-xl text-xs text-[#A1A1AA] hover:text-white"
+                    >
+                      Cancel
+                    </button>
+                    {extractedTimetableExams.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={handleSaveTimetableExams}
+                        disabled={savingTimetable}
+                        className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#FF8A00] to-[#FF9D24] text-white text-xs font-bold"
+                      >
+                        {savingTimetable ? 'Saving Exams...' : `Save ${extractedTimetableExams.length} Exam(s)`}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
             </motion.div>
           </div>
         )}
