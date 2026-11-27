@@ -796,4 +796,95 @@ ${rawText.slice(0, 20000)}
   }
 });
 
+// ============================================================
+// 12. POST /api/v1/study/exams/:id/ask-lemon — Contextual Study AI
+// ============================================================
+router.post('/exams/:id/ask-lemon', requireAuth, async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    const { id } = req.params;
+    const { question, topicName } = req.body;
+
+    if (!question || !question.trim()) {
+      return res.status(400).json({ error: 'Please enter a question for LEMON.' });
+    }
+
+    let exam = null;
+    let topics = [];
+    try {
+      const { data } = await supabaseAdmin.from('study_exams').select('*').eq('id', id).eq('user_id', userId).single();
+      if (data) {
+        exam = data;
+        const { data: tData } = await supabaseAdmin.from('study_topics').select('unit_name, topic_name, is_understood').eq('exam_id', id);
+        if (tData) topics = tData;
+      }
+    } catch {}
+
+    if (!exam) {
+      const userExams = memoryExams.get(userId) || [];
+      const found = userExams.find(e => e.id === id);
+      if (found) {
+        exam = found;
+        topics = found.topics || [];
+      }
+    }
+
+    if (!exam) {
+      return res.status(404).json({ error: 'Exam workspace not found.' });
+    }
+
+    const hasUploadedSource = Boolean(exam.syllabus_text && exam.syllabus_text.trim().length > 30);
+    const contextBlock = `
+EXAM: ${exam.subject} — ${exam.exam_name} (Date: ${new Date(exam.exam_date).toLocaleDateString()})
+${topicName ? `FOCUSED TOPIC: ${topicName}` : ''}
+EXTRACTED TOPICS: ${topics.map(t => `${t.unit_name}: ${t.topic_name} (${t.is_understood ? 'Understood' : 'Pending'})`).join('; ') || 'None yet'}
+UPLOADED MATERIAL EXCERPT:
+${hasUploadedSource ? exam.syllabus_text.slice(0, 12000) : 'No uploaded syllabus or notes yet.'}
+`;
+
+    const answer = await callAiCompletion({
+      systemInstruction: `You are LEMON, the contextual academic AI inside FLOW Study 2.0 (Powered by IMV).
+Answer clearly, concisely, and accurately using structured markdown.
+If you are referencing the student's uploaded material, state "Based on your uploaded material:".
+If you are generating a general academic explanation because the uploaded material does not cover it, state "General academic explanation:".
+Never fabricate source references.`,
+      prompt: `${contextBlock}\n\nSTUDENT QUESTION:\n${question.trim()}`,
+      preferGemini: true,
+      jsonMode: false
+    });
+
+    res.json({
+      success: true,
+      answer,
+      usedUploadedSource: hasUploadedSource
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ============================================================
+// 13. DELETE /api/v1/study/exams/:id — Delete Exam Workspace
+// ============================================================
+router.delete('/exams/:id', requireAuth, async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    const { id } = req.params;
+
+    try {
+      await supabaseAdmin.from('study_topics').delete().eq('exam_id', id).eq('user_id', userId);
+      await supabaseAdmin.from('study_questions').delete().eq('exam_id', id).eq('user_id', userId);
+      await supabaseAdmin.from('study_flashcards').delete().eq('exam_id', id).eq('user_id', userId);
+      await supabaseAdmin.from('study_exams').delete().eq('id', id).eq('user_id', userId);
+    } catch {}
+
+    const userExams = memoryExams.get(userId) || [];
+    memoryExams.set(userId, userExams.filter(e => e.id !== id));
+
+    res.json({ success: true });
+  } catch (err) {
+    next(err);
+  }
+});
+
 export default router;

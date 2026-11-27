@@ -30,6 +30,11 @@ import {
 } from 'lucide-react';
 import api from '../services/api';
 import { LoadingSpinner } from '../components/LoadingSpinner';
+import { ExamOnboardingModal } from '../components/study/ExamOnboardingModal';
+import { LemonAssistantPanel } from '../components/study/LemonAssistantPanel';
+import { DocumentCentre } from '../components/study/DocumentCentre';
+import { ProgressCentre } from '../components/study/ProgressCentre';
+import type { StudySection, IngestionStage } from '../components/study/types';
 
 export const Study: React.FC = () => {
   const [exams, setExams] = useState<any[]>([]);
@@ -63,6 +68,9 @@ export const Study: React.FC = () => {
   const [uploadFeedback, setUploadFeedback] = useState<string | null>(null);
   const [downloadingPdf, setDownloadingPdf] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Study 2.0 Top-Level Section: 'home' | 'workspace' | 'documents' | 'progress'
+  const [activeSection, setActiveSection] = useState<StudySection>('workspace');
 
   // Active Mode: 'hub' | 'learn' | 'priority' | 'test' | 'pomodoro'
   const [activeMode, setActiveMode] = useState<'hub' | 'learn' | 'priority' | 'test' | 'pomodoro'>('hub');
@@ -509,8 +517,35 @@ export const Study: React.FC = () => {
         )}
       </div>
 
-      {/* 3. Mode Navigation Bar */}
+      {/* 2.5 Study 2.0 Section Navigation */}
       {selectedExamId && (
+        <div className="flex flex-wrap items-center gap-2 border-b border-white/10 pb-3">
+          {(
+            [
+              { id: 'home', label: 'Study Home' },
+              { id: 'workspace', label: 'Exam Workspace' },
+              { id: 'documents', label: 'Document Centre' },
+              { id: 'progress', label: 'Progress Centre' }
+            ] as const
+          ).map((sec) => (
+            <button
+              key={sec.id}
+              type="button"
+              onClick={() => setActiveSection(sec.id)}
+              className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all ${
+                activeSection === sec.id
+                  ? 'bg-[#FF8A00] text-black'
+                  : 'bg-[#18191D] text-[#A1A1AA] hover:text-white border border-white/5'
+              }`}
+            >
+              {sec.label}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* 3. Mode Navigation Bar */}
+      {selectedExamId && activeSection === 'workspace' && (
         <div className="flex flex-wrap items-center justify-between gap-4 p-2 rounded-2xl bg-[#18191E] border border-slate-800">
           <div className="flex items-center gap-1.5">
             {[
@@ -552,7 +587,7 @@ export const Study: React.FC = () => {
         </div>
       )}
 
-      {/* 4. Active Mode Workspaces */}
+      {/* 4. Active Section & Mode Workspaces */}
       {detailLoading ? (
         <LoadingSpinner text="Loading Study Materials..." />
       ) : !currentExam ? (
@@ -561,6 +596,64 @@ export const Study: React.FC = () => {
           <h3 className="text-base font-bold text-white">No Exam Selected</h3>
           <p className="text-xs max-w-sm mx-auto">Create or choose an examination above to unlock study modes, question prioritization and test simulations.</p>
         </div>
+      ) : activeSection === 'home' ? (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 space-y-6">
+            <div className="p-6 rounded-2xl bg-[#101114] border border-white/10 space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-[#FF9D24]">Study Command Centre</span>
+                  <h2 className="text-xl font-black text-white mt-0.5">{currentExam.subject}</h2>
+                  <p className="text-xs text-[#A1A1AA]">{currentExam.exam_name} • {new Date(currentExam.exam_date).toLocaleDateString('en-US', { dateStyle: 'medium' })}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setActiveSection('workspace')}
+                  className="px-4 py-2 rounded-xl bg-[#FF8A00] hover:bg-[#FF9D24] text-black text-xs font-bold transition-colors"
+                >
+                  Open Workspace
+                </button>
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                <div className="p-4 rounded-xl bg-[#18191D] border border-white/5">
+                  <div className="text-xl font-black text-white">{topicCoveragePct}%</div>
+                  <div className="text-[11px] text-[#A1A1AA]">Syllabus Covered</div>
+                </div>
+                <div className="p-4 rounded-xl bg-[#18191D] border border-white/5">
+                  <div className="text-xl font-black text-[#FF9D24]">{questionsPct}%</div>
+                  <div className="text-[11px] text-[#A1A1AA]">Priority Qs Solved</div>
+                </div>
+                <div className="p-4 rounded-xl bg-[#18191D] border border-white/5">
+                  <div className="text-xl font-black text-white">{flashcards.length}</div>
+                  <div className="text-[11px] text-[#A1A1AA]">Flashcards Ready</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <LemonAssistantPanel examId={currentExam.id} subject={currentExam.subject} />
+          </div>
+        </div>
+      ) : activeSection === 'documents' ? (
+        <DocumentCentre
+          exam={currentExam}
+          selectedFiles={selectedFiles}
+          onFilesAdd={(files) => setSelectedFiles((prev) => [...prev, ...files])}
+          onFileRemove={(i) => setSelectedFiles((prev) => prev.filter((_, idx) => idx !== i))}
+          docType={uploadDocType as any}
+          onDocTypeChange={(t) => setUploadDocType(t === 'notes' ? 'syllabus' : t)}
+          uploading={uploadingDocs}
+          stage={uploadStage as IngestionStage}
+          feedback={uploadFeedback}
+          onUploadAndExtract={handleUploadDocs}
+        />
+      ) : activeSection === 'progress' ? (
+        <ProgressCentre
+          subject={currentExam.subject}
+          topics={topics}
+          questions={questions}
+          flashcards={flashcards}
+        />
       ) : activeMode === 'hub' ? (
         /* ================= STUDY HUB OVERVIEW ================= */
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -1106,222 +1199,17 @@ export const Study: React.FC = () => {
         </div>
       )}
 
-      {/* 5. Create Exam Modal */}
-      <AnimatePresence>
-        {isNewExamOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm overflow-y-auto">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="w-full max-w-2xl bg-[#18191E] border border-slate-800 rounded-3xl p-6 sm:p-8 space-y-5 text-white my-8"
-            >
-              <div className="flex items-center justify-between">
-                <h3 className="text-xl font-black">Add Exam Schedule</h3>
-                <div className="flex items-center gap-1 p-1 rounded-xl bg-[#101114] border border-slate-800">
-                  <button
-                    type="button"
-                    onClick={() => setExamModalTab('manual')}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                      examModalTab === 'manual' ? 'bg-[#FF8A00] text-white' : 'text-[#A1A1AA] hover:text-white'
-                    }`}
-                  >
-                    Manual Entry
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setExamModalTab('timetable')}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                      examModalTab === 'timetable' ? 'bg-[#FF8A00] text-white' : 'text-[#A1A1AA] hover:text-white'
-                    }`}
-                  >
-                    Upload Exam Schedule
-                  </button>
-                </div>
-              </div>
-
-              {examModalTab === 'manual' ? (
-                <form onSubmit={handleCreateExam} className="space-y-4">
-                  <div>
-                    <label className="text-xs font-semibold text-[#A1A1AA] block mb-1">Subject Name *</label>
-                    <input
-                      required
-                      value={newSubject}
-                      onChange={(e) => setNewSubject(e.target.value)}
-                      placeholder="e.g. Operating Systems / CS401"
-                      className="w-full p-3 rounded-xl bg-[#101114] border border-slate-800 text-xs text-white focus:outline-none focus:border-[#FF9D24]"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-[#A1A1AA] block mb-1">Examination Title *</label>
-                    <input
-                      required
-                      value={newExamName}
-                      onChange={(e) => setNewExamName(e.target.value)}
-                      placeholder="e.g. End-Semester Examination"
-                      className="w-full p-3 rounded-xl bg-[#101114] border border-slate-800 text-xs text-white focus:outline-none focus:border-[#FF9D24]"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-[#A1A1AA] block mb-1">Target Examination Date *</label>
-                    <input
-                      type="date"
-                      required
-                      value={newExamDate}
-                      onChange={(e) => setNewExamDate(e.target.value)}
-                      className="w-full p-3 rounded-xl bg-[#101114] border border-slate-800 text-xs text-white focus:outline-none focus:border-[#FF9D24]"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-[#A1A1AA] block mb-1">Syllabus Overview / Topics (Optional)</label>
-                    <textarea
-                      rows={3}
-                      value={newSyllabusText}
-                      onChange={(e) => setNewSyllabusText(e.target.value)}
-                      placeholder="Paste key chapters or topics..."
-                      className="w-full p-3 rounded-xl bg-[#101114] border border-slate-800 text-xs text-white focus:outline-none focus:border-[#FF9D24] resize-none"
-                    />
-                  </div>
-                  <div className="flex items-center justify-end gap-3 pt-3">
-                    <button
-                      type="button"
-                      onClick={() => setIsNewExamOpen(false)}
-                      className="px-4 py-2 rounded-xl text-xs text-[#A1A1AA] hover:text-white"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={savingExam}
-                      className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#FF8A00] to-[#FF9D24] text-white text-xs font-bold"
-                    >
-                      {savingExam ? 'Saving...' : 'Save & Prepare'}
-                    </button>
-                  </div>
-                </form>
-              ) : (
-                <div className="space-y-4">
-                  <p className="text-xs text-[#A1A1AA]">
-                    Upload your examination timetable (PDF, PNG, JPG, JPEG, WebP). LEMON will extract subjects, codes, dates, and times for you to review.
-                  </p>
-                  <input
-                    type="file"
-                    accept=".pdf,image/png,image/jpeg,image/webp"
-                    onChange={(e) => {
-                      setTimetableFile(e.target.files?.[0] || null);
-                      setTimetableError(null);
-                    }}
-                    className="w-full p-3 rounded-xl bg-[#101114] border border-slate-800 text-xs text-slate-300 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-[#FF8A00]/20 file:text-[#FF9D24]"
-                  />
-
-                  {timetableFile && extractedTimetableExams.length === 0 && (
-                    <button
-                      type="button"
-                      onClick={handleExtractTimetable}
-                      disabled={extractingTimetable}
-                      className="w-full py-2.5 rounded-xl bg-gradient-to-r from-[#FF8A00] to-[#FF9D24] text-white text-xs font-bold"
-                    >
-                      {extractingTimetable ? 'LEMON Extracting Timetable...' : 'Extract Exam Schedule'}
-                    </button>
-                  )}
-
-                  {timetableError && (
-                    <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-xs text-rose-400">
-                      {timetableError}
-                    </div>
-                  )}
-
-                  {extractedTimetableExams.length > 0 && (
-                    <div className="space-y-3 max-h-64 overflow-y-auto pr-1">
-                      <span className="text-[11px] font-bold text-[#FF9D24] uppercase tracking-wider block">
-                        Confirm Extracted Exams ({extractedTimetableExams.length})
-                      </span>
-                      {extractedTimetableExams.map((ex, idx) => (
-                        <div key={idx} className="p-3 rounded-xl bg-[#101114] border border-slate-800 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                          <input
-                            value={ex.subject || ''}
-                            onChange={(e) => {
-                              const copy = [...extractedTimetableExams];
-                              copy[idx].subject = e.target.value;
-                              setExtractedTimetableExams(copy);
-                            }}
-                            placeholder="Subject Name"
-                            className="p-2 rounded-lg bg-[#18191E] border border-slate-800 text-white"
-                          />
-                          <input
-                            value={ex.subject_code || ''}
-                            onChange={(e) => {
-                              const copy = [...extractedTimetableExams];
-                              copy[idx].subject_code = e.target.value;
-                              setExtractedTimetableExams(copy);
-                            }}
-                            placeholder="Code (e.g. CS301)"
-                            className="p-2 rounded-lg bg-[#18191E] border border-slate-800 text-white"
-                          />
-                          <input
-                            type="date"
-                            value={ex.exam_date || ''}
-                            onChange={(e) => {
-                              const copy = [...extractedTimetableExams];
-                              copy[idx].exam_date = e.target.value;
-                              setExtractedTimetableExams(copy);
-                            }}
-                            className="p-2 rounded-lg bg-[#18191E] border border-slate-800 text-white"
-                          />
-                          <div className="flex gap-2">
-                            <input
-                              value={ex.exam_time || ''}
-                              onChange={(e) => {
-                                const copy = [...extractedTimetableExams];
-                                copy[idx].exam_time = e.target.value;
-                                setExtractedTimetableExams(copy);
-                              }}
-                              placeholder="Time"
-                              className="flex-1 p-2 rounded-lg bg-[#18191E] border border-slate-800 text-white"
-                            />
-                            <button
-                              type="button"
-                              onClick={() => setExtractedTimetableExams(prev => prev.filter((_, i) => i !== idx))}
-                              className="p-2 rounded-lg bg-rose-500/10 text-rose-400 hover:bg-rose-500/20"
-                            >
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  <div className="flex items-center justify-end gap-3 pt-3">
-                    <button
-                      type="button"
-                      onClick={() => setIsNewExamOpen(false)}
-                      className="px-4 py-2 rounded-xl text-xs text-[#A1A1AA] hover:text-white"
-                    >
-                      Cancel
-                    </button>
-                    {extractedTimetableExams.length > 0 && (
-                      <button
-                        type="button"
-                        onClick={handleSaveTimetableExams}
-                        disabled={savingTimetable}
-                        className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#FF8A00] to-[#FF9D24] text-white text-xs font-bold"
-                      >
-                        {savingTimetable ? 'Saving Exams...' : `Save ${extractedTimetableExams.length} Exam(s)`}
-                      </button>
-                    )}
-                  </div>
-                </div>
-              )}
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+      {/* 5. Create / Import Exam Modal */}
+      <ExamOnboardingModal
+        isOpen={isNewExamOpen}
+        onClose={() => setIsNewExamOpen(false)}
+        onCreated={async (newId) => {
+          await loadExams();
+          if (newId) setSelectedExamId(newId);
+        }}
+      />
     </div>
   );
 };
 
 export default Study;
-
-
-
