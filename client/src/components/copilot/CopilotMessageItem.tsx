@@ -23,7 +23,7 @@ interface CopilotMessageItemProps {
   onTaskCreated?: () => void;
 }
 
-export const CopilotMessageItem: React.FC<CopilotMessageItemProps> = ({
+export const CopilotMessageItem: React.FC<CopilotMessageItemProps> = React.memo(({
   message,
   userInitial = 'U',
   onTaskCreated
@@ -311,4 +311,4 @@ export const CopilotMessageItem: React.FC<CopilotMessageItemProps> = ({
       </AnimatePresence>
     </div>
   );
-};
+});

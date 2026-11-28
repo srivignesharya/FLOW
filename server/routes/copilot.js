@@ -21,63 +21,43 @@ router.post('/chat', requireAuth, validateBody(copilotQuerySchema), async (req, 
     console.log(`[IMVISION] Query: "${query}"`);
     console.log(`[IMVISION] Document Attached: ${documentId || 'None'}`);
 
-    // Build document context if a specific document is selected
-    let docContext = 'No specific document selected.';
-    if (documentId) {
-      const { data: doc } = await supabaseAdmin
-        .from('documents')
-        .select('file_name, file_type, raw_text_content')
-        .eq('id', documentId)
+    // Run independent DB context queries in parallel
+    const [docRes, historyRes, tasksRes] = await Promise.all([
+      documentId
+        ? supabaseAdmin
+            .from('documents')
+            .select('file_name, file_type, raw_text_content')
+            .eq('id', documentId)
+            .eq('user_id', userId)
+            .single()
+        : Promise.resolve({ data: null }),
+      supabaseAdmin
+        .from('copilot_messages')
+        .select('role, content')
         .eq('user_id', userId)
-        .single();
+        .order('created_at', { ascending: false })
+        .limit(10),
+      supabaseAdmin
+        .from('tasks')
+        .select('title, subject, deadline, priority, status, estimated_minutes')
+        .eq('user_id', userId)
+        .neq('status', 'completed')
+        .order('deadline', { ascending: true })
+        .limit(15)
+    ]);
 
-      if (doc) {
-        docContext = `Document: "${doc.file_name}" (${doc.file_type})\n${
-          doc.raw_text_content
-            ? `Content:\n${doc.raw_text_content.slice(0, 3000)}`
-            : 'Binary file — no raw text available.'
-        }`;
-      }
+    let docContext = 'No specific document selected.';
+    if (docRes.data) {
+      const doc = docRes.data;
+      docContext = `Document: "${doc.file_name}" (${doc.file_type})\n${
+        doc.raw_text_content
+          ? `Content:\n${doc.raw_text_content.slice(0, 3000)}`
+          : 'Binary file — no raw text available.'
+      }`;
     }
 
-    // Fetch recent chat history for multi-turn context (last 10 messages)
-    const { data: history } = await supabaseAdmin
-      .from('copilot_messages')
-      .select('role, content')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false })
-      .limit(10);
-
-    const recentHistory = (history || []).reverse();
-
-    // Fetch user's tasks for broader academic context
-    const { data: tasks } = await supabaseAdmin
-      .from('tasks')
-      .select('title, subject, deadline, priority, status, estimated_minutes')
-      .eq('user_id', userId)
-      .neq('status', 'completed')
-      .order('deadline', { ascending: true })
-      .limit(20);
-
-    // Fetch active study schedule context
-    const { data: activeSchedule } = await supabaseAdmin
-      .from('study_schedules')
-      .select('generated_plan')
-      .eq('user_id', userId)
-      .eq('is_active', true)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    // Fetch user profile preferences
-    const { data: profile } = await supabaseAdmin
-      .from('profiles')
-      .select('full_name, preferred_study_hours_per_day, academic_institution')
-      .eq('id', userId)
-      .single();
-
-    const todayStr = new Date().toISOString();
-    console.log(`[IMVISION] Context loaded: ${tasks?.length || 0} active tasks | Active schedule: ${Boolean(activeSchedule)} | Profile: "${profile?.full_name || 'Student'}"`);
+    const recentHistory = (historyRes.data || []).reverse();
+    const tasks = tasksRes.data || [];
 
     // Cleanly format tasks into human-readable compact bullets rather than raw JSON dump
     const simplifiedTasks = (tasks && tasks.length > 0)

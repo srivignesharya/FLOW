@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import api from '../services/api';
 import { supabase } from '../lib/supabaseClient';
 import { useAuth } from './AuthContext';
@@ -36,6 +36,7 @@ interface CopilotContextType {
   toggleExpand: () => void;
   setActiveDocumentId: (id: string | null) => void;
   sendMessage: (query: string) => Promise<void>;
+  stopGenerating: () => void;
   clearHistory: () => Promise<void>;
   loadHistory: () => Promise<void>;
   loadDocuments: () => Promise<void>;
@@ -54,6 +55,15 @@ export const CopilotProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [historyLoading, setHistoryLoading] = useState(false);
   const [activeDocumentId, setActiveDocumentId] = useState<string | null>(null);
   const [documents, setDocuments] = useState<CopilotDocument[]>([]);
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  const stopGenerating = useCallback(() => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+      setLoading(false);
+    }
+  }, []);
 
   // Open / Close / Toggle handlers
   const openCopilot = useCallback(() => setIsOpen(true), []);
@@ -138,12 +148,15 @@ export const CopilotProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
     setMessages((prev) => [...prev, optimisticMsg]);
     setLoading(true);
+    abortControllerRef.current?.abort();
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
 
     try {
       const res = await api.post('/copilot/chat', {
         query: trimmed,
         documentId: activeDocumentId || null
-      });
+      }, { signal: controller.signal });
 
       const assistantMsg: CopilotMessage = {
         role: 'assistant',
@@ -154,6 +167,9 @@ export const CopilotProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
       setMessages((prev) => [...prev, assistantMsg]);
     } catch (err: any) {
+      if (err.name === 'CanceledError' || err.name === 'AbortError') {
+        return;
+      }
       const errorMsg = err.response?.data?.error || 'Failed to get a response from Copilot. Please try again.';
       showToast(errorMsg, 'error');
 
@@ -182,27 +198,48 @@ export const CopilotProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
   };
 
+  const value = useMemo(
+    () => ({
+      isOpen,
+      isExpanded,
+      messages,
+      loading,
+      historyLoading,
+      activeDocumentId,
+      documents,
+      openCopilot,
+      closeCopilot,
+      toggleCopilot,
+      toggleExpand,
+      setActiveDocumentId,
+      sendMessage,
+      stopGenerating,
+      clearHistory,
+      loadHistory,
+      loadDocuments
+    }),
+    [
+      isOpen,
+      isExpanded,
+      messages,
+      loading,
+      historyLoading,
+      activeDocumentId,
+      documents,
+      openCopilot,
+      closeCopilot,
+      toggleCopilot,
+      toggleExpand,
+      sendMessage,
+      stopGenerating,
+      clearHistory,
+      loadHistory,
+      loadDocuments
+    ]
+  );
+
   return (
-    <CopilotContext.Provider
-      value={{
-        isOpen,
-        isExpanded,
-        messages,
-        loading,
-        historyLoading,
-        activeDocumentId,
-        documents,
-        openCopilot,
-        closeCopilot,
-        toggleCopilot,
-        toggleExpand,
-        setActiveDocumentId,
-        sendMessage,
-        clearHistory,
-        loadHistory,
-        loadDocuments
-      }}
-    >
+    <CopilotContext.Provider value={value}>
       {children}
     </CopilotContext.Provider>
   );
