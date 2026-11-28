@@ -197,7 +197,7 @@ router.get('/exams/:id', requireAuth, async (req, res, next) => {
 // ============================================================
 // 4. POST /api/v1/study/exams/:id/upload-docs — Upload PDF / Image
 // ============================================================
-router.post('/exams/:id/upload-docs', requireAuth, upload.array('files', 5), async (req, res, next) => {
+router.post('/exams/:id/upload-docs', requireAuth, upload.array('files', 20), async (req, res, next) => {
   try {
     const userId = req.user.id;
     const { id } = req.params;
@@ -713,17 +713,24 @@ router.get('/exams/:id/formula-pdf', requireAuth, async (req, res, next) => {
 // ============================================================
 // 11. POST /api/v1/study/extract-timetable — AI Timetable Extraction
 // ============================================================
-router.post('/extract-timetable', requireAuth, upload.single('file'), async (req, res, next) => {
+router.post('/extract-timetable', requireAuth, upload.array('files', 20), async (req, res, next) => {
   try {
-    if (!req.file) {
-      return res.status(400).json({ error: 'Please upload a PDF or image of your exam timetable.' });
+    const files = req.files && req.files.length > 0 ? req.files : (req.file ? [req.file] : []);
+    if (files.length === 0) {
+      return res.status(400).json({ error: 'Please upload at least one PDF or image of your exam timetable.' });
     }
 
     let rawText = '';
-    if (req.file.mimetype === 'application/pdf') {
-      rawText = await extractTextFromPdf(req.file.buffer);
-    } else if (req.file.mimetype.startsWith('image/')) {
-      rawText = await performVisionOcr(req.file.buffer, req.file.mimetype);
+    for (const file of files) {
+      let text = '';
+      if (file.mimetype === 'application/pdf') {
+        text = await extractTextFromPdf(file.buffer);
+      } else if (file.mimetype.startsWith('image/')) {
+        text = await performVisionOcr(file.buffer, file.mimetype);
+      }
+      if (text && text.trim().length > 0) {
+        rawText += `\n\n--- ${file.originalname} ---\n${text}`;
+      }
     }
 
     if (!rawText || rawText.trim().length < 15) {

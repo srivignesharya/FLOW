@@ -29,7 +29,7 @@ export const ExamOnboardingModal: React.FC<ExamOnboardingModalProps> = ({
   const [manualError, setManualError] = useState<string | null>(null);
 
   // Timetable extraction fields
-  const [timetableFile, setTimetableFile] = useState<File | null>(null);
+  const [timetableFiles, setTimetableFiles] = useState<File[]>([]);
   const [extracting, setExtracting] = useState(false);
   const [extractedExams, setExtractedExams] = useState<any[]>([]);
   const [timetableError, setTimetableError] = useState<string | null>(null);
@@ -66,12 +66,12 @@ export const ExamOnboardingModal: React.FC<ExamOnboardingModalProps> = ({
   };
 
   const handleExtractTimetable = async () => {
-    if (!timetableFile) return;
+    if (timetableFiles.length === 0) return;
     try {
       setExtracting(true);
       setTimetableError(null);
       const formData = new FormData();
-      formData.append('file', timetableFile);
+      timetableFiles.forEach((f) => formData.append('files', f));
       const res = await api.post('/study/extract-timetable', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
@@ -102,7 +102,7 @@ export const ExamOnboardingModal: React.FC<ExamOnboardingModalProps> = ({
         });
         if (res.data?.id) lastId = res.data.id;
       }
-      setTimetableFile(null);
+      setTimetableFiles([]);
       setExtractedExams([]);
       onClose();
       await onCreated(lastId);
@@ -304,22 +304,23 @@ export const ExamOnboardingModal: React.FC<ExamOnboardingModalProps> = ({
                   </p>
                   <input
                     type="file"
+                    multiple
                     accept=".pdf,image/png,image/jpeg,image/webp"
                     onChange={(e) => {
-                      setTimetableFile(e.target.files?.[0] || null);
+                      setTimetableFiles(e.target.files ? Array.from(e.target.files) : []);
                       setTimetableError(null);
                       setExtractedExams([]);
                     }}
                     className="w-full p-2.5 rounded-xl bg-[#101114] border border-white/10 text-xs text-slate-300 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-[#FF8A00]/20 file:text-[#FF9D24]"
                   />
-                  {timetableFile && extractedExams.length === 0 && (
+                  {timetableFiles.length > 0 && extractedExams.length === 0 && (
                     <button
                       type="button"
                       onClick={handleExtractTimetable}
                       disabled={extracting}
                       className="w-full py-2.5 rounded-xl bg-[#FF8A00] hover:bg-[#FF9D24] text-black text-xs font-bold transition-colors disabled:opacity-50"
                     >
-                      {extracting ? 'LEMON Extracting Schedule...' : 'Extract Exam Schedule'}
+                      {extracting ? 'LEMON Extracting Schedule...' : `Extract Exam Schedule (${timetableFiles.length} file${timetableFiles.length > 1 ? 's' : ''})`}
                     </button>
                   )}
                 </div>
