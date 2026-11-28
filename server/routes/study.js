@@ -887,4 +887,153 @@ router.delete('/exams/:id', requireAuth, async (req, res, next) => {
   }
 });
 
+// ============================================================
+// 14. POST /api/v1/study/exams/:id/regenerate — Independent Regeneration
+// ============================================================
+router.post('/exams/:id/regenerate', requireAuth, async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    const { id } = req.params;
+    const { target } = req.body; // 'questions' | 'flashcards' | 'formulas'
+
+    if (!['questions', 'flashcards', 'formulas'].includes(target)) {
+      return res.status(400).json({ error: 'Invalid target. Must be questions, flashcards, or formulas.' });
+    }
+
+    let exam = null;
+    try {
+      const { data } = await supabaseAdmin.from('study_exams').select('*').eq('id', id).eq('user_id', userId).single();
+      if (data) exam = data;
+    } catch {}
+
+    const userExams = memoryExams.get(userId) || [];
+    const foundMem = userExams.find(e => e.id === id);
+    if (!exam && foundMem) exam = foundMem;
+
+    if (!exam) {
+      return res.status(404).json({ error: 'Exam workspace not found.' });
+    }
+
+    const materialContext = `Subject: ${exam.subject} (${exam.exam_name})\nSyllabus / Uploaded Material:\n${exam.syllabus_text || 'Core topics in ' + exam.subject}`;
+
+    if (target === 'formulas') {
+      const formulaPrompt = `
+You are LEMON, an academic formula extraction engine.
+Inspect the subject and syllabus below. Determine if this subject genuinely contains mathematical formulas, equations, or complexity expressions.
+If the subject is non-mathematical (e.g. humanities, communication, ethics, management) or no formulas exist, return:
+{ "available": false, "reason": "no_formulas_applicable", "formulas": [] }
+If formulas DO exist, extract/organize them accurately without inventing fake formulas:
+{ "available": true, "formulas": [ { "unit": "Unit 1", "name": "Formula Name", "expression": "a^2 + b^2 = c^2", "variables": "a, b, c: triangle sides" } ] }
+`;
+      const aiRes = await callAiCompletion({
+        systemInstruction: 'You are LEMON. Output strict JSON only. Never invent formulas for non-mathematical subjects.',
+        prompt: `${formulaPrompt}\n\n${materialContext}`,
+        preferGemini: true,
+        jsonMode: true
+      });
+      let parsed = null;
+      try { parsed = JSON.parse(aiRes); } catch {
+        const m = aiRes.match(/\{[\s\S]*\}/);
+        if (m) parsed = JSON.parse(m[0]);
+      }
+      if (!parsed || parsed.available === false || !Array.isArray(parsed.formulas) || parsed.formulas.length === 0) {
+        return res.json({
+          success: true,
+          target: 'formulas',
+          available: false,
+          message: 'Formula sheet unavailable — no relevant formulas were identified for this module.'
+        });
+      }
+      return res.json({
+        success: true,
+        target: 'formulas',
+        available: true,
+        formulas: parsed.formulas
+      });
+    }
+
+    if (target === 'questions') {
+      const qPrompt = `
+Generate 6-8 prioritized exam questions for ${exam.subject} based on the syllabus below.
+Return strict JSON:
+{ "questions": [ { "unit_name": "Unit 1", "topic_name": "Topic", "question": "...", "answer_key": "...", "priority": "high", "priority_reason": "...", "expected_marks": 8, "suggested_time_minutes": 15 } ] }
+`;
+      const aiRes = await callAiCompletion({
+        systemInstruction: 'You are LEMON. Output strict JSON only.',
+        prompt: `${qPrompt}\n\n${materialContext}`,
+        preferGemini: true,
+        jsonMode: true
+      });
+      let parsed = null;
+      try { parsed = JSON.parse(aiRes); } catch {
+        const m = aiRes.match(/\{[\s\S]*\}/);
+        if (m) parsed = JSON.parse(m[0]);
+      }
+      const payload = (parsed?.questions || []).map(q => ({
+        exam_id: id,
+        user_id: userId,
+        unit_name: q.unit_name || 'Unit 1',
+        topic_name: q.topic_name || 'Topic',
+        question: q.question,
+        answer_key: q.answer_key,
+        priority: q.priority || 'medium',
+        priority_reason: q.priority_reason || 'AI syllabus-based recommendation',
+        expected_marks: Number(q.expected_marks) || 5,
+        suggested_time_minutes: Number(q.suggested_time_minutes) || 10,
+        is_attempted: false,
+        attempt_verdict: null
+      }));
+      let persisted = [];
+      try {
+        if (payload.length > 0) {
+          const { data, error } = await supabaseAdmin.from('study_questions').insert(payload).select();
+          if (!error && data) persisted = data;
+        }
+      } catch {}
+      if (persisted.length === 0) persisted = payload.map((q, idx) => ({ id: `q-${Date.now()}-${idx}`, ...q }));
+      if (foundMem) foundMem.questions = [...(foundMem.questions || []), ...persisted];
+      return res.json({ success: true, target: 'questions', questions: persisted });
+    }
+
+    if (target === 'flashcards') {
+      const fPrompt = `
+Generate 6-10 concise, non-duplicate flashcards for ${exam.subject} based on the syllabus below.
+Return strict JSON:
+{ "flashcards": [ { "topic_name": "Topic", "question": "...", "answer": "...", "difficulty": "medium" } ] }
+`;
+      const aiRes = await callAiCompletion({
+        systemInstruction: 'You are LEMON. Output strict JSON only.',
+        prompt: `${fPrompt}\n\n${materialContext}`,
+        preferGemini: true,
+        jsonMode: true
+      });
+      let parsed = null;
+      try { parsed = JSON.parse(aiRes); } catch {
+        const m = aiRes.match(/\{[\s\S]*\}/);
+        if (m) parsed = JSON.parse(m[0]);
+      }
+      const payload = (parsed?.flashcards || []).map(f => ({
+        exam_id: id,
+        user_id: userId,
+        topic_name: f.topic_name || 'General',
+        question: f.question,
+        answer: f.answer,
+        difficulty: f.difficulty || 'medium'
+      }));
+      let persisted = [];
+      try {
+        if (payload.length > 0) {
+          const { data, error } = await supabaseAdmin.from('study_flashcards').insert(payload).select();
+          if (!error && data) persisted = data;
+        }
+      } catch {}
+      if (persisted.length === 0) persisted = payload.map((f, idx) => ({ id: `fc-${Date.now()}-${idx}`, ...f }));
+      if (foundMem) foundMem.flashcards = [...(foundMem.flashcards || []), ...persisted];
+      return res.json({ success: true, target: 'flashcards', flashcards: persisted });
+    }
+  } catch (err) {
+    next(err);
+  }
+});
+
 export default router;
